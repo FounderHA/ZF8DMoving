@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ZfAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfAttributeSet.h"
 #include "ZfStrengthSet.generated.h"
 
 /**
@@ -17,12 +17,15 @@ class ZF8DMOVING_API UZfStrengthSet : public UZfAttributeSet
 public:
 	UZfStrengthSet(const FObjectInitializer& ObjectInitializer);
 	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
+	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "CharacterAttributes")
 	FGameplayAttributeData Strength;
 	ATTRIBUTE_ACCESSORS(UZfStrengthSet, Strength)
 	
+protected:
 	
-	
-	
+	UFUNCTION()
+	virtual void OnRep_Strength(const FGameplayAttributeData& OldValue) const;
 };

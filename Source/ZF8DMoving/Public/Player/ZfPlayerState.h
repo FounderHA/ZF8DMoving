@@ -8,10 +8,10 @@
 #include "AbilitySystemInterface.h"
 #include "ZfPlayerState.generated.h"
 
+class UZfHealthSet;
+class UZfStrengthSet;
 
-/**
- * 
- */
+
 UCLASS()
 class ZF8DMOVING_API AZfPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -22,7 +22,17 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
+	UZfHealthSet* GetHealthSet() const;
+	UZfStrengthSet* GetStrengthSet() const;
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UZfHealthSet> HealthSet;
+	
+	UPROPERTY()
+	TObjectPtr<UZfStrengthSet> StrengthSet;
+	
 };

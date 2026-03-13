@@ -2,3 +2,8 @@
 
 
 #include "AbilitySystem/Attributes/ZfAttributeSet.h"
+
+UZfAttributeSet::UZfAttributeSet(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}

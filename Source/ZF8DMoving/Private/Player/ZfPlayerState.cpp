@@ -2,8 +2,9 @@
 
 
 #include "Player/ZfPlayerState.h"
-
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/ZfHealthSet.h"
+#include "AbilitySystem/Attributes/MainAttributes/ZfStrengthSet.h"
 
 AZfPlayerState::AZfPlayerState()
 {
@@ -12,9 +13,22 @@ AZfPlayerState::AZfPlayerState()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	
 	NetUpdateFrequency = 100.0f;
+	
+	HealthSet = CreateDefaultSubobject<UZfHealthSet>(TEXT("HealthSet"));
+	StrengthSet = CreateDefaultSubobject<UZfStrengthSet>(TEXT("StrengthSet"));
 }
 
 UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+UZfHealthSet* AZfPlayerState::GetHealthSet() const
+{
+	return HealthSet;
+}
+
+UZfStrengthSet* AZfPlayerState::GetStrengthSet() const
+{
+	return StrengthSet;
 }

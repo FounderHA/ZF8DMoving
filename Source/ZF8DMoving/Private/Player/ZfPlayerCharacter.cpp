@@ -66,6 +66,7 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	}
 	
 	AbilitySystemComponent = ZfPlayerState->GetAbilitySystemComponent();
+	HealthSet = ZfPlayerState->GetHealthSet();
 	
 	AbilitySystemComponent->InitAbilityActorInfo(ZfPlayerState,this);
 }
