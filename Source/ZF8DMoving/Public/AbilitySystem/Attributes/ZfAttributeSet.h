@@ -3,14 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
+#include "AttributeSet.h"
+#include "AbilitySystemComponent.h"
 #include "ZfAttributeSet.generated.h"
+
+#define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
+GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
+GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
+GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
+GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfAttributeSet : public UObject
+class ZF8DMOVING_API UZfAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
+	
+
+public:
+	
+	UZfAttributeSet(const FObjectInitializer& ObjectInitializer);
+	
 };

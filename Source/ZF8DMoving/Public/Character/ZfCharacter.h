@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "ZfCharacter.generated.h"
 
+class UZfHealthSet;
 
 UCLASS()
 class ZF8DMOVING_API AZfCharacter : public ACharacter, public IAbilitySystemInterface
@@ -27,4 +28,7 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UZfHealthSet> HealthSet;
 };

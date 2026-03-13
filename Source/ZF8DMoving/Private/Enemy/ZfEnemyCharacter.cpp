@@ -2,15 +2,17 @@
 
 
 #include "Enemy/ZfEnemyCharacter.h"
-
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/ZfHealthSet.h"
 
 
 AZfEnemyCharacter::AZfEnemyCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UZfAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	HealthSet = CreateDefaultSubobject<UZfHealthSet>(TEXT("HealthSet"));
+	
 }
