@@ -8,11 +8,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/MainAttributes/ZfStrengthModMagnitudeCalculation.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/MainAttributes/ZfStrengthModMagnitudeCalculation.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerState.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerState.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ZF8DMoving.sln" beforeDir="false" afterPath="$PROJECT_DIR$/ZF8DMoving.sln" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,6 +24,7 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/AbilitySystemInterface.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/GameplayEffect.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/GameplayModMagnitudeCalculation.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Editor/AnimationModifiers/Private/ModifierOutputFilter.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Editor/AnimationModifiers/Private/SModifierListview.h" root0="FORCE_HIGHLIGHTING" />
@@ -39,24 +37,6 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/PlayerController.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartition.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Json/Public/Serialization/JsonSerializable.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/MainAttributes/ZfStrengthModMagnitudeCalculation.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfHealthSet.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Character/ZfCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Enemy/ZfEnemyCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Game/ZfGameMode.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/Class/PDA_ClassDataAsset.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPLayerState.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/MainAttributes/ZfStrengthModMagnitudeCalculation.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfAttributeSet.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfHealthSet.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Character/ZfCharacter.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Enemy/ZfEnemyCharacter.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Game/ZfGameMode.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/Class/PDA_ClassDataAsset.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPLayerState.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPlayerCharacter.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
@@ -71,11 +51,12 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;Uproject.ZF8DMoving.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;founder/attribute&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;founder/attribute2&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -183,6 +164,8 @@
       <workItem from="1773427220897" duration="16000" />
       <workItem from="1773439419677" duration="1135000" />
       <workItem from="1773440575468" duration="7633000" />
+      <workItem from="1773456162822" duration="112000" />
+      <workItem from="1773456383925" duration="95000" />
     </task>
     <servers />
   </component>
