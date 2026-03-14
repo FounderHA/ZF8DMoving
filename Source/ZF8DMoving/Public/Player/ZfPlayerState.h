@@ -6,10 +6,34 @@
 #include "AbilitySystemReplicationProxyInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "Player/Class/ZfPrimaryDataAssetClass.h"
 #include "ZfPlayerState.generated.h"
 
 class UZfHealthSet;
-class UZfStrengthSet;
+class UZfMainAttributesSet;
+
+USTRUCT(BlueprintType)
+struct FPlayerAttributePoints
+{
+	GENERATED_BODY()
+
+public:
+	
+	UPROPERTY(BlueprintReadOnly)
+	float StrengthPoints;
+
+	UPROPERTY(BlueprintReadOnly)
+	float IntelligencePoints;
+
+	UPROPERTY(BlueprintReadOnly)
+	float DexterityPoints;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float ConstitutionPoints;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float ConvictionPoints;
+};
 
 
 UCLASS()
@@ -21,9 +45,16 @@ public:
 	AZfPlayerState();
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
 	
 	UZfHealthSet* GetHealthSet() const;
-	UZfStrengthSet* GetStrengthSet() const;
+	UZfMainAttributesSet* GetStrengthSet() const;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Class")
+	TObjectPtr<UZfPrimaryDataAssetClass> CharacterClassData;
+	
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	FPlayerAttributePoints AllocatedPoints;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
@@ -33,6 +64,6 @@ protected:
 	TObjectPtr<UZfHealthSet> HealthSet;
 	
 	UPROPERTY()
-	TObjectPtr<UZfStrengthSet> StrengthSet;
+	TObjectPtr<UZfMainAttributesSet> StrengthSet;
 	
 };

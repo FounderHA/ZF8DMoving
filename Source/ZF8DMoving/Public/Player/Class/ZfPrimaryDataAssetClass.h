@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "PDA_ClassDataAsset.generated.h"
+#include "ZfPrimaryDataAssetClass.generated.h"
 
 
 UCLASS(BlueprintType)
-class ZF8DMOVING_API UPDA_ClassDataAsset : public UPrimaryDataAsset
+class ZF8DMOVING_API UZfPrimaryDataAssetClass : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	

@@ -2,9 +2,10 @@
 
 
 #include "Player/ZfPlayerState.h"
+#include "Net/UnrealNetwork.h"
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfHealthSet.h"
-#include "AbilitySystem/Attributes/MainAttributes/ZfStrengthSet.h"
+#include "AbilitySystem/Attributes/ZfMainAttributesSet.h"
 
 AZfPlayerState::AZfPlayerState()
 {
@@ -15,7 +16,7 @@ AZfPlayerState::AZfPlayerState()
 	SetNetUpdateFrequency(100.0f);
 	
 	HealthSet = CreateDefaultSubobject<UZfHealthSet>(TEXT("HealthSet"));
-	StrengthSet = CreateDefaultSubobject<UZfStrengthSet>(TEXT("StrengthSet"));
+	StrengthSet = CreateDefaultSubobject<UZfMainAttributesSet>(TEXT("StrengthSet"));
 }
 
 UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
@@ -23,12 +24,19 @@ UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void AZfPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, AllocatedPoints, COND_None, REPNOTIFY_Always);
+}
+
 UZfHealthSet* AZfPlayerState::GetHealthSet() const
 {
 	return HealthSet;
 }
 
-UZfStrengthSet* AZfPlayerState::GetStrengthSet() const
+UZfMainAttributesSet* AZfPlayerState::GetStrengthSet() const
 {
 	return StrengthSet;
 }
