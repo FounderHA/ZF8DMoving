@@ -52,15 +52,13 @@ UAbilitySystemComponent* AZfPlayerCharacter::GetAbilitySystemComponent() const
 
 void AZfPlayerCharacter::InitAbilityActorInfo()
 {
-	Super::InitAbilityActorInfo();
-	
 	AZfPlayerState*	ZfPlayerState = GetPlayerState<AZfPlayerState>();
 	if (!IsValid(ZfPlayerState))
 	{
 		return;
 	}
 	
-	if (!IsValid(AbilitySystemComponent) || !HasAuthority())
+	if (!HasAuthority())
 	{
 		return;
 	}
