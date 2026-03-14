@@ -7,10 +7,12 @@
 #include "PDA_ClassDataAsset.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FMainAttributes
+UCLASS(BlueprintType)
+class ZF8DMOVING_API UPDA_ClassDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
+	
+public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainAttributes")
 	float Strength;
@@ -26,53 +28,29 @@ struct FMainAttributes
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainAttributes")
 	float Conviction;
-};
-
-
-USTRUCT(BlueprintType)
-struct FResistences
-{
-	GENERATED_BODY()
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainResistences")
 	float PhysicalResistance;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainResistences")
 	float MagicResistance;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainResistences")
 	float StunResistance;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainResistences")
 	float SlowResistance;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MainResistences")
 	float CriticalResistance;
-};
-
-/**
- * 
- */
-UCLASS(BlueprintType)
-class ZF8DMOVING_API UPDA_ClassDataAsset : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
 	
-public:
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
-	FMainAttributes MainAttributes;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Resistences")
-	FResistences Resistences;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Bases")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="BasesValues")
 	float BaseHealth;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Bases")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="BasesValues")
 	float BaseMana;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Bases")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="BasesValues")
 	float BaseStamina;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Modifier")
