@@ -9,7 +9,160 @@
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ZF8DMoving.sln" beforeDir="false" afterPath="$PROJECT_DIR$/ZF8DMoving.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/Mannequins/Animations/ABP_ZF.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/Mannequins/Animations/ABP_ZF.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Maps/Deafult.umap" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/61/1LR3KQKAFI07UKQY1DPW20.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/8H/80JXLSH2855OP04OI9S82B.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/C1/QSU7U4LO0FG8PUDU3HNFVT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/DV/WGX6LGSC78Y3OOANNAMVOK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/G8/MZULDV2WPXUYZDQ4JXEAS5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/HL/8KQTQ4ZV4ZNZVL1MCZMEM2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/PY/46GRBY916AKF0E6VPMKI3Y.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/RC/3R9LKD13PVFTYF4NFW7U6R.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/0/T3/YTHBXMUHCBGTRRXYK2ACY2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/01/ZD34EYJ498HCMXCUQ1A7D4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/8Q/FQNDEVXQ4AOH7OO583UDSB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/MF/KN75E96CQDEUJIN1CD5KFK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/MG/8U3NTS51I4F4ZHBIZI2JPL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/TI/TURVLJ5BU4IYZLE0FEXQ41.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/XE/Y8IHTDVBWXQ6O9H8VT3PTK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/1/YM/RLSGPTLMJ6DK6BP786KQ87.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/06/7UZ8VTQ9NSIQ99G0IAR73N.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/27/I5412PILP96R5IHXTL7WY2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/6I/VRFDCY5Y4F4Q6L3PJ8WWE4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/7D/CBFD7M32YB9NQLHURW2UVF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/DW/TKRNILMASPU76FK7E4VADQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/E0/6PLLMONEDXLFL5SLS192HF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/TK/MBTL1UK4WZ884RHH92PK6F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/2/TX/KBHQ8MAHWO52CYCOZ4CHXE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/7I/VDKN6JTKUBWI1T4EQDDVC4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/BO/BYY7NBQOW1OY32BXQO6GBX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/DV/SX8J8GZ2S7VNROAZCCC0NS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/ER/VOHHLOCDHSTPJP6W03GBEW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/HQ/AKOG4BTC2UPYLVV66BR1LQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/HQ/LZZXRP3JJ7S4ALZRCNMKFJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/HX/RKKGX6SHZOQ2QX2MYZ6ODV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/3/TE/YUNYVK1NH3PIOP0XKR8NYK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/09/C78LGB312VE2BP52L9RAM4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/0C/SL2A3TYAVDAPJO490PRDK8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/31/9VHY478722ZU1X36TD5RNR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/31/YS0IGLKTB649ZNU2M6YPH1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/41/CY6SQF0FFRED32E8CQ1YS1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/5G/KP6R6P860RGDFK7PAZI1EE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/AJ/685PQARPQHGBOML4VBKZGI.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/EW/563Q08VUWSPLCGCAIXC60S.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/G8/S8Q7TEHJTP115CHPSMR550.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/IR/6I7CAEBR3TTTKCZVYIUL2C.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/IU/CX3CNCCI2HOPBQZLS00ECH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/MR/AUBBZ5YL8KXLJR5RAWWF2S.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/ST/V0ZUX5LLJ5RQ1I2LVXGTII.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/4/YO/Q9NC8RKYEVFYJ097VZRW3G.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/2Z/WUFDBGSP014FREYFH6Y11R.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/5W/QOIP0ZORC23M9OL2WL386L.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/6S/PL3B9D03PJZAC8E5VD8CQ6.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/7A/5JY9ODWABRUE2UXYS687MJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/EP/NO825EQEN71LHQR0VQ3IZZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/F3/CSXEGR5AXDKBHHLEEJ6HR9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/G0/I2WE8YLV9SV5N4PLBGEO2R.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/GY/URQCCGUJ4XSI6PIIVH92EU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/KV/J3AY0JEYNBREPDOQSDH8NW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/LZ/I6ES4571UL1LO0KMV5A74Y.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/X8/YSA24XBC7EYM6AJVJI304S.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/5/Z5/PXHADF9HOWIEUINYWA63Y3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/0C/Q6WC6IM7MH171JSECZ71YQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/5Z/2YENT3PPVV4BY8QEJJ5OGG.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/EM/M9O93Q3MQA5SBDY7F9B7DH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/EP/62WSJ462Y8DCRKR25ZYWS4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/HR/9VZVR5GKKAEQMZCSOBPK3K.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/M3/RI7C3MTFDYBJV7YOY6HJHU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/NF/PM67V8HPGPKJQ4POTSWRUC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/QC/TL95T0PEQJ6LNHZU8P8LGS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/R9/EQ9IP7W1UGXB4KVYIORXVZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/UP/8HX399BVQ1XPHR5URZPBA9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/6/Y2/NXTWA1Q4ODEIA6QFH1CI25.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/2M/N24R7LKRGNA0VWQ2V163A2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/8K/KV2VVLVWE6WWJ37F7NZZ1Y.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/96/54E4CMJAM24WHTK19J0PTQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/H3/364P9EX6TGLY7COB40E65F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/MN/TD41DDEXJPFOY1BN6FLZ4M.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/MQ/NB568H09MKC7XHAMG05PX9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/UH/J13TY6H6T6XSGZHNW8L7RH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/UI/RZYV7541YONGOBJX1BWPDO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/7/ZM/HR4V8ILTYGJRYRZWA4XRVO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/4E/0H5DOVGKILN5DW6YPM93T8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/8O/ZJDEOF5TFW5KPK56CGYVU4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/BC/NC91S93MWO29SZN9DRF1I8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/BI/04TDJBA4KV1TZS2IYCBBIC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/D1/0VKLP7RH4W2N2B961OPMML.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/GX/DCY5WEV4X01GENFHWHA56O.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/IE/ETPP9H6JQJ11U4EV84QFWC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/IY/F40P09SX8HWCJGPV821502.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/IY/JWKHMU87PZWANCDGIQF072.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/S5/SCPT12FH7V81XPXL2OENSQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/8/VS/BLG7GUEGXRDO0MXR03U81J.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/9/31/KS2O26UU0C3ZJVBBHZLYH2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/9/7D/OOMD1V3ITNPVXWV8XVED9H.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/9/NF/XP2AVON9I3LQZFRE2PYRXE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/9/WY/A4BTRFW081KL229Z57KQ09.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/54/IB5SZ4Q866KXKRL9TMBC3W.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/5T/IN69X1UWKSIG9QYUE5EVWY.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/70/VHVQRRQ0KHEPH01P9C8N85.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/FE/JUQYMJZHVIAUJA6FB3SFL9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/TD/1Y1YKCZ6HNA61H00PQ70FC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/VO/PVN9ISYT1RJCM6V7BFSBO5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/A/X9/6ODNR9L6Z5X7F6XXNY6B7Y.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/1X/Z9ZN4L1D23OBEBIV38EQFZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/8O/DBY3HI2BTOA711ZF2SBWTL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/AS/AJTTW83AICSE9SGXHO1WOS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/CV/EYOOWKHL2LCT9F9OM722YZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/D3/R2DGQAZEV6XAA33IZ0S8BX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/B/MH/HGNZI4IJLTHKD7EEN5NJ2R.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/C/68/DPUUC01SI5CFPJY1UBV69K.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/C/QA/V9R4E9M9EG79GWWQSGM9PJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/C/R0/36IUBFS4RX2OFNFF24L08C.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/C/RN/MA1KD37YI0UJ0B5SI7WWPK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/4K/WTGM6HNKRM4RBABWF82HDS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/5Y/3Y56DBPCU3N19FPGEPT1NQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/6Y/TC0FK3S6X7Z1IZZ6NFUQT9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/8M/JPHO0Q5R1A45EISFLKL5RS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/93/50CZ73QBVD8QBH1QJ1Q8G3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/AV/AAN7OV8Y16KS5PW98V8KO9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/BG/S6FKK08J5TVDRFQX7HXTER.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/C9/NO2QYPB1ZKIVW1VFJX65KS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/CK/I499E4EBB6GMIF8ZCCEA7F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/EF/S8OOY8CNWZISCOB0JTLRVT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/L4/35L59CEDJ2C03HB3R7NSGI.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/Q2/SXSC9J9QGK7W80QBEWP5WR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/D/YF/RW8IRECF6XOWXGLECS6HNO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/0T/87KZ5BF9NWN0MJ60617IBT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/1W/CJ1ZT4QX3ZAM19Z8NU0509.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/3H/ADSS82GPEMR80T2R1VU3ZT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/E2/ZWAKJ2ZJX71UJPEG45D98A.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/EG/NVMAZHMDGUYKAPROCLBZZ9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/GV/Q9734AIUCYFSMCULKFG937.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/JX/ASTL0KAJ14WBNT4TPF1CBK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/MB/QY6UXOUUBMMB34OOJCYZHW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/MC/1VG9WN1BFTZHIH16CMYPQZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/PR/5QHG02SICXTE2S33DSXANF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/R6/CRD7B634Y0JZQ3406QTREB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/W3/M4MWPY7UJ2Q6EWA4JV0J4F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/XH/9MPD64MOPL09P48NQ0HMPB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/E/Z7/VXVE497FOB2Y8TQ0J5SBKK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/F/39/ITXGYSN0QG7VCK2QRB8HI9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/Deafult/F/5B/GLSPPJ9ZRHMJ3EYS38NYQ8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/Maps/Deafult/6/BB/TBGUA5XN7ENZFDTV2LFMHM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/Maps/Deafult/7/8W/JA40LDMN8C9C1PQ1MU81AY.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/Maps/Deafult/9/XK/Z2AK1K78VV3WMHJIK2BYZX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/Maps/Deafult/A/A2/7BPSC7O9OTPWT3B48KDVLF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/Maps/Deafult/C/KR/5IYJJD3JJKDY18QQH9GVLN.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/ZF8DMoving.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/Class/PDA_ClassDataAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/Class/PDA_ClassDataAsset.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/ZF8DMoving.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ZF8DMoving.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/ZF8DMoving.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +176,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/AbilitySystemInterface.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/GameplayEffect.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Public/GameplayModMagnitudeCalculation.h" root0="FORCE_HIGHLIGHTING" />
@@ -38,6 +192,7 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/WorldPartition/WorldPartition.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Json/Public/Serialization/JsonSerializable.h" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -56,7 +211,8 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;Uproject.ZF8DMoving.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;founder/attribute2&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;founder/attribute&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -166,12 +322,23 @@
       <workItem from="1773440575468" duration="7633000" />
       <workItem from="1773456162822" duration="112000" />
       <workItem from="1773456383925" duration="95000" />
+      <workItem from="1773512235362" duration="177000" />
+      <workItem from="1773512503746" duration="193000" />
+      <workItem from="1773512740708" duration="139000" />
+      <workItem from="1773512916727" duration="58000" />
+      <workItem from="1773513143149" duration="51000" />
+      <workItem from="1773513316776" duration="288000" />
+      <workItem from="1773513620285" duration="939000" />
+      <workItem from="1773514584646" duration="592000" />
+      <workItem from="1773515710915" duration="98000" />
+      <workItem from="1773515910182" duration="1015000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
