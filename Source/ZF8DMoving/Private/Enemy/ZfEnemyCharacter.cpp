@@ -3,7 +3,7 @@
 
 #include "Enemy/ZfEnemyCharacter.h"
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
-#include "AbilitySystem/Attributes/ZfHealthSet.h"
+#include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
 
 
 AZfEnemyCharacter::AZfEnemyCharacter()
@@ -13,6 +13,6 @@ AZfEnemyCharacter::AZfEnemyCharacter()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
-	HealthSet = CreateDefaultSubobject<UZfHealthSet>(TEXT("HealthSet"));
+	HealthSet = CreateDefaultSubobject<UZfResourceAttributeSet>(TEXT("HealthSet"));
 	
 }

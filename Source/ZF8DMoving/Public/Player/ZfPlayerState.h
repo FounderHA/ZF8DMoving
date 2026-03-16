@@ -6,35 +6,24 @@
 #include "AbilitySystemReplicationProxyInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "Inventory/ZfInventoryComponent.h"
 #include "Player/Class/ZfPrimaryDataAssetClass.h"
 #include "ZfPlayerState.generated.h"
 
-class UZfHealthSet;
-class UZfMainAttributesSet;
+class UZfMainAttributeSet;
+class UZfResourceAttributeSet;
+class UZfProgressionAttributeSet;
 
-USTRUCT(BlueprintType)
-struct FPlayerAttributePoints
+UENUM(BlueprintType)
+enum class EZfAttributeType : uint8
 {
-	GENERATED_BODY()
-
-public:
+	Strength     UMETA(DisplayName = "Strength"),
+	Dexterity    UMETA(DisplayName = "Dexterity"),
+	Intelligence UMETA(DisplayName = "Intelligence"),
+	Constitution UMETA(DisplayName = "Constitution"),
+	Conviction UMETA(DisplayName = "Conviction")
 	
-	UPROPERTY(BlueprintReadOnly)
-	float StrengthPoints;
-
-	UPROPERTY(BlueprintReadOnly)
-	float IntelligencePoints;
-
-	UPROPERTY(BlueprintReadOnly)
-	float DexterityPoints;
-	
-	UPROPERTY(BlueprintReadOnly)
-	float ConstitutionPoints;
-	
-	UPROPERTY(BlueprintReadOnly)
-	float ConvictionPoints;
 };
-
 
 UCLASS()
 class ZF8DMOVING_API AZfPlayerState : public APlayerState, public IAbilitySystemInterface
@@ -45,25 +34,84 @@ public:
 	AZfPlayerState();
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
-	UZfHealthSet* GetHealthSet() const;
-	UZfMainAttributesSet* GetStrengthSet() const;
+	UZfResourceAttributeSet* GetResourceAttributeSet() const;
+	UZfMainAttributeSet* GetMainAttributeSet() const;
+	UZfProgressionAttributeSet* GetProgressionAttributeSet() const;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Class")
 	TObjectPtr<UZfPrimaryDataAssetClass> CharacterClassData;
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateAttributePoints(float StrengthPointsToAdd, EZfAttributeType InAttributeType);
+
 	
-	UPROPERTY(BlueprintReadOnly, Replicated)
-	FPlayerAttributePoints AllocatedPoints;
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_AvailablePoints, Category = "AllocatedPoints")
+	float AvailablePoints = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StrengthPoints, Category = "AllocatedPoints")
+	float StrengthPoints = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_IntelligencePoints, Category = "AllocatedPoints")
+	float IntelligencePoints = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DexterityPoints, Category = "AllocatedPoints")
+	float DexterityPoints = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ConstitutionPoints, Category = "AllocatedPoints")
+	float ConstitutionPoints = 0.f;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ConvictionPoints, Category = "AllocatedPoints")
+	float ConvictionPoints = 0.f;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ApplyRecalculateAttribute(EZfAttributeType InAttributeType);
+
+	UFUNCTION(BlueprintCallable)
+	UZfInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	
 protected:
+
+	UFUNCTION()
+	virtual void OnRep_AvailablePoints() const;
+
+	UFUNCTION()
+	virtual void OnRep_StrengthPoints();
+
+	UFUNCTION()
+	virtual void OnRep_IntelligencePoints() const;
+
+	UFUNCTION()
+	virtual void OnRep_DexterityPoints() const;
+
+	UFUNCTION()
+	virtual void OnRep_ConstitutionPoints() const;
+
+	UFUNCTION()
+	virtual void OnRep_ConvictionPoints() const;
+	
+	UPROPERTY()
+	EZfAttributeType AttributeType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
+	TObjectPtr<UZfInventoryComponent> InventoryComponent;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UZfHealthSet> HealthSet;
+	TObjectPtr<UZfResourceAttributeSet> ResourceAttributeSet;
 	
 	UPROPERTY()
-	TObjectPtr<UZfMainAttributesSet> StrengthSet;
+	TObjectPtr<UZfMainAttributeSet> MainAttributeSet;
+
+	UPROPERTY()
+	TObjectPtr<UZfProgressionAttributeSet> ProgressionAttributeSet;
+
 	
+	
+	//RPC
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateAttributePoints(float StrengthPointsToAdd, EZfAttributeType InAttributeType);
 };

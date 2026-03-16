@@ -8,7 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "ZfCharacter.generated.h"
 
-class UZfHealthSet;
+class UZfResourceAttributeSet;
 
 UCLASS()
 class ZF8DMOVING_API AZfCharacter : public ACharacter, public IAbilitySystemInterface
@@ -30,5 +30,5 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UZfHealthSet> HealthSet;
+	TObjectPtr<UZfResourceAttributeSet> HealthSet;
 };
