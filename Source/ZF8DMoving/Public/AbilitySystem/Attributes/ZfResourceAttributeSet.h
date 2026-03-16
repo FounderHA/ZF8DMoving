@@ -2,20 +2,21 @@
 
 #pragma once
 
+
 #include "CoreMinimal.h"
 #include "ZfAttributeSet.h"
-#include "ZfHealthSet.generated.h"
+#include "ZfResourceAttributeSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfHealthSet : public UZfAttributeSet
+class ZF8DMOVING_API UZfResourceAttributeSet : public UZfAttributeSet
 {
 	GENERATED_BODY()
 	
 public:
-	UZfHealthSet(const FObjectInitializer& ObjectInitializer);
+	UZfResourceAttributeSet(const FObjectInitializer& ObjectInitializer);
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
 	
@@ -25,11 +26,11 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "HealthSet")
 	FGameplayAttributeData Health;
-	ATTRIBUTE_ACCESSORS(UZfHealthSet, Health)
+	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, Health)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "HealthSet")
 	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS(UZfHealthSet, MaxHealth)
+	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, MaxHealth)
 
 protected:
 	

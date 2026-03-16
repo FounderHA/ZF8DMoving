@@ -3,42 +3,42 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/Attributes/ZfAttributeSet.h"
-#include "ZfMainAttributesSet.generated.h"
+#include "ZfAttributeSet.h"
+#include "ZfMainAttributeSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfMainAttributesSet : public UZfAttributeSet
+class ZF8DMOVING_API UZfMainAttributeSet : public UZfAttributeSet
 {
 	GENERATED_BODY()
 	
 public:
-	UZfMainAttributesSet(const FObjectInitializer& ObjectInitializer);
+	UZfMainAttributeSet(const FObjectInitializer& ObjectInitializer);
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "CharacterAttributes")
 	FGameplayAttributeData Strength;
-	ATTRIBUTE_ACCESSORS(UZfMainAttributesSet, Strength)
+	ATTRIBUTE_ACCESSORS(UZfMainAttributeSet, Strength)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Dexterity, Category = "CharacterAttributes")
 	FGameplayAttributeData Dexterity;
-	ATTRIBUTE_ACCESSORS(UZfMainAttributesSet, Dexterity)
+	ATTRIBUTE_ACCESSORS(UZfMainAttributeSet, Dexterity)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Intelligence, Category = "CharacterAttributes")
 	FGameplayAttributeData Intelligence;
-	ATTRIBUTE_ACCESSORS(UZfMainAttributesSet, Intelligence)
+	ATTRIBUTE_ACCESSORS(UZfMainAttributeSet, Intelligence)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Constitution, Category = "CharacterAttributes")
 	FGameplayAttributeData Constitution;
-	ATTRIBUTE_ACCESSORS(UZfMainAttributesSet, Constitution)
+	ATTRIBUTE_ACCESSORS(UZfMainAttributeSet, Constitution)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Conviction, Category = "CharacterAttributes")
 	FGameplayAttributeData Conviction;
-	ATTRIBUTE_ACCESSORS(UZfMainAttributesSet, Conviction)
+	ATTRIBUTE_ACCESSORS(UZfMainAttributeSet, Conviction)
 	
 protected:
 	

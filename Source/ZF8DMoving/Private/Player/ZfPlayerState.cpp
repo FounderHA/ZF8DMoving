@@ -3,9 +3,11 @@
 
 #include "Player/ZfPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Inventory/ZfInventoryComponent.h"
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
-#include "AbilitySystem/Attributes/ZfHealthSet.h"
-#include "AbilitySystem/Attributes/ZfMainAttributesSet.h"
+#include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 
 AZfPlayerState::AZfPlayerState()
 {
@@ -13,10 +15,14 @@ AZfPlayerState::AZfPlayerState()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	
+	InventoryComponent = CreateDefaultSubobject<UZfInventoryComponent>(TEXT("InventoryComponent"));
+	InventoryComponent->SetIsReplicated(true);
+	
 	SetNetUpdateFrequency(100.0f);
 	
-	HealthSet = CreateDefaultSubobject<UZfHealthSet>(TEXT("HealthSet"));
-	StrengthSet = CreateDefaultSubobject<UZfMainAttributesSet>(TEXT("StrengthSet"));
+	ResourceAttributeSet = CreateDefaultSubobject<UZfResourceAttributeSet>(TEXT("ResourceAttributeSet"));
+	MainAttributeSet = CreateDefaultSubobject<UZfMainAttributeSet>(TEXT("MainAttributeSet"));
+	ProgressionAttributeSet = CreateDefaultSubobject<UZfProgressionAttributeSet>(TEXT("ProgressionAttributeSet"));
 }
 
 UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
@@ -28,15 +34,123 @@ void AZfPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, AllocatedPoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, AvailablePoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, StrengthPoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, DexterityPoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, IntelligencePoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, ConstitutionPoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, ConvictionPoints, COND_None, REPNOTIFY_Always);
 }
 
-UZfHealthSet* AZfPlayerState::GetHealthSet() const
+UZfResourceAttributeSet* AZfPlayerState::GetResourceAttributeSet() const
 {
-	return HealthSet;
+	return ResourceAttributeSet;
 }
 
-UZfMainAttributesSet* AZfPlayerState::GetStrengthSet() const
+UZfMainAttributeSet* AZfPlayerState::GetMainAttributeSet() const
 {
-	return StrengthSet;
+	return MainAttributeSet;
+}
+
+UZfProgressionAttributeSet* AZfPlayerState::GetProgressionAttributeSet() const
+{
+	return ProgressionAttributeSet;
+}
+
+// Notify
+void AZfPlayerState::OnRep_AvailablePoints() const
+{
+}
+
+void AZfPlayerState::OnRep_StrengthPoints()
+{
+}
+
+void AZfPlayerState::OnRep_IntelligencePoints() const
+{
+}
+
+void AZfPlayerState::OnRep_DexterityPoints() const
+{
+}
+
+void AZfPlayerState::OnRep_ConstitutionPoints() const
+{
+}
+
+void AZfPlayerState::OnRep_ConvictionPoints() const
+{
+}
+
+void AZfPlayerState::UpdateAttributePoints(float AttributePointsToAdd, EZfAttributeType InAttributeType)
+{
+	//if (!HasAuthority()) return;
+	//Server_UpdateAttributePoints_Implementation(AttributePointsToAdd, InAttributeType);
+
+	if (HasAuthority())
+	{
+		// Se já é servidor, executa direto
+		Server_UpdateAttributePoints_Implementation(AttributePointsToAdd, InAttributeType);
+	}
+	else
+	{
+		// Se é cliente, envia RPC para o servidor
+		Server_UpdateAttributePoints(AttributePointsToAdd, InAttributeType);
+	}
+}
+
+void AZfPlayerState::Server_UpdateAttributePoints_Implementation(float AttributePointsToAdd, EZfAttributeType InAttributeType)
+{
+
+	//if (AllocatedPoints.AvailablePoints <= 0.f) return;
+	
+	float NewAttributePoints;
+	
+	switch (InAttributeType)
+	{
+	case EZfAttributeType::Strength:
+		// lógica para Strength
+		NewAttributePoints = StrengthPoints + AttributePointsToAdd;
+		StrengthPoints = NewAttributePoints;
+		ApplyRecalculateAttribute(InAttributeType);
+		OnRep_StrengthPoints();
+		break;
+
+	case EZfAttributeType::Dexterity:
+		// lógica para Dexterity
+		NewAttributePoints = DexterityPoints + AttributePointsToAdd;
+		DexterityPoints = NewAttributePoints;
+		ApplyRecalculateAttribute(InAttributeType);
+		OnRep_DexterityPoints();
+		break;
+
+	case EZfAttributeType::Intelligence:
+		// lógica para Intelligence
+		NewAttributePoints = IntelligencePoints + AttributePointsToAdd;
+		IntelligencePoints = NewAttributePoints;
+		ApplyRecalculateAttribute(InAttributeType);
+		OnRep_IntelligencePoints();
+		break;
+
+	case EZfAttributeType::Constitution:
+		// lógica para Constitution
+		NewAttributePoints = ConstitutionPoints + AttributePointsToAdd;
+		ConstitutionPoints = NewAttributePoints;
+		ApplyRecalculateAttribute(InAttributeType);
+		OnRep_ConstitutionPoints();
+		break;
+
+	case EZfAttributeType::Conviction:
+		// lógica para Conviction
+		NewAttributePoints = ConvictionPoints + AttributePointsToAdd;
+		ConvictionPoints = NewAttributePoints;
+		ApplyRecalculateAttribute(InAttributeType);
+		OnRep_ConvictionPoints();
+		break;
+		
+	default:
+		break;
+	}
+
+	AvailablePoints += AttributePointsToAdd * -1.f;
 }

@@ -43,7 +43,7 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 
 		// pegar valores
 	float BaseStrength = 0.f;
-	float AllocatedStrength = PS->AllocatedPoints.StrengthPoints;
+	float AllocatedStrength = PS->StrengthPoints;
 	
 	if (PS->CharacterClassData)
 	{
