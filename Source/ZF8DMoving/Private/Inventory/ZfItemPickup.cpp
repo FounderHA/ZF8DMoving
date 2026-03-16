@@ -1,4 +1,4 @@
-#include "Inventory/ZfItemActor.h"
+#include "Inventory/ZfItemPickup.h"
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfItemDefinition.h"
@@ -7,7 +7,7 @@
 #include "Player/ZfPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
-AZfItemActor::AZfItemActor()
+AZfItemPickup::AZfItemPickup()
 {
     bReplicates = true;
 
@@ -21,37 +21,37 @@ AZfItemActor::AZfItemActor()
     SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
-void AZfItemActor::GetLifetimeReplicatedProps(
+void AZfItemPickup::GetLifetimeReplicatedProps(
     TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AZfItemActor, Item);
+    DOREPLIFETIME(AZfItemPickup, Item);
 }
 
-void AZfItemActor::BeginPlay()
+void AZfItemPickup::BeginPlay()
 {
     Super::BeginPlay();
 
     if (HasAuthority())
     {
         SphereComponent->OnComponentBeginOverlap.AddDynamic(
-            this, &AZfItemActor::OnSphereOverlap);
+            this, &AZfItemPickup::OnSphereOverlap);
     }
 }
 
-void AZfItemActor::InitializeWithItem(UZfItemInstance* InItem)
+void AZfItemPickup::InitializeWithItem(UZfItemInstance* InItem)
 {
     if (!InItem) return;
     Item = InItem;
     UpdateVisual();
 }
 
-void AZfItemActor::OnRep_Item()
+void AZfItemPickup::OnRep_Item()
 {
     UpdateVisual();
 }
 
-void AZfItemActor::UpdateVisual()
+void AZfItemPickup::UpdateVisual()
 {
     if (!Item) return;
 
@@ -65,7 +65,7 @@ void AZfItemActor::UpdateVisual()
     }
 }
 
-void AZfItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComp,
+void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp,
     AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {

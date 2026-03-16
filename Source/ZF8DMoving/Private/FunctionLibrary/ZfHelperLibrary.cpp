@@ -1,11 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FunctionLibrary/ZfAttributeHelperLibrary.h"
+#include "FunctionLibrary/ZfHelperLibrary.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "Inventory/ZfInventoryComponent.h"
+#include "GameFramework/Character.h"
+#include "Player/ZfPlayerState.h"
 
-TArray<FGameplayAttribute> UZfAttributeHelperLibrary::GetAllAttributes(TSubclassOf<UAttributeSet> AttributeSetClass)
+
+TArray<FGameplayAttribute> UZfHelperLibrary::GetAllAttributes(TSubclassOf<UAttributeSet> AttributeSetClass)
 {
     TArray<FGameplayAttribute> Attributes;
 
@@ -27,4 +31,11 @@ TArray<FGameplayAttribute> UZfAttributeHelperLibrary::GetAllAttributes(TSubclass
     }
 
     return Attributes;
+}
+
+UZfInventoryComponent* UZfHelperLibrary::FindInventoryComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfInventoryComponent>();
 }

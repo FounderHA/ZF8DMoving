@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AttributeSet.h"
-#include "ZfAttributeHelperLibrary.generated.h"
+#include "inventory/ZfInventoryComponent.h"
+#include "ZfHelperLibrary.generated.h"
+
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfAttributeHelperLibrary : public UBlueprintFunctionLibrary
+class ZF8DMOVING_API UZfHelperLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -20,4 +22,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="GAS")
 	static TArray<FGameplayAttribute> GetAllAttributes(TSubclassOf<UAttributeSet> AttributeSetClass);
 	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Inventory")
+	static UZfInventoryComponent* FindInventoryComponent(AActor* Actor);
 };
