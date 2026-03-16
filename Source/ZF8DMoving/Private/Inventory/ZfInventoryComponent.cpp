@@ -2,7 +2,7 @@
 
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfItemDefinition.h"
-#include "Inventory/ZfItemActor.h"
+#include "Inventory/ZfItemPickup.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "Inventory/Fragments/ZfStackableFragment.h"
 #include "Net/UnrealNetwork.h"
@@ -143,8 +143,8 @@ void UZfInventoryComponent::Server_DropItem_Implementation(
     Params.SpawnCollisionHandlingOverride =
         ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    AZfItemActor* DroppedActor = GetWorld()->SpawnActor<AZfItemActor>(
-        AZfItemActor::StaticClass(), Location, FRotator::ZeroRotator, Params
+    AZfItemPickup* DroppedActor = GetWorld()->SpawnActor<AZfItemPickup>(
+        AZfItemPickup::StaticClass(), Location, FRotator::ZeroRotator, Params
     );
 
     if (DroppedActor)

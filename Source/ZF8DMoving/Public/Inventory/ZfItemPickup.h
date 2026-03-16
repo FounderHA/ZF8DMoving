@@ -1,18 +1,18 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "ZfItemActor.generated.h"
+#include "ZfItemPickup.generated.h"
 
 class UZfItemInstance;
 class USphereComponent;
 
 UCLASS()
-class ZF8DMOVING_API AZfItemActor : public AActor
+class ZF8DMOVING_API AZfItemPickup : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	AZfItemActor();
+	AZfItemPickup();
 
 	void InitializeWithItem(UZfItemInstance* InItem);
 
