@@ -4,6 +4,7 @@
 #include "Inventory/ZfItemEquipped.h"
 #include "Inventory/Fragments/ZfEquippableFragment.h"
 #include "Inventory/Fragments/ZfBackpackFragment.h"
+#include "Player/ZfPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 
@@ -27,16 +28,17 @@ FZfEquipmentEntry* UZfEquipmentComponent::FindEntry(EZfEquipSlot Slot)
     });
 }
 
-void UZfEquipmentComponent::Server_EquipItem_Implementation(
-    UZfItemInstance* InItem, UZfInventoryComponent* FromInventory)
+void UZfEquipmentComponent::Server_EquipItem_Implementation(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory, EZfEquipSlot TargetSlot)
 {
     if (!InItem || !FromInventory) return;
 
-    UZfEquippableFragment* Equippable =
-        InItem->FindFragmentByClass<UZfEquippableFragment>();
+    UZfEquippableFragment* Equippable = InItem->FindFragmentByClass<UZfEquippableFragment>();
 
     if (!Equippable || Equippable->EquipSlot == EZfEquipSlot::None) return;
 
+    // Verifica se o slot do item é compatível com o slot de destino
+    if (Equippable->EquipSlot != TargetSlot) return;
+        
     // Se slot ocupado desequipa primeiro
     if (IsSlotOccupied(Equippable->EquipSlot))
     {
@@ -47,7 +49,10 @@ void UZfEquipmentComponent::Server_EquipItem_Implementation(
     FromInventory->Server_RemoveItem_Implementation(InItem);
 
     // Pega o personagem dono
-    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    AZfPlayerState* PS = Cast<AZfPlayerState>(GetOwner());
+    if (!PS) return;
+    
+    ACharacter* Character = Cast<ACharacter>(PS->GetPawn());
     if (!Character) return;
 
     // Spawna o AZfItemEquipped
@@ -56,17 +61,11 @@ void UZfEquipmentComponent::Server_EquipItem_Implementation(
     Params.SpawnCollisionHandlingOverride =
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    AZfItemEquipped* SpawnedActor = GetWorld()->SpawnActor<AZfItemEquipped>(
-        AZfItemEquipped::StaticClass(),
-        FVector::ZeroVector,
-        FRotator::ZeroRotator,
-        Params
-    );
+    AZfItemEquipped* SpawnedActor = GetWorld()->SpawnActor<AZfItemEquipped>(AZfItemEquipped::StaticClass(),FVector::ZeroVector,FRotator::ZeroRotator,Params);
 
     if (SpawnedActor)
     {
-        SpawnedActor->InitializeWithItem(InItem,
-            Character->GetMesh(), Equippable->SocketName);
+        SpawnedActor->InitializeWithItem(InItem,Character->GetMesh(), Equippable->SocketName);
 
         SpawnedActor->SetActorRelativeTransform(Equippable->AttachOffset);
 
@@ -77,8 +76,7 @@ void UZfEquipmentComponent::Server_EquipItem_Implementation(
         EquippedItems.Add(NewEntry);
 
         // Verifica se é mochila e expande o inventário
-        UZfBackpackFragment* Backpack = 
-            InItem->FindFragmentByClass<UZfBackpackFragment>();
+        UZfBackpackFragment* Backpack = InItem->FindFragmentByClass<UZfBackpackFragment>();
         if (Backpack)
         {
             FromInventory->AddExtraSlots(Backpack->ExtraSlots);
