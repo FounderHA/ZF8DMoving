@@ -2,3 +2,14 @@
 
 
 #include "Inventory/Fragments/ZfStackableFragment.h"
+
+#include "Net/UnrealNetwork.h"
+
+
+void UZfStackableFragment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(UZfStackableFragment, CurrentStackSize);
+	DOREPLIFETIME(UZfStackableFragment, MaxStackSize);
+}

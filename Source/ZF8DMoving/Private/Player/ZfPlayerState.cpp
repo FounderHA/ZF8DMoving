@@ -44,6 +44,7 @@ void AZfPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, IntelligencePoints, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, ConstitutionPoints, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(AZfPlayerState, ConvictionPoints, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME(AZfPlayerState, CharacterClassData);
 }
 
 UZfResourceAttributeSet* AZfPlayerState::GetResourceAttributeSet() const

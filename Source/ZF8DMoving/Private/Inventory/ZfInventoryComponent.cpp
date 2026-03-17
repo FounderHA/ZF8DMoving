@@ -3,7 +3,10 @@
 #include "Inventory/ZfItemPickup.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "Inventory/Fragments/ZfStackableFragment.h"
+#include "Player/ZfPlayerState.h"
 #include "Net/UnrealNetwork.h"
+
+
 
 // FastArray callbacks
 void FZfInventoryEntry::PreReplicatedRemove(const FZfInventoryList& InArraySerializer)
@@ -68,6 +71,18 @@ void FZfInventoryList::RemoveItem(UZfItemInstance* Item)
 UZfInventoryComponent::UZfInventoryComponent()
 {
     SetIsReplicatedByDefault(true);
+    InventoryList.OwnerComponent = this;
+}
+
+void UZfInventoryComponent::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
+void UZfInventoryComponent::OnRegister()
+{
+    Super::OnRegister();
+    // Garante que OwnerComponent está setado tanto no servidor quanto no cliente
     InventoryList.OwnerComponent = this;
 }
 
@@ -183,27 +198,42 @@ void UZfInventoryComponent::Server_RemoveItem_Implementation(UZfItemInstance* In
     OnItemRemoved.Broadcast(InItem);
 }
 
-void UZfInventoryComponent::Server_DropItem_Implementation(
-    UZfItemInstance* InItem, FVector Location)
+void UZfInventoryComponent::Server_DropItem_Implementation(UZfItemInstance* InItem, float DistanceDrop)
 {
     if (!InItem || !GetWorld()) return;
 
+    // 1 — Verifica se está no inventário
+    const bool bWasInInventory = InventoryList.Entries.ContainsByPredicate([InItem](const FZfInventoryEntry& E) { return E.Item == InItem; });
+    if (!bWasInInventory) return;
+
+    // 2 — Valida definição
+    if (!InItem->ItemDefinition) return;
+
+    // 3 — Sanitiza localização — evita drop em coordenada arbitrária vinda do cliente
+    APawn* OwnerPawn = nullptr;
+    if (APlayerState* PS = Cast<APlayerState>(GetOwner()))
+    {
+        OwnerPawn = PS->GetPawn();
+    }
+    
+    FVector Location = OwnerPawn->GetActorLocation() + OwnerPawn->GetActorForwardVector() * DistanceDrop;
+
+    // 4 — Spawna o pickupe
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    AZfItemPickup* DroppedActor = GetWorld()->SpawnActor<AZfItemPickup>(AZfItemPickup::StaticClass(), Location, FRotator::ZeroRotator, Params);
+
+    if (!DroppedActor) return;
+
+    // 5 — Pickup criado com sucesso — remove do inventário direto na _Implementation
+    // ✅ sem RPC dentro de RPC
     InventoryList.RemoveItem(InItem);
     OnItemRemoved.Broadcast(InItem);
 
-    FActorSpawnParameters Params;
-    Params.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-    AZfItemPickup* DroppedActor = GetWorld()->SpawnActor<AZfItemPickup>(
-        AZfItemPickup::StaticClass(), Location, FRotator::ZeroRotator, Params
-    );
-
-    if (DroppedActor)
-    {
-        InItem->Rename(nullptr, DroppedActor);
-        DroppedActor->InitializeWithItem(InItem);
-    }
+    // 6 — Rename só depois de tudo validado
+    InItem->Rename(nullptr, DroppedActor);
+    DroppedActor->InitializeWithItem(InItem);
 }
 
 void UZfInventoryComponent::AddExtraSlots(int32 Amount)
@@ -273,5 +303,27 @@ void UZfInventoryComponent::MarkItemDirty(UZfItemInstance* InItem)
             InventoryList.MarkItemDirty(Entry);
             return;
         }
+    }
+}
+
+
+// Debug inventory
+void UZfInventoryComponent::DebugInventory()
+{
+    for (const FZfInventoryEntry& Entry : InventoryList.Entries)
+    {
+        FString ItemName = TEXT("null");
+
+        if (Entry.Item && Entry.Item->ItemDefinition)
+        {
+            ItemName = Entry.Item->ItemDefinition->ItemName.ToString();
+        }
+        else if (Entry.Item)
+        {
+            ItemName = TEXT("Item sem definição");
+        }
+
+        GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
+            FString::Printf(TEXT("Slot %d: %s"), Entry.SlotIndex, *ItemName));
     }
 }

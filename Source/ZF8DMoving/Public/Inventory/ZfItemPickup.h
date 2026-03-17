@@ -14,13 +14,13 @@ class ZF8DMOVING_API AZfItemPickup : public AActor
 public:
 	AZfItemPickup();
 
+	UFUNCTION(BlueprintCallable)
 	void InitializeWithItem(UZfItemInstance* InItem);
 
 	UFUNCTION(BlueprintCallable)
 	UZfItemInstance* GetItem() const { return Item; }
 
-	virtual void GetLifetimeReplicatedProps(
-		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,7 +33,7 @@ protected:
 	UFUNCTION()
 	void OnRep_Item();
 
-	UPROPERTY(ReplicatedUsing = OnRep_Item)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Item)
 	TObjectPtr<UZfItemInstance> Item;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
