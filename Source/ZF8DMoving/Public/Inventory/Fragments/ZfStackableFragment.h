@@ -15,9 +15,12 @@ class ZF8DMOVING_API UZfStackableFragment : public UZfItemFragment
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stack")
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UPROPERTY(EditDefaultsOnly, Replicated, BlueprintReadOnly, Category = "Stack")
 	int32 MaxStackSize = 99;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Stack")
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Stack")
 	int32 CurrentStackSize = 1;
 };

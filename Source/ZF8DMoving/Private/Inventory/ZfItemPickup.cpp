@@ -65,9 +65,7 @@ void AZfItemPickup::UpdateVisual()
     }
 }
 
-void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp,
-    AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-    bool bFromSweep, const FHitResult& SweepResult)
+void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!HasAuthority() || !Item || !OtherActor) return;
 
@@ -80,6 +78,6 @@ void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp,
     UZfInventoryComponent* Inventory = PS->GetInventoryComponent();
     if (!Inventory) return;
 
-    Inventory->Server_AddItem(Item);
+    Inventory->Server_AddItem_Implementation(Item);
     Destroy();
 }

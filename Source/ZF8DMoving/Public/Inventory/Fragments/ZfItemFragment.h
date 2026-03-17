@@ -15,6 +15,11 @@ class ZF8DMOVING_API UZfItemFragment : public UObject
 	GENERATED_BODY()
 
 public:
+	// ✅ Necessário para replicar como referência
+	virtual bool IsSupportedForNetworking() const override { return true; }
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	// Chamado quando o item é criado a partir da definição
 	virtual void OnItemCreated(UZfItemInstance* OwnerItem) {}
 

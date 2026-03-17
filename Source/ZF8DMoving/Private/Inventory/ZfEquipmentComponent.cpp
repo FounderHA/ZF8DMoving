@@ -27,13 +27,11 @@ FZfEquipmentEntry* UZfEquipmentComponent::FindEntry(EZfEquipSlot Slot)
     });
 }
 
-void UZfEquipmentComponent::Server_EquipItem_Implementation(
-    UZfItemInstance* InItem, UZfInventoryComponent* FromInventory)
+void UZfEquipmentComponent::Server_EquipItem_Implementation(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory)
 {
     if (!InItem || !FromInventory) return;
 
-    UZfEquippableFragment* Equippable =
-        InItem->FindFragmentByClass<UZfEquippableFragment>();
+    UZfEquippableFragment* Equippable = InItem->FindFragmentByClass<UZfEquippableFragment>();
 
     if (!Equippable || Equippable->EquipSlot == EZfEquipSlot::None) return;
 
