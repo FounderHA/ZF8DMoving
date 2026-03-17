@@ -39,7 +39,7 @@ public:
 
 	// Equipa um item vindo da Bag
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_EquipItem(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory);
+	void Server_EquipItem(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory, EZfEquipSlot TargetSlot);
 
 	// Desequipa um slot e devolve para a Bag
 	UFUNCTION(BlueprintCallable, Server, Reliable)
