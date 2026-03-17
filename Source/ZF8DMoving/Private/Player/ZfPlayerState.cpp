@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "AbilitySystem/ZfAbilitySystemComponent.h"
+#include "Inventory/ZfEquipmentComponent.h"
 #include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
@@ -17,6 +18,9 @@ AZfPlayerState::AZfPlayerState()
 	
 	InventoryComponent = CreateDefaultSubobject<UZfInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
+
+	EquipmentComponent = CreateDefaultSubobject<UZfEquipmentComponent>(TEXT("EquipmentComponent"));
+	EquipmentComponent->SetIsReplicated(true);
 	
 	SetNetUpdateFrequency(100.0f);
 	

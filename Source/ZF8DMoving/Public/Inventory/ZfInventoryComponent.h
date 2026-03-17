@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,6 +8,7 @@
 
 class UZfItemDefinition;
 class UZfInventoryComponent;
+class AZfItemPickup;
 
 USTRUCT(BlueprintType)
 struct FZfInventoryEntry : public FFastArraySerializerItem
@@ -18,6 +17,9 @@ struct FZfInventoryEntry : public FFastArraySerializerItem
 
     UPROPERTY()
     TObjectPtr<UZfItemInstance> Item = nullptr;
+
+    UPROPERTY()
+    int32 SlotIndex = -1;
 
     void PreReplicatedRemove(const struct FZfInventoryList& InArraySerializer);
     void PostReplicatedAdd(const struct FZfInventoryList& InArraySerializer);
@@ -35,7 +37,7 @@ struct FZfInventoryList : public FFastArraySerializer
     UPROPERTY(NotReplicated)
     TObjectPtr<UZfInventoryComponent> OwnerComponent = nullptr;
 
-    void AddItem(UZfItemInstance* Item);
+    void AddItem(UZfItemInstance* Item, int32 SlotIndex);
     void RemoveItem(UZfItemInstance* Item);
 
     bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
@@ -63,11 +65,21 @@ public:
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    // Cria item novo a partir de definição e adiciona no primeiro slot vazio
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_AddItemFromDefinition(UZfItemDefinition* ItemDefinition);
 
+    // Adiciona item existente no primeiro slot vazio
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_AddItem(UZfItemInstance* InItem);
+
+    // Adiciona item em slot específico
+    UFUNCTION(BlueprintCallable, Server, Reliable)
+    void Server_AddItemAtSlot(UZfItemInstance* InItem, int32 SlotIndex);
+
+    // Move item de um slot para outro
+    UFUNCTION(BlueprintCallable, Server, Reliable)
+    void Server_MoveItem(int32 FromSlot, int32 ToSlot);
 
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_RemoveItem(UZfItemInstance* InItem);
@@ -75,10 +87,31 @@ public:
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_DropItem(UZfItemInstance* InItem, FVector Location);
 
+    // Expande slots — chamado pelo EquipmentComponent ao equipar mochila
+    void AddExtraSlots(int32 Amount);
+
+    // Tenta reduzir slots — retorna false se itens nos slots extras
+    bool TryRemoveExtraSlots(int32 Amount);
+
     UFUNCTION(BlueprintCallable)
     TArray<UZfItemInstance*> GetAllItems() const;
 
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    UZfItemInstance* GetItemAtSlot(int32 SlotIndex) const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool IsSlotEmpty(int32 SlotIndex) const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    int32 GetMaxSlots() const { return MaxSlots; }
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    int32 GetFirstEmptySlot() const;
+
+    void MarkItemDirty(UZfItemInstance* InItem);
+
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, UZfItemInstance*, AffectedItem);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotsChanged, int32, NewMaxSlots);
 
     UPROPERTY(BlueprintAssignable)
     FOnInventoryChanged OnItemAdded;
@@ -86,7 +119,19 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnInventoryChanged OnItemRemoved;
 
+    UPROPERTY(BlueprintAssignable)
+    FOnSlotsChanged OnSlotsChanged;
+
 private:
     UPROPERTY(Replicated)
     FZfInventoryList InventoryList;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+    int32 BaseSlots = 20;
+
+    UPROPERTY(ReplicatedUsing = OnRep_MaxSlots)
+    int32 MaxSlots = 20;
+
+    UFUNCTION()
+    void OnRep_MaxSlots();
 };
