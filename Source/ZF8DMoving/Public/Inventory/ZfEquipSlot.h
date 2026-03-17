@@ -14,7 +14,8 @@ enum class EZfEquipSlot : uint8
 	Legs        UMETA(DisplayName = "Legs"),
 	Feet        UMETA(DisplayName = "Feet"),
 	Hands       UMETA(DisplayName = "Hands"),
-	Back        UMETA(DisplayName = "Back"),
+	Cape        UMETA(DisplayName = "Cape"),
+	Backpack    UMETA(DisplayName = "Backpack"),
 	Ring_1      UMETA(DisplayName = "Ring 1"),
 	Ring_2      UMETA(DisplayName = "Ring 2"),
 	Necklace    UMETA(DisplayName = "Necklace")

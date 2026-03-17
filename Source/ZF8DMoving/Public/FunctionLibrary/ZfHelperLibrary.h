@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AttributeSet.h"
-#include "inventory/ZfInventoryComponent.h"
 #include "ZfHelperLibrary.generated.h"
 
 
@@ -24,4 +23,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Inventory")
 	static UZfInventoryComponent* FindInventoryComponent(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Equipment")
+	static UZfEquipmentComponent* FindEquipmentComponent(AActor* Actor);
 };

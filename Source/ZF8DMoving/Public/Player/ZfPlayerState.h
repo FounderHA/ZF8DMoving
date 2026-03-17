@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
 #include "Inventory/ZfInventoryComponent.h"
+#include "Inventory/ZfEquipmentComponent.h"
 #include "Player/Class/ZfPrimaryDataAssetClass.h"
 #include "ZfPlayerState.generated.h"
 
@@ -99,6 +100,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment")
+	TObjectPtr<UZfEquipmentComponent> EquipmentComponent;
 	
 	UPROPERTY()
 	TObjectPtr<UZfResourceAttributeSet> ResourceAttributeSet;

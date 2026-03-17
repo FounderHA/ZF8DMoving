@@ -5,6 +5,7 @@
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Inventory/ZfInventoryComponent.h"
+#include "Inventory/ZfEquipmentComponent.h"
 #include "GameFramework/Character.h"
 #include "Player/ZfPlayerState.h"
 
@@ -38,4 +39,11 @@ UZfInventoryComponent* UZfHelperLibrary::FindInventoryComponent(AActor* Actor)
     if (!Actor) return nullptr;
 
     return Actor->FindComponentByClass<UZfInventoryComponent>();
+}
+
+UZfEquipmentComponent* UZfHelperLibrary::FindEquipmentComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfEquipmentComponent>();
 }

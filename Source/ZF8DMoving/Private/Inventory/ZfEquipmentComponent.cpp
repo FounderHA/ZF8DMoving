@@ -3,118 +3,143 @@
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemEquipped.h"
 #include "Inventory/Fragments/ZfEquippableFragment.h"
+#include "Inventory/Fragments/ZfBackpackFragment.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 
 UZfEquipmentComponent::UZfEquipmentComponent()
 {
-	SetIsReplicatedByDefault(true);
+    SetIsReplicatedByDefault(true);
 }
 
 void UZfEquipmentComponent::GetLifetimeReplicatedProps(
-	TArray<FLifetimeProperty>& OutLifetimeProps) const
+    TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UZfEquipmentComponent, EquippedItems);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UZfEquipmentComponent, EquippedItems);
 }
 
 FZfEquipmentEntry* UZfEquipmentComponent::FindEntry(EZfEquipSlot Slot)
 {
-	return EquippedItems.FindByPredicate([Slot](const FZfEquipmentEntry& E)
-	{
-		return E.Slot == Slot;
-	});
+    return EquippedItems.FindByPredicate([Slot](const FZfEquipmentEntry& E)
+    {
+        return E.Slot == Slot;
+    });
 }
+
 void UZfEquipmentComponent::Server_EquipItem_Implementation(
-	UZfItemInstance* InItem, UZfInventoryComponent* FromInventory)
+    UZfItemInstance* InItem, UZfInventoryComponent* FromInventory)
 {
-	if (!InItem || !FromInventory) return;
+    if (!InItem || !FromInventory) return;
 
-	UZfEquippableFragment* Equippable =
-		InItem->FindFragmentByClass<UZfEquippableFragment>();
+    UZfEquippableFragment* Equippable =
+        InItem->FindFragmentByClass<UZfEquippableFragment>();
 
-	if (!Equippable || Equippable->EquipSlot == EZfEquipSlot::None) return;
+    if (!Equippable || Equippable->EquipSlot == EZfEquipSlot::None) return;
 
-	// Se slot ocupado desequipa primeiro
-	if (IsSlotOccupied(Equippable->EquipSlot))
-	{
-		Server_UnequipItem_Implementation(Equippable->EquipSlot, FromInventory);
-	}
+    // Se slot ocupado desequipa primeiro
+    if (IsSlotOccupied(Equippable->EquipSlot))
+    {
+        Server_UnequipItem_Implementation(Equippable->EquipSlot, FromInventory);
+    }
 
-	// Remove da Bag
-	FromInventory->Server_RemoveItem_Implementation(InItem);
+    // Remove da Bag
+    FromInventory->Server_RemoveItem_Implementation(InItem);
 
-	// Pega o personagem dono
-	ACharacter* Character = Cast<ACharacter>(GetOwner());
-	if (!Character) return;
+    // Pega o personagem dono
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character) return;
 
-	// Spawna o AZfItemEquipped
-	FActorSpawnParameters Params;
-	Params.Owner = Character;
-	Params.SpawnCollisionHandlingOverride =
-		ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    // Spawna o AZfItemEquipped
+    FActorSpawnParameters Params;
+    Params.Owner = Character;
+    Params.SpawnCollisionHandlingOverride =
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	AZfItemEquipped* SpawnedActor = GetWorld()->SpawnActor<AZfItemEquipped>(
-		AZfItemEquipped::StaticClass(),
-		FVector::ZeroVector,
-		FRotator::ZeroRotator,
-		Params
-	);
+    AZfItemEquipped* SpawnedActor = GetWorld()->SpawnActor<AZfItemEquipped>(
+        AZfItemEquipped::StaticClass(),
+        FVector::ZeroVector,
+        FRotator::ZeroRotator,
+        Params
+    );
 
-	if (SpawnedActor)
-	{
-		SpawnedActor->InitializeWithItem(InItem,
-			Character->GetMesh(), Equippable->SocketName);
+    if (SpawnedActor)
+    {
+        SpawnedActor->InitializeWithItem(InItem,
+            Character->GetMesh(), Equippable->SocketName);
 
-		SpawnedActor->SetActorRelativeTransform(Equippable->AttachOffset);
+        SpawnedActor->SetActorRelativeTransform(Equippable->AttachOffset);
 
-		FZfEquipmentEntry NewEntry;
-		NewEntry.Slot = Equippable->EquipSlot;
-		NewEntry.Item = InItem;
-		NewEntry.SpawnedActor = SpawnedActor;
-		EquippedItems.Add(NewEntry);
+        FZfEquipmentEntry NewEntry;
+        NewEntry.Slot = Equippable->EquipSlot;
+        NewEntry.Item = InItem;
+        NewEntry.SpawnedActor = SpawnedActor;
+        EquippedItems.Add(NewEntry);
 
-		OnItemEquipped.Broadcast(Equippable->EquipSlot, InItem);
-	}
+        // Verifica se é mochila e expande o inventário
+        UZfBackpackFragment* Backpack = 
+            InItem->FindFragmentByClass<UZfBackpackFragment>();
+        if (Backpack)
+        {
+            FromInventory->AddExtraSlots(Backpack->ExtraSlots);
+        }
+
+        OnItemEquipped.Broadcast(Equippable->EquipSlot, InItem);
+    }
 }
+
 void UZfEquipmentComponent::Server_UnequipItem_Implementation(
-	EZfEquipSlot Slot, UZfInventoryComponent* ToInventory)
+    EZfEquipSlot Slot, UZfInventoryComponent* ToInventory)
 {
-	if (Slot == EZfEquipSlot::None) return;
+    if (Slot == EZfEquipSlot::None) return;
 
-	FZfEquipmentEntry* Entry = FindEntry(Slot);
-	if (!Entry || !Entry->Item) return;
+    FZfEquipmentEntry* Entry = FindEntry(Slot);
+    if (!Entry || !Entry->Item) return;
 
-	if (Entry->SpawnedActor)
-	{
-		Entry->SpawnedActor->Destroy();
-		Entry->SpawnedActor = nullptr;
-	}
+    // Verifica se é mochila antes de desequipar
+    UZfBackpackFragment* Backpack = 
+        Entry->Item->FindFragmentByClass<UZfBackpackFragment>();
+    if (Backpack && ToInventory)
+    {
+        bool bCanUnequip = ToInventory->TryRemoveExtraSlots(Backpack->ExtraSlots);
+        if (!bCanUnequip)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+                TEXT("Mova os itens dos slots extras antes de desequipar a mochila!"));
+            return;
+        }
+    }
 
-	if (ToInventory)
-	{
-		ToInventory->Server_AddItem_Implementation(Entry->Item);
-	}
+    if (Entry->SpawnedActor)
+    {
+        Entry->SpawnedActor->Destroy();
+        Entry->SpawnedActor = nullptr;
+    }
 
-	OnItemUnequipped.Broadcast(Slot, Entry->Item);
+    if (ToInventory)
+    {
+        ToInventory->Server_AddItem_Implementation(Entry->Item);
+    }
 
-	EquippedItems.RemoveAll([Slot](const FZfEquipmentEntry& E)
-	{
-		return E.Slot == Slot;
-	});
+    OnItemUnequipped.Broadcast(Slot, Entry->Item);
+
+    EquippedItems.RemoveAll([Slot](const FZfEquipmentEntry& E)
+    {
+        return E.Slot == Slot;
+    });
 }
 
 UZfItemInstance* UZfEquipmentComponent::GetEquippedItem(EZfEquipSlot Slot) const
 {
-	const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
-		[Slot](const FZfEquipmentEntry& E) { return E.Slot == Slot; });
-	if (!Entry) return nullptr;
-	return Entry->Item;
+    const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
+        [Slot](const FZfEquipmentEntry& E) { return E.Slot == Slot; });
+    if (!Entry) return nullptr;
+    return Entry->Item;
 }
 
 bool UZfEquipmentComponent::IsSlotOccupied(EZfEquipSlot Slot) const
 {
-	const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
-		[Slot](const FZfEquipmentEntry& E) { return E.Slot == Slot; });
-	return Entry && Entry->Item != nullptr;
+    const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
+        [Slot](const FZfEquipmentEntry& E) { return E.Slot == Slot; });
+    return Entry && Entry->Item != nullptr;
 }

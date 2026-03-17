@@ -35,8 +35,7 @@ class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
 public:
 	UZfEquipmentComponent();
 
-	virtual void GetLifetimeReplicatedProps(
-		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// Equipa um item vindo da Bag
 	UFUNCTION(BlueprintCallable, Server, Reliable)
@@ -54,8 +53,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool IsSlotOccupied(EZfEquipSlot Slot) const;
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquipmentChanged, 
-		EZfEquipSlot, Slot, UZfItemInstance*, Item);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquipmentChanged, EZfEquipSlot, Slot, UZfItemInstance*, Item);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnEquipmentChanged OnItemEquipped;
@@ -68,4 +66,6 @@ private:
 	// Array replicado em vez de TMap
 	UPROPERTY(Replicated)
 	TArray<FZfEquipmentEntry> EquippedItems;
+
+	FZfEquipmentEntry* FindEntry(EZfEquipSlot Slot);
 };
