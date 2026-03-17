@@ -4,6 +4,7 @@
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
+#include "Net/UnrealNetwork.h"
 
 void UZfItemInstance::InitializeFromDefinition(UZfItemDefinition* InDefinition)
 {
@@ -26,6 +27,15 @@ void UZfItemInstance::InitializeFromDefinition(UZfItemDefinition* InDefinition)
 			Fragments.Add(NewFragment);
 		}
 	}
+}
+
+void UZfItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(UZfItemInstance, ItemGuid);
+	DOREPLIFETIME(UZfItemInstance, ItemDefinition);
+	DOREPLIFETIME(UZfItemInstance, Fragments);
 }
 
 UZfItemFragment* UZfItemInstance::FindFragment(TSubclassOf<UZfItemFragment> FragmentClass) const

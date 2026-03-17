@@ -14,7 +14,7 @@ USTRUCT(BlueprintType)
 struct FZfInventoryEntry : public FFastArraySerializerItem
 {
     GENERATED_BODY()
-
+    
     UPROPERTY()
     TObjectPtr<UZfItemInstance> Item = nullptr;
 
@@ -61,9 +61,11 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 
 public:
     UZfInventoryComponent();
+    
+    virtual void BeginPlay() override;
+    virtual void OnRegister() override;
 
-    virtual void GetLifetimeReplicatedProps(
-        TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // Cria item novo a partir de definição e adiciona no primeiro slot vazio
     UFUNCTION(BlueprintCallable, Server, Reliable)
@@ -85,7 +87,7 @@ public:
     void Server_RemoveItem(UZfItemInstance* InItem);
 
     UFUNCTION(BlueprintCallable, Server, Reliable)
-    void Server_DropItem(UZfItemInstance* InItem, FVector Location);
+    void Server_DropItem(UZfItemInstance* InItem, float DistanceDrop);
 
     // Expande slots — chamado pelo EquipmentComponent ao equipar mochila
     void AddExtraSlots(int32 Amount);
@@ -134,4 +136,11 @@ private:
 
     UFUNCTION()
     void OnRep_MaxSlots();
+
+// Debug inventory
+public:
+
+    UFUNCTION(BlueprintCallable)
+    void DebugInventory();
+    
 };
