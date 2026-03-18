@@ -40,6 +40,10 @@ struct FZfInventoryList : public FFastArraySerializer
     void AddItem(UZfItemInstance* Item, int32 SlotIndex);
     void RemoveItem(UZfItemInstance* Item);
 
+    UZfItemInstance* AddItem(UZfItemDefinition* ItemDefinition, int32 SlotIndex);
+
+    void RemoveItem(UZfItemDefinition* ItemDefinition);
+
     bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
     {
         return FFastArraySerializer::FastArrayDeltaSerialize<FZfInventoryEntry, FZfInventoryList>(
@@ -61,19 +65,12 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 
 public:
     UZfInventoryComponent();
-    
-    virtual void BeginPlay() override;
-    virtual void OnRegister() override;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // Cria item novo a partir de definição e adiciona no primeiro slot vazio
-    UFUNCTION(BlueprintCallable, Server, Reliable)
-    void Server_AddItemFromDefinition(UZfItemDefinition* ItemDefinition);
-
     // Adiciona item existente no primeiro slot vazio
     UFUNCTION(BlueprintCallable, Server, Reliable)
-    void Server_AddItem(UZfItemInstance* InItem);
+    void Server_AddItem(UZfItemDefinition* InItemDefinition);
 
     // Adiciona item em slot específico
     UFUNCTION(BlueprintCallable, Server, Reliable)

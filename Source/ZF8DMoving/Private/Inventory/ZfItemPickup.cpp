@@ -1,5 +1,4 @@
 #include "Inventory/ZfItemPickup.h"
-#include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfItemDefinition.h"
 #include "Components/SphereComponent.h"
@@ -21,53 +20,43 @@ AZfItemPickup::AZfItemPickup()
     SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
-void AZfItemPickup::GetLifetimeReplicatedProps(
-    TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AZfItemPickup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AZfItemPickup, Item);
+    DOREPLIFETIME(AZfItemPickup, ItemDefinition);
 }
 
 void AZfItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-
+    
     if (HasAuthority())
     {
-        SphereComponent->OnComponentBeginOverlap.AddDynamic(
-            this, &AZfItemPickup::OnSphereOverlap);
+        SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AZfItemPickup::OnSphereOverlap);
     }
+
+    SphereComponent->SetHiddenInGame(false);
 }
 
-void AZfItemPickup::InitializeWithItem(UZfItemInstance* InItem)
-{
-    if (!InItem) return;
-    Item = InItem;
-    UpdateVisual();
-}
-
-void AZfItemPickup::OnRep_Item()
+void AZfItemPickup::OnRep_ItemDefinition()
 {
     UpdateVisual();
 }
 
 void AZfItemPickup::UpdateVisual()
 {
-    if (!Item) return;
+    // acessa a definição direto
+    if (!ItemDefinition) return;
 
-    // ✅ acessa a definição direto
-    UZfItemDefinition* Definition = Item->ItemDefinition;
-    if (!Definition) return;
-
-    if (Definition->StaticMesh)
+    if (ItemDefinition->StaticMesh)
     {
-        MeshComponent->SetStaticMesh(Definition->StaticMesh);
+        MeshComponent->SetStaticMesh(ItemDefinition->StaticMesh);
     }
 }
 
 void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (!HasAuthority() || !Item || !OtherActor) return;
+    if (!HasAuthority() || !ItemDefinition || !OtherActor) return;
 
     ACharacter* Character = Cast<ACharacter>(OtherActor);
     if (!Character) return;
@@ -78,6 +67,6 @@ void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor*
     UZfInventoryComponent* Inventory = PS->GetInventoryComponent();
     if (!Inventory) return;
 
-    Inventory->Server_AddItem_Implementation(Item);
-    Destroy();
+    Inventory->Server_AddItem(ItemDefinition);
+    SetLifeSpan(0.01f);
 }

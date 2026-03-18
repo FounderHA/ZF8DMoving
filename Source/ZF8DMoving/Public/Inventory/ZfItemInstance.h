@@ -42,10 +42,10 @@ public:
 	FGuid ItemGuid;
 
 	// Definição que originou esse item
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	TObjectPtr<UZfItemDefinition> ItemDefinition;
 
 	// Fragments instanciados em runtime
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	TArray<TObjectPtr<UZfItemFragment>> Fragments;
 };
