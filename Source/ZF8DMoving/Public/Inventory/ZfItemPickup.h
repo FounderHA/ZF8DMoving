@@ -4,6 +4,7 @@
 #include "ZfItemPickup.generated.h"
 
 class UZfItemInstance;
+class UZfItemDefinition;
 class USphereComponent;
 
 UCLASS()
@@ -14,34 +15,27 @@ class ZF8DMOVING_API AZfItemPickup : public AActor
 public:
 	AZfItemPickup();
 
-	UFUNCTION(BlueprintCallable)
-	void InitializeWithItem(UZfItemInstance* InItem);
-
-	UFUNCTION(BlueprintCallable)
-	UZfItemInstance* GetItem() const { return Item; }
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateVisual();
 
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-
+	virtual void OnRep_ItemDefinition();
+	
 	UFUNCTION()
-	void OnRep_Item();
+	void OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_ItemDefinition, Category = "Item")
+	UZfItemDefinition* ItemDefinition;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Item)
-	TObjectPtr<UZfItemInstance> Item;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<USphereComponent> SphereComponent;
-
-private:
-	void UpdateVisual();
 };

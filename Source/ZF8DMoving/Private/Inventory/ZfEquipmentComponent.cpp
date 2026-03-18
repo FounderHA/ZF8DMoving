@@ -86,8 +86,7 @@ void UZfEquipmentComponent::Server_EquipItem_Implementation(UZfItemInstance* InI
     }
 }
 
-void UZfEquipmentComponent::Server_UnequipItem_Implementation(
-    EZfEquipSlot Slot, UZfInventoryComponent* ToInventory)
+void UZfEquipmentComponent::Server_UnequipItem_Implementation(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory)
 {
     if (Slot == EZfEquipSlot::None) return;
 
@@ -95,8 +94,7 @@ void UZfEquipmentComponent::Server_UnequipItem_Implementation(
     if (!Entry || !Entry->Item) return;
 
     // Verifica se é mochila antes de desequipar
-    UZfBackpackFragment* Backpack = 
-        Entry->Item->FindFragmentByClass<UZfBackpackFragment>();
+    UZfBackpackFragment* Backpack = Entry->Item->FindFragmentByClass<UZfBackpackFragment>();
     if (Backpack && ToInventory)
     {
         bool bCanUnequip = ToInventory->TryRemoveExtraSlots(Backpack->ExtraSlots);
@@ -116,7 +114,8 @@ void UZfEquipmentComponent::Server_UnequipItem_Implementation(
 
     if (ToInventory)
     {
-        ToInventory->Server_AddItem_Implementation(Entry->Item);
+        // Passar Item Definition e não Item Instance.
+        //ToInventory->Server_AddItem(Entry->Item);
     }
 
     OnItemUnequipped.Broadcast(Slot, Entry->Item);
