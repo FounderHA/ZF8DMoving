@@ -7,6 +7,7 @@
 #include "Player/ZfPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
+#include "Tests/ToolMenusTestUtilities.h"
 
 UZfEquipmentComponent::UZfEquipmentComponent()
 {
@@ -126,6 +127,7 @@ void UZfEquipmentComponent::Server_UnequipItem_Implementation(EZfEquipSlot Slot,
     });
 }
 
+
 UZfItemInstance* UZfEquipmentComponent::GetEquippedItem(EZfEquipSlot Slot) const
 {
     const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
@@ -139,4 +141,52 @@ bool UZfEquipmentComponent::IsSlotOccupied(EZfEquipSlot Slot) const
     const FZfEquipmentEntry* Entry = EquippedItems.FindByPredicate(
         [Slot](const FZfEquipmentEntry& E) { return E.Slot == Slot; });
     return Entry && Entry->Item != nullptr;
+}
+
+//
+//============================ Debug Inventory ============================
+//
+
+#include "Inventory/ZfItemDefinition.h"
+
+void UZfEquipmentComponent::DebugEquipament()
+{
+    for (const FZfEquipmentEntry& Entry : EquippedItems)
+    {
+        if (!Entry.Item) continue;
+
+        FString ItemName = TEXT("sem definicao");
+        if (Entry.Item->ItemDefinition)
+        {
+            UZfItemDefinition* Def = Entry.Item->ItemDefinition.Get();
+            if (Def)
+            {
+                ItemName = Def->ItemName.ToString();
+            }
+        }
+
+        FString SlotName = UEnum::GetValueAsString(Entry.Slot);
+
+        FString ActorInfo = TEXT("sem actor spawnado");
+        if (Entry.SpawnedActor)
+        {
+            ActorInfo = Entry.SpawnedActor->GetName();
+        }
+
+        GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
+            FString::Printf(TEXT("[Slot %s] Item: %s | Fragments: %d | Actor: %s"),
+                *SlotName,
+                *ItemName,
+                Entry.Item->Fragments.Num(),
+                *ActorInfo));
+
+        for (int32 i = 0; i < Entry.Item->Fragments.Num(); i++)
+        {
+            UZfItemFragment* Fragment = Entry.Item->Fragments[i];
+            FString FragName = Fragment ? Fragment->GetClass()->GetName() : TEXT("nullptr");
+
+            GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
+                FString::Printf(TEXT("  Fragment[%d]: %s"), i, *FragName));
+        }
+    }
 }

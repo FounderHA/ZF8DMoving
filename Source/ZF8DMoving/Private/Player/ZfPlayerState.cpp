@@ -87,6 +87,7 @@ void AZfPlayerState::OnRep_ConvictionPoints() const
 {
 }
 
+
 void AZfPlayerState::UpdateAttributePoints(float AttributePointsToAdd, EZfAttributeType InAttributeType)
 {
 	//if (!HasAuthority()) return;
@@ -158,4 +159,58 @@ void AZfPlayerState::Server_UpdateAttributePoints_Implementation(float Attribute
 	}
 
 	AvailablePoints += AttributePointsToAdd * -1.f;
+	
 }
+
+//
+//============================ Debug Attribut ============================
+//
+void AZfPlayerState::DebugAttribute()
+{
+	float StrengthPointsDebug = StrengthPoints;
+	float IntelligencePointsDebug = IntelligencePoints;
+	float DexterityPointsDebug = DexterityPoints;
+	float ConstitutionPointsDebug = ConstitutionPoints;
+	float ConvictionPointsDebug = ConvictionPoints;
+	float BaseClassStrengthDebug = CharacterClassData->Strength;
+	float BaseClassIntelligenceDebug = CharacterClassData->Intelligence;
+	float BaseClassDexterityDebug = CharacterClassData->Dexterity;
+	float BaseClassConstitutionDebug = CharacterClassData->Constitution;
+	float BaseClassConvictionDebug = CharacterClassData->Conviction;
+	float TotalStrength = StrengthPointsDebug + BaseClassStrengthDebug;
+	float TotalIntelligence = IntelligencePointsDebug + BaseClassIntelligenceDebug;
+	float TotalDexterity = DexterityPointsDebug + BaseClassDexterityDebug;
+	float TotalConstitution = ConstitutionPointsDebug + BaseClassConstitutionDebug;
+	float TotalConviction = ConvictionPointsDebug + BaseClassConvictionDebug;
+	
+	
+	
+	APlayerController* PC = GetPlayerController();
+	if (PC && PC->IsLocalController())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
+		FString::Printf(TEXT("Conv = Base %.0f + Allocated %.0f Total: %.0f"),
+		BaseClassConvictionDebug, ConvictionPointsDebug, TotalConviction));
+		
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor(255, 100, 0),
+		FString::Printf(TEXT("Const = Base %.0f + Allocated %.0f -> Total: %.0f"),
+		BaseClassConstitutionDebug, ConstitutionPointsDebug, TotalConstitution));
+		
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
+		FString::Printf(TEXT("Dex = Base %.0f + Allocated %.0f -> Total: %.0f"),
+		BaseClassDexterityDebug, DexterityPointsDebug, TotalDexterity));
+		
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor(255, 100, 0),
+		FString::Printf(TEXT("Int = Base %.0f + Allocated %.0f -> Total: %.0f"),
+		BaseClassIntelligenceDebug, IntelligencePointsDebug, TotalIntelligence));
+		
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
+		FString::Printf(TEXT("Str = Base %.0f + Allocated %.0f -> Total: %.0f"),
+		BaseClassStrengthDebug, StrengthPointsDebug, TotalStrength));
+	
+		
+	
+	}
+}
+
+
