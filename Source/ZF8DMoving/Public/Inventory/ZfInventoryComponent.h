@@ -37,11 +37,16 @@ struct FZfInventoryList : public FFastArraySerializer
     UPROPERTY(NotReplicated)
     TObjectPtr<UZfInventoryComponent> OwnerComponent = nullptr;
 
+    // Cria uma nova instância a partir da definição e adiciona
+    UZfItemInstance* AddItem(UZfItemDefinition* ItemDefinition, int32 SlotIndex);   
+    
+    // Adiciona uma instância já existente (ex: vinda do equipment)
     void AddItem(UZfItemInstance* Item, int32 SlotIndex);
+    
+    // Remove por instância
     void RemoveItem(UZfItemInstance* Item);
-
-    UZfItemInstance* AddItem(UZfItemDefinition* ItemDefinition, int32 SlotIndex);
-
+    
+    // Remove por definição (remove o primeiro encontrado)
     void RemoveItem(UZfItemDefinition* ItemDefinition);
 
     bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
@@ -68,7 +73,7 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // Adiciona item existente no primeiro slot vazio
+    // Adiciona item a partir de uma definição (cria a instância no servidor)
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_AddItem(UZfItemDefinition* InItemDefinition);
 
