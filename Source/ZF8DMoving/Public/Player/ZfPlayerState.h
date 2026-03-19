@@ -118,4 +118,10 @@ protected:
 	//RPC
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateAttributePoints(float StrengthPointsToAdd, EZfAttributeType InAttributeType);
+
+public:
+	// Debug inventory
+	UFUNCTION(BlueprintCallable)
+	void DebugAttribute();
+	
 };

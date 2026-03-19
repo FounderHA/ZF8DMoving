@@ -249,6 +249,7 @@ void UZfInventoryComponent::Server_AddItemAtSlot_Implementation(UZfItemInstance*
     }
 
     OnItemAdded.Broadcast(InItem);
+    
 }
 
 //
@@ -268,10 +269,12 @@ void UZfInventoryComponent::Server_MoveItem_Implementation(int32 FromSlot, int32
     {
         ToEntry->SlotIndex = FromSlot;
         InventoryList.MarkItemDirty(*ToEntry);
+        OnItemAdded.Broadcast(ToEntry->Item); // <-- notifica servidor
     }
 
     FromEntry->SlotIndex = ToSlot;
     InventoryList.MarkItemDirty(*FromEntry);
+    OnItemAdded.Broadcast(FromEntry->Item); // <-- notifica servidor
 }
 
 //

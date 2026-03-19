@@ -68,4 +68,13 @@ private:
 	TArray<FZfEquipmentEntry> EquippedItems;
 
 	FZfEquipmentEntry* FindEntry(EZfEquipSlot Slot);
+
+//==================================== Debug ============================
+	
+public:
+	// Debug Equipament
+	UFUNCTION(BlueprintCallable)
+	void DebugEquipament();
+
 };
+
