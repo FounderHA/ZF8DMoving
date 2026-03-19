@@ -8,17 +8,14 @@
 
 //
 //============================ UZfInventoryComponent ============================
-// 
+//
 UZfInventoryComponent::UZfInventoryComponent()
 {
     SetIsReplicatedByDefault(true);
     InventoryList.OwnerComponent = this;
-
-    // Habilita o sistema moderno de subobject replication
     bReplicateUsingRegisteredSubObjectList = true;
 }
 
-// Replicação de Variaveis
 void UZfInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -28,13 +25,12 @@ void UZfInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 //
 //============================ FastArray callbacks ============================
-// 
+//
 void FZfInventoryEntry::PreReplicatedRemove(const FZfInventoryList& InArraySerializer)
 {
     if (InArraySerializer.OwnerComponent && Item)
     {
         InArraySerializer.OwnerComponent->OnItemRemoved.Broadcast(Item);
-
         for (UZfItemFragment* Fragment : Item->Fragments)
         {
             if (Fragment) Fragment->OnItemRemoved(Item);
@@ -44,14 +40,18 @@ void FZfInventoryEntry::PreReplicatedRemove(const FZfInventoryList& InArraySeria
 
 void FZfInventoryEntry::PostReplicatedAdd(const FZfInventoryList& InArraySerializer)
 {
-    if (InArraySerializer.OwnerComponent && Item)
-    {
-        InArraySerializer.OwnerComponent->OnItemAdded.Broadcast(Item);
+    if (!InArraySerializer.OwnerComponent || !Item) return;
 
-        for (UZfItemFragment* Fragment : Item->Fragments)
-        {
-            if (Fragment) Fragment->OnItemAdded(Item);
-        }
+    // CLIENTE: reconstrói os Fragments localmente a partir da ItemDefinition
+    // já replicada. Os dados mutáveis chegam via subobject replication
+    // logo após e sobrescrevem os valores default automaticamente.
+    Item->InitializeFragmentsOnClient();
+
+    InArraySerializer.OwnerComponent->OnItemAdded.Broadcast(Item);
+
+    for (UZfItemFragment* Fragment : Item->Fragments)
+    {
+        if (Fragment) Fragment->OnItemAdded(Item);
     }
 }
 
@@ -64,35 +64,43 @@ void FZfInventoryEntry::PostReplicatedChange(const FZfInventoryList& InArraySeri
 }
 
 //
-//============================ Add Item no FastArray ============================
-// 
+//============================ Add Item ============================
+//
 UZfItemInstance* FZfInventoryList::AddItem(UZfItemDefinition* ItemDefinition, int32 SlotIndex)
 {
-    
     check(OwnerComponent != nullptr);
-    check(OwnerComponent->GetOwner()->HasAuthority());
-    
-    FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
-    NewEntry.Item = NewObject<UZfItemInstance>(OwnerComponent->GetOwner());
-    NewEntry.SlotIndex = SlotIndex;
-    NewEntry.Item->InitializeFromDefinition(ItemDefinition);
-       
-    
-    for (UZfItemFragment* ItemFragment : NewEntry.Item->Fragments)
-    {
-        if (ItemFragment)
-        {
-            ItemFragment->OnItemAdded(NewEntry.Item);
-        }
-    }
-    
-    MarkItemDirty(NewEntry);
+    AActor* OwnerActor = OwnerComponent->GetOwner();
+    check(OwnerActor->HasAuthority());
 
+    FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
+
+    // Outer do Item = Actor (PlayerState)
+    NewEntry.Item = NewObject<UZfItemInstance>(OwnerActor);
+    NewEntry.SlotIndex = SlotIndex;
+
+    // Outer dos Fragments = Actor (PlayerState), passado explicitamente
+    NewEntry.Item->InitializeFromDefinition(ItemDefinition, OwnerActor);
+
+    for (UZfItemFragment* Fragment : NewEntry.Item->Fragments)
+    {
+        if (Fragment) Fragment->OnItemAdded(NewEntry.Item);
+    }
+
+    MarkItemDirty(NewEntry);
     return NewEntry.Item;
 }
 
+void FZfInventoryList::AddItem(UZfItemInstance* Item, int32 SlotIndex)
+{
+    if (!Item) return;
+    FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
+    NewEntry.Item = Item;
+    NewEntry.SlotIndex = SlotIndex;
+    MarkItemDirty(NewEntry);
+}
+
 //
-//============================ Remove Item no FastArray ============================
+//============================ Remove Item ============================
 //
 void FZfInventoryList::RemoveItem(UZfItemInstance* Item)
 {
@@ -120,21 +128,6 @@ void FZfInventoryList::RemoveItem(UZfItemDefinition* ItemDefinition)
 }
 
 //
-//============================ AddItem (por UZfItemInstance direto) ============================
-//
-
-// Mantida para compatibilidade com Server_AddItemAtSlot
-void FZfInventoryList::AddItem(UZfItemInstance* Item, int32 SlotIndex)
-{
-    if (!Item) return;
-
-    FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
-    NewEntry.Item = Item;
-    NewEntry.SlotIndex = SlotIndex;
-    MarkItemDirty(NewEntry);
-}
-
-//
 //============================ Server Add Item ============================
 //
 void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InItemDefinition)
@@ -142,13 +135,11 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
     if (!InItemDefinition) return;
 
     // Verifica stack
-
     if (const UZfStackableFragment* Stackable = InItemDefinition->FindFragmentByClass<UZfStackableFragment>())
     {
         for (FZfInventoryEntry& Entry : InventoryList.Entries)
         {
-            if (!Entry.Item) continue;
-            if (Entry.Item->ItemDefinition != InItemDefinition) continue;
+            if (!Entry.Item || Entry.Item->ItemDefinition != InItemDefinition) continue;
 
             UZfStackableFragment* ExistingStack = Entry.Item->FindFragmentByClass<UZfStackableFragment>();
             if (!ExistingStack) continue;
@@ -163,7 +154,6 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
         }
     }
 
-    // Busca primeiro slot vazio
     int32 EmptySlot = GetFirstEmptySlot();
     if (EmptySlot == -1)
     {
@@ -172,19 +162,17 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
     }
 
     UZfItemInstance* NewInstance = InventoryList.AddItem(InItemDefinition, EmptySlot);
-    
-    // Registra a instância do item no canal de replicação
+
+    // Registra o Item no canal de replicação do componente
     AddReplicatedSubObject(NewInstance);
- 
-    // registra também cada Fragment individualmente
+
+    // Registra cada Fragment individualmente — eles têm o Actor como Outer,
+    // então o engine consegue estabelecer o canal corretamente
     for (UZfItemFragment* Fragment : NewInstance->Fragments)
     {
-        if (Fragment)
-        {
-            AddReplicatedSubObject(Fragment);
-        }
+        if (Fragment) AddReplicatedSubObject(Fragment);
     }
- 
+
     OnItemAdded.Broadcast(NewInstance);
 }
 
@@ -194,21 +182,16 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
 void UZfInventoryComponent::Server_RemoveItem_Implementation(UZfItemInstance* InItem)
 {
     if (!InItem) return;
- 
-    // remove os Fragments do canal de replicação antes de remover o item
+
     for (UZfItemFragment* Fragment : InItem->Fragments)
     {
-        if (Fragment)
-        {
-            RemoveReplicatedSubObject(Fragment);
-        }
+        if (Fragment) RemoveReplicatedSubObject(Fragment);
     }
- 
     RemoveReplicatedSubObject(InItem);
+
     InventoryList.RemoveItem(InItem);
     OnItemRemoved.Broadcast(InItem);
 }
-
 
 //
 //============================ Server Drop Item ============================
@@ -217,62 +200,54 @@ void UZfInventoryComponent::Server_DropItem_Implementation(UZfItemInstance* InIt
 {
     if (!InItem || !GetWorld()) return;
 
-    // 1 — Verifica se está no inventário
     const bool bWasInInventory = InventoryList.Entries.ContainsByPredicate([InItem](const FZfInventoryEntry& E) { return E.Item == InItem; });
-    if (!bWasInInventory) return;
+    if (!bWasInInventory || !InItem->ItemDefinition) return;
 
-    // 2 — Valida definição
-    if (!InItem->ItemDefinition) return;
-
-    // 3 — Sanitiza localização — evita drop em coordenada arbitrária vinda do cliente
     APawn* OwnerPawn = nullptr;
     if (APlayerState* PS = Cast<APlayerState>(GetOwner()))
     {
         OwnerPawn = PS->GetPawn();
     }
-    
+    if (!OwnerPawn) return;
+
     FVector Location = OwnerPawn->GetActorLocation() + OwnerPawn->GetActorForwardVector() * DistanceDrop;
 
-    // 4 — Spawna o pickupe
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
     AZfItemPickup* DroppedActor = GetWorld()->SpawnActor<AZfItemPickup>(AZfItemPickup::StaticClass(), Location, FRotator::ZeroRotator, Params);
-
     if (!DroppedActor) return;
- 
-    // remove do canal de replicação antes de remover do FastArray
+
     for (UZfItemFragment* Fragment : InItem->Fragments)
     {
         if (Fragment) RemoveReplicatedSubObject(Fragment);
     }
     RemoveReplicatedSubObject(InItem);
- 
+
     InventoryList.RemoveItem(InItem);
     OnItemRemoved.Broadcast(InItem);
- 
+
     InItem->Rename(nullptr, DroppedActor);
     DroppedActor->UpdateVisual();
 }
 
 //
-//============================ Server Add Item to Slot ============================
+//============================ Server AddItem At Slot ============================
 //
-void UZfInventoryComponent::Server_AddItemAtSlot_Implementation(
-    UZfItemInstance* InItem, int32 SlotIndex)
+void UZfInventoryComponent::Server_AddItemAtSlot_Implementation(UZfItemInstance* InItem, int32 SlotIndex)
 {
     if (!InItem) return;
     if (SlotIndex < 0 || SlotIndex >= MaxSlots) return;
     if (!IsSlotEmpty(SlotIndex)) return;
 
     InventoryList.AddItem(InItem, SlotIndex);
- 
+
     AddReplicatedSubObject(InItem);
     for (UZfItemFragment* Fragment : InItem->Fragments)
     {
         if (Fragment) AddReplicatedSubObject(Fragment);
     }
- 
+
     OnItemAdded.Broadcast(InItem);
 }
 
@@ -284,17 +259,13 @@ void UZfInventoryComponent::Server_MoveItem_Implementation(int32 FromSlot, int32
     if (FromSlot < 0 || FromSlot >= MaxSlots) return;
     if (ToSlot < 0 || ToSlot >= MaxSlots) return;
 
-    // Busca entry no slot de origem
     FZfInventoryEntry* FromEntry = InventoryList.Entries.FindByPredicate([FromSlot](const FZfInventoryEntry& E) { return E.SlotIndex == FromSlot; });
-
     if (!FromEntry || !FromEntry->Item) return;
 
-    // Busca entry no slot de destino
     FZfInventoryEntry* ToEntry = InventoryList.Entries.FindByPredicate([ToSlot](const FZfInventoryEntry& E) { return E.SlotIndex == ToSlot; });
 
     if (ToEntry && ToEntry->Item)
     {
-        // Troca os dois itens de slot
         ToEntry->SlotIndex = FromSlot;
         InventoryList.MarkItemDirty(*ToEntry);
     }
@@ -304,7 +275,7 @@ void UZfInventoryComponent::Server_MoveItem_Implementation(int32 FromSlot, int32
 }
 
 //
-//============================ Fragmento de ExtraSlot ============================
+//============================ Extra Slots ============================
 //
 void UZfInventoryComponent::AddExtraSlots(int32 Amount)
 {
@@ -317,14 +288,9 @@ bool UZfInventoryComponent::TryRemoveExtraSlots(int32 Amount)
     int32 NewMaxSlots = MaxSlots - Amount;
     if (NewMaxSlots < BaseSlots) NewMaxSlots = BaseSlots;
 
-    // Verifica se tem itens nos slots que vão sumir
     for (const FZfInventoryEntry& Entry : InventoryList.Entries)
     {
-        if (Entry.Item && Entry.SlotIndex >= NewMaxSlots)
-        {
-            // Tem item em slot que vai sumir — não deixa desequipar
-            return false;
-        }
+        if (Entry.Item && Entry.SlotIndex >= NewMaxSlots) return false;
     }
 
     MaxSlots = NewMaxSlots;
@@ -353,8 +319,7 @@ TArray<UZfItemInstance*> UZfInventoryComponent::GetAllItems() const
 UZfItemInstance* UZfInventoryComponent::GetItemAtSlot(int32 SlotIndex) const
 {
     const FZfInventoryEntry* Entry = InventoryList.Entries.FindByPredicate([SlotIndex](const FZfInventoryEntry& E) { return E.SlotIndex == SlotIndex; });
-    if (!Entry) return nullptr;
-    return Entry->Item;
+    return Entry ? Entry->Item : nullptr;
 }
 
 bool UZfInventoryComponent::IsSlotEmpty(int32 SlotIndex) const
@@ -384,7 +349,7 @@ void UZfInventoryComponent::MarkItemDirty(UZfItemInstance* InItem)
 }
 
 //
-//============================ Debug ============================
+//============================ Debug Inventory ============================
 //
 void UZfInventoryComponent::DebugInventory()
 {
@@ -394,37 +359,61 @@ void UZfInventoryComponent::DebugInventory()
 
         FString ItemName = Entry.Item->ItemDefinition ? Entry.Item->ItemDefinition->ItemName.ToString() : TEXT("sem definição");
 
-        // Mostra quantos fragments tem no DataAsset para comparar
         if (Entry.Item->ItemDefinition)
         {
             GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green,
                 FString::Printf(TEXT("  → DataAsset tem %d fragments"),
-                    Entry.Item->ItemDefinition->Fragments.Num()
-                ));
+                    Entry.Item->ItemDefinition->Fragments.Num()));
         }
 
-        // Mostra cada fragment individualmente
         for (auto& Fragment : Entry.Item->Fragments)
         {
-            FString FragmentName = Fragment 
-                ? Fragment->GetClass()->GetName() 
-                : TEXT("nullptr");
-
+            FString FragmentName = Fragment ? Fragment->GetClass()->GetName() : TEXT("nullptr");
             GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan,
-                FString::Printf(TEXT("  → Fragment: %s"), *FragmentName));
+                FString::Printf(TEXT("  → Fragment: %s | Outer: %s"),
+                    *FragmentName,
+                    Fragment ? *Fragment->GetOuter()->GetName() : TEXT("N/A")));
         }
 
-        // Stack info
         FString StackInfo = TEXT("Não stackável");
         if (UZfStackableFragment* Stack = Entry.Item->FindFragmentByClass<UZfStackableFragment>())
         {
-            StackInfo = FString::Printf(TEXT("Stack: %d / %d"), 
+            StackInfo = FString::Printf(TEXT("Stack: %d / %d"),
                 Stack->CurrentStackSize, Stack->MaxStackSize);
         }
-        
-        // Mostra o item e quantos fragments ele tem
+
         GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow,
-            FString::Printf(TEXT("[Slot %d] %s | Fragments: %d | %s"),
-                Entry.SlotIndex, *ItemName, Entry.Item->Fragments.Num(), *StackInfo));
+            FString::Printf(TEXT("[Slot %d] %s | Fragments: %d | %s | Item Outer: %s"),
+                Entry.SlotIndex, *ItemName, Entry.Item->Fragments.Num(), *StackInfo,
+                *Entry.Item->GetOuter()->GetName()));
     }
+}
+
+//
+//============================ Debug Fragment ============================
+//
+ 
+#include "Inventory/Fragments/ZfTestFragment.h"   // <-- inclua no topo do .cpp
+ 
+void UZfInventoryComponent::Server_DebugSetTestValue_Implementation(int32 NewValue)
+{
+    for (FZfInventoryEntry& Entry : InventoryList.Entries)
+    {
+        if (!Entry.Item) continue;
+ 
+        UZfTestFragment* TestFrag = Entry.Item->FindFragmentByClass<UZfTestFragment>();
+        if (!TestFrag) continue;
+ 
+        // Modifica o valor — a replicação via Subobject cuida do resto
+        TestFrag->SetTestValue(NewValue);
+ 
+        GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Yellow,
+            FString::Printf(TEXT("[SERVER] Item '%s' → TestValue = %d"),
+                *Entry.Item->ItemDefinition->ItemName.ToString(), NewValue));
+ 
+        return; // modifica só o primeiro item com o fragment
+    }
+ 
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+        TEXT("[SERVER] Nenhum item com ZfTestFragment encontrado no inventário!"));
 }

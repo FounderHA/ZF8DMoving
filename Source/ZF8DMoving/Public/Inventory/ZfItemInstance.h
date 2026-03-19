@@ -7,7 +7,6 @@
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "ZfItemInstance.generated.h"
 
-
 class UZfItemDefinition;
 class UZfItemFragment;
 
@@ -16,36 +15,39 @@ class ZF8DMOVING_API UZfItemInstance : public UObject
 {
 	GENERATED_BODY()
 
-public:	
-	// Inicializa o item a partir de uma definição
-	void InitializeFromDefinition(UZfItemDefinition* InDefinition);
+public:
+	// Servidor: cria os Fragments duplicando da Definition.
+	// InOuter deve ser o Actor dono (PlayerState) — obrigatório para
+	// AddReplicatedSubObject funcionar.
+	void InitializeFromDefinition(UZfItemDefinition* InDefinition, UObject* InOuter);
 
-	// Necessário para UObject trafegar como referência replicada
+	// Cliente: reconstrói os Fragments localmente a partir da ItemDefinition
+	// já replicada. Chamado pelo PostReplicatedAdd do FastArray.
+	// Os dados mutáveis (ex: CurrentStackSize) chegam depois via subobject replication
+	// e sobrescrevem os valores default automaticamente.
+	void InitializeFragmentsOnClient();
+
 	virtual bool IsSupportedForNetworking() const override { return true; }
-	
-	// Replica as propriedades do próprio objeto
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	// Busca fragment por tipo — uso na Blueprint
+
 	UFUNCTION(BlueprintCallable)
 	UZfItemFragment* FindFragment(TSubclassOf<UZfItemFragment> FragmentClass) const;
 
-	// Busca fragment por tipo — uso no C++
 	template<typename T>
 	T* FindFragmentByClass() const
 	{
 		return Cast<T>(FindFragment(T::StaticClass()));
 	}
 
-	// ID único dessa instância — útil para salvar/carregar
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	FGuid ItemGuid;
 
-	// Definição que originou esse item
 	UPROPERTY(BlueprintReadOnly, Replicated)
 	TObjectPtr<UZfItemDefinition> ItemDefinition;
 
-	// Fragments instanciados em runtime
-	UPROPERTY(BlueprintReadOnly, Replicated)
+	// NÃO replicado via DOREPLIFETIME — o servidor registra cada Fragment
+	// individualmente com AddReplicatedSubObject no InventoryComponent,
+	// e o cliente os reconstrói localmente via InitializeFragmentsOnClient().
+	UPROPERTY(BlueprintReadOnly)
 	TArray<TObjectPtr<UZfItemFragment>> Fragments;
 };

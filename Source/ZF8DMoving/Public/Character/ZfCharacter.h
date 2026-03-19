@@ -31,4 +31,6 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UZfResourceAttributeSet> HealthSet;
+
+	virtual void Tick(float DeltaSeconds) override;
 };

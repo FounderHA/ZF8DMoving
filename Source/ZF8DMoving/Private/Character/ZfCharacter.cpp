@@ -34,4 +34,9 @@ void AZfCharacter::InitAbilityActorInfo()
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 }
 
+void AZfCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
 
