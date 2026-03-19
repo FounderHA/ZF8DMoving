@@ -14,6 +14,7 @@ UZfInventoryComponent::UZfInventoryComponent()
     SetIsReplicatedByDefault(true);
     InventoryList.OwnerComponent = this;
 
+    // Habilita o sistema moderno de subobject replication
     bReplicateUsingRegisteredSubObjectList = true;
 }
 
@@ -67,39 +68,50 @@ void FZfInventoryEntry::PostReplicatedChange(const FZfInventoryList& InArraySeri
 // 
 UZfItemInstance* FZfInventoryList::AddItem(UZfItemDefinition* ItemDefinition, int32 SlotIndex)
 {
-    UZfItemInstance* Result = nullptr;
     
     check(OwnerComponent != nullptr);
-    AActor* OwnerActor = OwnerComponent->GetOwner();
-    check(OwnerActor->HasAuthority());
-
+    check(OwnerComponent->GetOwner()->HasAuthority());
+    
     FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
     NewEntry.Item = NewObject<UZfItemInstance>(OwnerComponent->GetOwner());
     NewEntry.SlotIndex = SlotIndex;
     NewEntry.Item->InitializeFromDefinition(ItemDefinition);
-    for (UZfItemFragment* ItemFragment : ItemDefinition->Fragments)
+       
+    
+    for (UZfItemFragment* ItemFragment : NewEntry.Item->Fragments)
     {
-        if (ItemFragment != nullptr)
+        if (ItemFragment)
         {
             ItemFragment->OnItemAdded(NewEntry.Item);
         }
     }
-
-    Result = NewEntry.Item;
+    
     MarkItemDirty(NewEntry);
 
-    return Result;
+    return NewEntry.Item;
 }
 
 //
 //============================ Remove Item no FastArray ============================
 //
+void FZfInventoryList::RemoveItem(UZfItemInstance* Item)
+{
+    for (int32 i = Entries.Num() - 1; i >= 0; i--)
+    {
+        if (Entries[i].Item == Item)
+        {
+            Entries.RemoveAt(i);
+            MarkArrayDirty();
+            return;
+        }
+    }
+}
+
 void FZfInventoryList::RemoveItem(UZfItemDefinition* ItemDefinition)
 {
     for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
     {
-        FZfInventoryEntry& Entry = *EntryIt;
-        if (Entry.Item->ItemDefinition == ItemDefinition)
+        if (EntryIt->Item && EntryIt->Item->ItemDefinition == ItemDefinition)
         {
             EntryIt.RemoveCurrent();
             MarkArrayDirty();
@@ -108,34 +120,18 @@ void FZfInventoryList::RemoveItem(UZfItemDefinition* ItemDefinition)
 }
 
 //
-//============================ FZfInventoryList ============================
+//============================ AddItem (por UZfItemInstance direto) ============================
 //
+
+// Mantida para compatibilidade com Server_AddItemAtSlot
 void FZfInventoryList::AddItem(UZfItemInstance* Item, int32 SlotIndex)
 {
-   /* if (!Item) return;
+    if (!Item) return;
 
     FZfInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
     NewEntry.Item = Item;
     NewEntry.SlotIndex = SlotIndex;
-    MarkItemDirty(NewEntry);*/
-}
-
-void FZfInventoryList::RemoveItem(UZfItemInstance* Item)
-{
-    /*for (int32 i = Entries.Num() - 1; i >= 0; i--)
-    {
-        if (Entries[i].Item == Item)
-        {
-            Entries.RemoveAt(i);
-            MarkArrayDirty();
-
-            if (OwnerComponent)
-            {
-                OwnerComponent->OnItemRemoved.Broadcast(Item);
-            }
-            return;
-        }
-    }*/
+    MarkItemDirty(NewEntry);
 }
 
 //
@@ -155,7 +151,6 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
             if (Entry.Item->ItemDefinition != InItemDefinition) continue;
 
             UZfStackableFragment* ExistingStack = Entry.Item->FindFragmentByClass<UZfStackableFragment>();
-
             if (!ExistingStack) continue;
 
             if (ExistingStack->CurrentStackSize < ExistingStack->MaxStackSize)
@@ -177,9 +172,43 @@ void UZfInventoryComponent::Server_AddItem_Implementation(UZfItemDefinition* InI
     }
 
     UZfItemInstance* NewInstance = InventoryList.AddItem(InItemDefinition, EmptySlot);
+    
+    // Registra a instância do item no canal de replicação
     AddReplicatedSubObject(NewInstance);
+ 
+    // registra também cada Fragment individualmente
+    for (UZfItemFragment* Fragment : NewInstance->Fragments)
+    {
+        if (Fragment)
+        {
+            AddReplicatedSubObject(Fragment);
+        }
+    }
+ 
     OnItemAdded.Broadcast(NewInstance);
 }
+
+//
+//============================ Server Remove Item ============================
+//
+void UZfInventoryComponent::Server_RemoveItem_Implementation(UZfItemInstance* InItem)
+{
+    if (!InItem) return;
+ 
+    // remove os Fragments do canal de replicação antes de remover o item
+    for (UZfItemFragment* Fragment : InItem->Fragments)
+    {
+        if (Fragment)
+        {
+            RemoveReplicatedSubObject(Fragment);
+        }
+    }
+ 
+    RemoveReplicatedSubObject(InItem);
+    InventoryList.RemoveItem(InItem);
+    OnItemRemoved.Broadcast(InItem);
+}
+
 
 //
 //============================ Server Drop Item ============================
@@ -211,13 +240,17 @@ void UZfInventoryComponent::Server_DropItem_Implementation(UZfItemInstance* InIt
     AZfItemPickup* DroppedActor = GetWorld()->SpawnActor<AZfItemPickup>(AZfItemPickup::StaticClass(), Location, FRotator::ZeroRotator, Params);
 
     if (!DroppedActor) return;
-
-    // 5 — Pickup criado com sucesso — remove do inventário direto na _Implementation
-    // sem RPC dentro de RPC
+ 
+    // remove do canal de replicação antes de remover do FastArray
+    for (UZfItemFragment* Fragment : InItem->Fragments)
+    {
+        if (Fragment) RemoveReplicatedSubObject(Fragment);
+    }
+    RemoveReplicatedSubObject(InItem);
+ 
     InventoryList.RemoveItem(InItem);
     OnItemRemoved.Broadcast(InItem);
-
-    // 6 — Rename só depois de tudo validado
+ 
     InItem->Rename(nullptr, DroppedActor);
     DroppedActor->UpdateVisual();
 }
@@ -233,27 +266,31 @@ void UZfInventoryComponent::Server_AddItemAtSlot_Implementation(
     if (!IsSlotEmpty(SlotIndex)) return;
 
     InventoryList.AddItem(InItem, SlotIndex);
+ 
+    AddReplicatedSubObject(InItem);
+    for (UZfItemFragment* Fragment : InItem->Fragments)
+    {
+        if (Fragment) AddReplicatedSubObject(Fragment);
+    }
+ 
     OnItemAdded.Broadcast(InItem);
 }
 
 //
 //============================ Server Move Item ============================
 //
-void UZfInventoryComponent::Server_MoveItem_Implementation(
-    int32 FromSlot, int32 ToSlot)
+void UZfInventoryComponent::Server_MoveItem_Implementation(int32 FromSlot, int32 ToSlot)
 {
     if (FromSlot < 0 || FromSlot >= MaxSlots) return;
     if (ToSlot < 0 || ToSlot >= MaxSlots) return;
 
     // Busca entry no slot de origem
-    FZfInventoryEntry* FromEntry = InventoryList.Entries.FindByPredicate(
-        [FromSlot](const FZfInventoryEntry& E) { return E.SlotIndex == FromSlot; });
+    FZfInventoryEntry* FromEntry = InventoryList.Entries.FindByPredicate([FromSlot](const FZfInventoryEntry& E) { return E.SlotIndex == FromSlot; });
 
     if (!FromEntry || !FromEntry->Item) return;
 
     // Busca entry no slot de destino
-    FZfInventoryEntry* ToEntry = InventoryList.Entries.FindByPredicate(
-        [ToSlot](const FZfInventoryEntry& E) { return E.SlotIndex == ToSlot; });
+    FZfInventoryEntry* ToEntry = InventoryList.Entries.FindByPredicate([ToSlot](const FZfInventoryEntry& E) { return E.SlotIndex == ToSlot; });
 
     if (ToEntry && ToEntry->Item)
     {
@@ -265,19 +302,6 @@ void UZfInventoryComponent::Server_MoveItem_Implementation(
     FromEntry->SlotIndex = ToSlot;
     InventoryList.MarkItemDirty(*FromEntry);
 }
-
-//
-//============================ Server Remove Item ============================
-//
-void UZfInventoryComponent::Server_RemoveItem_Implementation(UZfItemInstance* InItem)
-{
-    if (!InItem) return;
-
-    InventoryList.RemoveItem(InItem);
-    RemoveReplicatedSubObject(InItem);
-    OnItemRemoved.Broadcast(InItem);
-}
-
 
 //
 //============================ Fragmento de ExtraSlot ============================
