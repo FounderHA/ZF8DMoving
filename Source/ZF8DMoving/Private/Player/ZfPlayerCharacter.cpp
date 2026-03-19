@@ -18,9 +18,9 @@ void AZfPlayerCharacter::BeginPlay()
 }
 
 // Called every frame
-void AZfPlayerCharacter::Tick(float DeltaTime)
+void AZfPlayerCharacter::Tick(float DeltaSeconds)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaSeconds);
 }
 
 // Called to bind functionality to input

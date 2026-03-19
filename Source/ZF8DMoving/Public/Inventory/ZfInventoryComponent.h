@@ -139,10 +139,15 @@ private:
     UFUNCTION()
     void OnRep_MaxSlots();
 
-// Debug inventory
+    
 public:
-
+    // Debug inventory
     UFUNCTION(BlueprintCallable)
     void DebugInventory();
+
+    // Debug Fragment
+    UFUNCTION(BlueprintCallable, Server, Reliable)
+    void Server_DebugSetTestValue(int32 NewValue);
+    
     
 };
