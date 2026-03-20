@@ -94,8 +94,11 @@ public:
     // Expande slots — chamado pelo EquipmentComponent ao equipar mochila
     void AddExtraSlots(int32 Amount);
 
+    // Verifica se Consigo Reduzir Slots slots — retorna false se itens nos slots extras
+    bool CanRemoveExtraSlots(int32 Amount, int32 ReservedSlots = 0) const;
+
     // Tenta reduzir slots — retorna false se itens nos slots extras
-    bool TryRemoveExtraSlots(int32 Amount);
+    bool TryRemoveExtraSlots(int32 Amount, int32 ReservedSlots = 0);
 
     UFUNCTION(BlueprintCallable)
     TArray<UZfItemInstance*> GetAllItems() const;

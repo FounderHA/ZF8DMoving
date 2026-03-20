@@ -286,14 +286,45 @@ void UZfInventoryComponent::AddExtraSlots(int32 Amount)
     OnSlotsChanged.Broadcast(MaxSlots);
 }
 
-bool UZfInventoryComponent::TryRemoveExtraSlots(int32 Amount)
+bool UZfInventoryComponent::CanRemoveExtraSlots(int32 Amount, int32 ReservedSlots) const
 {
-    int32 NewMaxSlots = MaxSlots - Amount;
-    if (NewMaxSlots < BaseSlots) NewMaxSlots = BaseSlots;
+    int32 NewMaxSlots = FMath::Max(MaxSlots - Amount, BaseSlots);
 
+    TArray<int32> SlotsToMove;
     for (const FZfInventoryEntry& Entry : InventoryList.Entries)
     {
-        if (Entry.Item && Entry.SlotIndex >= NewMaxSlots) return false;
+        if (Entry.Item && Entry.SlotIndex >= NewMaxSlots)
+            SlotsToMove.Add(Entry.SlotIndex);
+    }
+
+    int32 FreeSlots = 0;
+    for (int32 i = 0; i < NewMaxSlots; i++)
+    {
+        if (IsSlotEmpty(i)) FreeSlots++;
+    }
+
+    return FreeSlots - ReservedSlots >= SlotsToMove.Num();
+}
+
+bool UZfInventoryComponent::TryRemoveExtraSlots(int32 Amount, int32 ReservedSlots)
+{
+    if (!CanRemoveExtraSlots(Amount, ReservedSlots)) return false;
+
+    int32 NewMaxSlots = FMath::Max(MaxSlots - Amount, BaseSlots);
+
+    TArray<int32> SlotsToMove;
+    for (const FZfInventoryEntry& Entry : InventoryList.Entries)
+    {
+        if (Entry.Item && Entry.SlotIndex >= NewMaxSlots)
+            SlotsToMove.Add(Entry.SlotIndex);
+    }
+
+    for (int32 OldSlot : SlotsToMove)
+    {
+        // GetFirstEmptySlot já vai ignorar o slot da mochila
+        // pois ela já foi adicionada antes dessa chamada
+        int32 FreeSlot = GetFirstEmptySlot();
+        Server_MoveItem_Implementation(OldSlot, FreeSlot);
     }
 
     MaxSlots = NewMaxSlots;
