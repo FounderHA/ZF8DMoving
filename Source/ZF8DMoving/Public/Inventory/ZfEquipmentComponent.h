@@ -11,7 +11,6 @@ class UZfItemInstance;
 class UZfInventoryComponent;
 class AZfItemEquipped;
 
-
 USTRUCT(BlueprintType)
 struct FZfEquipmentEntry
 {
@@ -39,11 +38,14 @@ public:
 
 	// Equipa um item vindo da Bag
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_EquipItem(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory, EZfEquipSlot TargetSlot);
+	void Server_EquipItem(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory, EZfEquipSlot TargetSlot, int32 UnequipToSlot = -1);
 
-	// Desequipa um slot e devolve para a Bag
+	// Desequipa e devolve ao inventário seguindo a lógica:
+	// - TargetInventorySlot vazio           → coloca no slot alvo
+	// - TargetInventorySlot com item igual  → swap (equipa o item do inventário)
+	// - TargetInventorySlot ocupado/diferente → primeiro slot vazio disponível
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_UnequipItem(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory);
+	void Server_UnequipItem(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory, int32 TargetInventorySlot);
 
 	// Retorna o item equipado em um slot
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -63,18 +65,20 @@ public:
 
 private:
 
-	// Array replicado em vez de TMap
 	UPROPERTY(Replicated)
 	TArray<FZfEquipmentEntry> EquippedItems;
 
 	FZfEquipmentEntry* FindEntry(EZfEquipSlot Slot);
 
-//==================================== Debug ============================
-	
+	// Lógica interna de desequipar — destrói actor e remove do array
+	// NÃO devolve ao inventário, isso é responsabilidade do Server_UnequipItem
+	void AddEquip(UZfItemInstance* InItem);
+	void RemoveEquip(EZfEquipSlot Slot);
+
+	// Validação se posso Equipar o Item
+	bool CanUnequipItem(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory, int32 TargetInventorySlot = -1) const;
+
 public:
-	// Debug Equipament
 	UFUNCTION(BlueprintCallable)
 	void DebugEquipament();
-
 };
-
