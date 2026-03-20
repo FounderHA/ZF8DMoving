@@ -73,6 +73,11 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+
+    // Adiciona item a partir de uma definição (cria a instância no servidor)
+    UFUNCTION(BlueprintCallable, Server, Reliable)
+    void Server_AddItemFromPickup(UZfItemDefinition* InItemDefinition);
+    
     // Adiciona item a partir de uma definição (cria a instância no servidor)
     UFUNCTION(BlueprintCallable, Server, Reliable)
     void Server_AddItem(UZfItemDefinition* InItemDefinition);

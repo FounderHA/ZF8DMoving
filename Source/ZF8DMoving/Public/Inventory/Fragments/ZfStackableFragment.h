@@ -21,6 +21,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Replicated, BlueprintReadOnly, Category = "Stack")
 	int32 MaxStackSize = 99;
 
-	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Stack")
+	UPROPERTY(EditDefaultsOnly, Replicated, BlueprintReadOnly, Category = "Stack")
 	int32 CurrentStackSize = 1;
 };

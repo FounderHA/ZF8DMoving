@@ -67,6 +67,6 @@ void AZfItemPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComp, AActor*
     UZfInventoryComponent* Inventory = PS->GetInventoryComponent();
     if (!Inventory) return;
 
-    Inventory->Server_AddItem(ItemDefinition);
+    Inventory->Server_AddItemFromPickup(ItemDefinition);
     SetLifeSpan(0.01f);
 }

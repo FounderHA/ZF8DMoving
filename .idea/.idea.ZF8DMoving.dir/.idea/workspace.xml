@@ -10,32 +10,9 @@
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Items/DA_ItemStaff.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/DA_ItemStaff.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Items/DA_ItemSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/DA_ItemSword.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/0c5f239e-0336-4611-a3b8-59d1bc88e670.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Captura_de_tela_2026-03-18_022944.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Captura_de_tela_2026-03-18_023022.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/ChatBox_image.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Chest.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Feet.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Gloves.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Head.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Legs.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Sword.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentPanel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentSlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentSlot.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TABMainPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TABMainPanel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/anel.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/botas.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/capa.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/capacete.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/luvas.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/mochila.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/peito.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfStackableFragment.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfStackableFragment.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryComponent.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,7 +27,6 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://11" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfEquipmentComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfInventoryComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZFMainAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -92,24 +68,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;Uproject.ZF8DMoving.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;zu4d0/inventoryEequipment&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;CppUnrealEngineOptionsId&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Uproject.ZF8DMoving.executor": "Debug",
+    "git-widget-placeholder": "zu4d0/Equipment",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "CppUnrealEngineOptionsId",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="ZF8DMoving" type="Uproject" factoryName="rider.uproject">
       <configuration_1 setup="1">
@@ -243,6 +219,7 @@
       <workItem from="1773919073582" duration="10472000" />
       <workItem from="1773931990084" duration="7383000" />
       <workItem from="1773944629793" duration="8791000" />
+      <workItem from="1773971189892" duration="5237000" />
     </task>
     <servers />
   </component>

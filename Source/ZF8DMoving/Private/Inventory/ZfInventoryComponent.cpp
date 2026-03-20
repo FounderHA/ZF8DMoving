@@ -117,6 +117,7 @@ void FZfInventoryList::RemoveItem(UZfItemInstance* Item)
 
 void FZfInventoryList::RemoveItem(UZfItemDefinition* ItemDefinition)
 {
+    
     for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
     {
         if (EntryIt->Item && EntryIt->Item->ItemDefinition == ItemDefinition)
@@ -125,7 +126,95 @@ void FZfInventoryList::RemoveItem(UZfItemDefinition* ItemDefinition)
             MarkArrayDirty();
         }
     }
+    
 }
+
+//
+//============================ Server Add Item From Pickup ============================
+//
+void UZfInventoryComponent::Server_AddItemFromPickup_Implementation(UZfItemDefinition* InItemDefinition)
+{
+    if (!InItemDefinition) return;
+
+    if (const UZfStackableFragment* Stackable = InItemDefinition->FindFragmentByClass<UZfStackableFragment>())
+    {
+        int32 CurrentAmountFromPickup = Stackable->CurrentStackSize;
+        
+        for (FZfInventoryEntry& Entry : InventoryList.Entries)
+        {
+            if (!Entry.Item || Entry.Item->ItemDefinition != InItemDefinition) continue;
+
+            UZfStackableFragment* ExistingStack = Entry.Item->FindFragmentByClass<UZfStackableFragment>();
+            if (!ExistingStack) continue;
+
+            if (ExistingStack->CurrentStackSize < ExistingStack->MaxStackSize)
+            {
+                int32 AmountInSlot = ExistingStack->CurrentStackSize;
+                int32 MaxInSlot = ExistingStack->MaxStackSize;
+
+                int32 SpaceInSlot = MaxInSlot - AmountInSlot;
+                int32 AmountToFill = FMath::Min(CurrentAmountFromPickup, SpaceInSlot);
+                CurrentAmountFromPickup = CurrentAmountFromPickup - AmountToFill;
+                
+                ExistingStack->CurrentStackSize += AmountToFill;
+                InventoryList.MarkItemDirty(Entry);
+                OnItemAdded.Broadcast(Entry.Item);
+                
+                if (CurrentAmountFromPickup == 0)
+                {
+                    return; 
+                }
+            }
+        }
+        if (CurrentAmountFromPickup > 0)
+        {
+            int32 EmptySlot = GetFirstEmptySlot();
+            if (EmptySlot == -1)
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Inventário cheio!"));
+                //Dropar Excesso
+                return;
+            }
+            
+            //Add Novo item Com novo valor no Currentstack
+            UZfItemInstance* NewInstance = InventoryList.AddItem(InItemDefinition, EmptySlot);
+            AddReplicatedSubObject(NewInstance);
+            
+            for (UZfItemFragment* Fragment : NewInstance->Fragments)
+            {
+                if (Fragment) AddReplicatedSubObject(Fragment);
+            }
+
+            // Seta o valor restante no novo slot
+            if (UZfStackableFragment* NewStack = NewInstance->FindFragmentByClass<UZfStackableFragment>())
+            {
+                NewStack->CurrentStackSize = CurrentAmountFromPickup;
+            }
+
+            OnItemAdded.Broadcast(NewInstance);
+            return;
+        }
+    }
+
+
+    // Esta parte é para quando Não tem StackableFragment
+    int32 EmptySlot = GetFirstEmptySlot();
+    UZfItemInstance* NewInstance = InventoryList.AddItem(InItemDefinition, EmptySlot);
+
+    // Registra o Item no canal de replicação do componente
+    AddReplicatedSubObject(NewInstance);
+
+    // Registra cada Fragment individualmente — eles têm o Actor como Outer,
+    // então o engine consegue estabelecer o canal corretamente
+    for (UZfItemFragment* Fragment : NewInstance->Fragments)
+    {
+        if (Fragment) AddReplicatedSubObject(Fragment);
+    }
+
+    OnItemAdded.Broadcast(NewInstance);
+    
+}
+
 
 //
 //============================ Server Add Item ============================
