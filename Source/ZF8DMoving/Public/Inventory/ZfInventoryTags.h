@@ -1,0 +1,140 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
+
+/*
+	// C++ 
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(ZfInventoryTags::WeaponTypes::Weapon_Staff);
+	FGameplayTag WeaponStaffTag = ZfInventoryTags::WeaponTypes::Weapon_Staff;
+
+	// Blueprint
+	FGameplayTag MinhaTagDaBlueprint = FGameplayTag::RequestGameplayTag("MinhaTag.Tag.MinhaTag");
+	FGameplayTagContainer MeuTagContainerComTagDaBlueprint;
+	MeuTagContainerComTagDaBlueprint.AddTag(FGameplayTag::RequestGameplayTag("MinhaTag.Tag.MinhaTag"));
+*/
+
+namespace ZfInventoryTags
+{
+	namespace WeaponTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weapon)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weapon_Staff)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weapon_Sword)
+	}
+	
+	namespace ShieldTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shield)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Shield_Tower)
+	}
+	
+	namespace HelmetTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Helmet)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Helmet_Plate)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Helmet_Leather)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Helmet_Cloth)
+	}
+	
+	namespace ChestTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Chest)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Chest_Plate)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Chest_Leather)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Chest_Cloth)
+	}
+	
+	namespace LegsTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Legs)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Legs_Plate)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Legs_Leather)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Legs_Cloth)
+	}
+	
+	namespace FeetTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Feet)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Feet_Plate)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Feet_Leather)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Feet_Cloth)
+	}
+	
+	namespace HandsTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hands)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hands_Plate)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hands_Leather)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hands_Cloth)
+	}
+	
+	namespace CapeTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cape)
+	}
+	
+	namespace JewelryTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Jewelry)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Jewelry_Ring)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Jewelry_Necklace)
+	}
+	
+	namespace BackpackTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Backpack)
+	}
+	
+	namespace ToolsTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tools)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tools_Pickaxe)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tools_Axe)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tools_Shovel)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tools_FishingRod)
+	}
+	
+	namespace ConsumableTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Consumable)
+	}
+	
+	namespace ThrowableTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Throwable)
+	}
+	
+	namespace CraftMaterialTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial)
+	}
+	
+	namespace RecipeTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Recipe)
+	}
+	
+	namespace QuestItemTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuestItem)
+	}
+	
+	namespace ProgressionItemTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(ProgressionItem)
+	}
+	
+	namespace CurrencyTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Currency)
+	}
+	
+	namespace CollectibleTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Collectible)
+	}
+}
