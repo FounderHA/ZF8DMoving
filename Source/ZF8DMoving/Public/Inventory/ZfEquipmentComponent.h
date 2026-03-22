@@ -4,27 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Inventory/ZfEquipSlot.h"
 #include "ZfEquipmentComponent.generated.h"
 
-class UZfItemInstance;
-class UZfInventoryComponent;
-class AZfItemEquipped;
-
-USTRUCT(BlueprintType)
-struct FZfEquipmentEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly)
-	EZfEquipSlot Slot = EZfEquipSlot::None;
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UZfItemInstance> Item = nullptr;
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AZfItemEquipped> SpawnedActor = nullptr;
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
@@ -32,53 +13,15 @@ class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Sets default values for this component's properties
 	UZfEquipmentComponent();
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	// Equipa um item vindo da Bag
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_EquipItem(UZfItemInstance* InItem, UZfInventoryComponent* FromInventory, EZfEquipSlot TargetSlot, int32 UnequipToSlot = -1);
-
-	// Desequipa e devolve ao inventário seguindo a lógica:
-	// - TargetInventorySlot vazio           → coloca no slot alvo
-	// - TargetInventorySlot com item igual  → swap (equipa o item do inventário)
-	// - TargetInventorySlot ocupado/diferente → primeiro slot vazio disponível
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_UnequipItem(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory, int32 TargetInventorySlot);
-
-	// Retorna o item equipado em um slot
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	UZfItemInstance* GetEquippedItem(EZfEquipSlot Slot) const;
-
-	// Verifica se um slot está ocupado
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool IsSlotOccupied(EZfEquipSlot Slot) const;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquipmentChanged, EZfEquipSlot, Slot, UZfItemInstance*, Item);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnEquipmentChanged OnItemEquipped;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnEquipmentChanged OnItemUnequipped;
-
-private:
-
-	UPROPERTY(Replicated)
-	TArray<FZfEquipmentEntry> EquippedItems;
-
-	FZfEquipmentEntry* FindEntry(EZfEquipSlot Slot);
-
-	// Lógica interna de desequipar — destrói actor e remove do array
-	// NÃO devolve ao inventário, isso é responsabilidade do Server_UnequipItem
-	void AddEquip(UZfItemInstance* InItem);
-	void RemoveEquip(EZfEquipSlot Slot);
-
-	// Validação se posso Equipar o Item
-	bool CanUnequipItem(EZfEquipSlot Slot, UZfInventoryComponent* ToInventory, int32 TargetInventorySlot = -1) const;
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void DebugEquipament();
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
 };
