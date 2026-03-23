@@ -7,8 +7,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GameplayTagContainer.h"   // Para uso do sistema de Tags do Unreal (TAGs para identificar tipos, slots, classes de modifier, etc.)
 #include "Engine/DataTable.h"       // Para herança de FTableRowBase nas structs de DataTable
+#include "Net/Serialization/FastArraySerializer.h"
 #include "ZfInventoryTypes.generated.h"
 
 // ============================================================
@@ -177,6 +179,8 @@ enum class EZfItemMechanicResult : uint8
     Failed_NotEnoughCost    UMETA(DisplayName = "Failed: Not Enough Cost"),
     Failed_InvalidOperation UMETA(DisplayName = "Failed: Invalid Operation"),
     Failed_StackFull        UMETA(DisplayName = "Failed: Stack Full"),
+    Failed_IncompatibleItem UMETA(DisplayName = "Failed: Incompatible Item Tag"),
+    Failed_SlotBlocked      UMETA(DisplayName = "Failed: Slot Blocked By Two Handed Weapon")
 };
 
 // ============================================================
@@ -312,6 +316,11 @@ struct ZF8DMOVING_API FZfAppliedModifier
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     FName ModifierRowName = NAME_None;
     
+    // classe do modifier cacheada para evitar lookup no DataTable
+    // Preenchida ao rolar o modifier e usada para validar limites por classe
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    EZfModifierClass ModifierClass = EZfModifierClass::None;
+    
     // Rank atual deste modifier (1 a 6)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     int32 CurrentRank = 0.0f;
@@ -341,7 +350,7 @@ struct ZF8DMOVING_API FZfAppliedModifier
     // Gerenciado pelo EquipmentComponent ao equipar/desequipar
     FActiveGameplayEffectHandle ActiveEffectHandle;
 };
-/*
+
 
 // ============================================================
 // FAST ARRAYS — INVENTÁRIO E EQUIPAMENTO
@@ -466,7 +475,6 @@ struct TStructOpsTypeTraits<FZfEquipmentList> : public TStructOpsTypeTraitsBase2
     enum { WithNetDeltaSerializer = true };
 };
 
-*/
 
 // ============================================================
 // STRUCTS DE COMBO SET
