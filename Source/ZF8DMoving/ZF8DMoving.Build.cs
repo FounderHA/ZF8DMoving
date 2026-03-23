@@ -13,6 +13,7 @@ public class ZF8DMoving : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"UMG",
 			"InputCore",
 			"EnhancedInput",
 			"GameplayTags",

@@ -12,9 +12,7 @@ namespace ZfInventoryTags
 	namespace ShieldTypes
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Shield, "ItemType.Shield")
-		UE_DEFINE_GAMEPLAY_TAG(Shield_Plate, "ItemType.Shield.Plate")
-		UE_DEFINE_GAMEPLAY_TAG(Shield_Leather, "ItemType.Shield.Leather")
-		UE_DEFINE_GAMEPLAY_TAG(Shield_Cloth, "ItemType.Shield.Cloth")
+		UE_DEFINE_GAMEPLAY_TAG(Shield_Tower, "ItemType.Shield.Tower")
 	}
 	
 	namespace HelmetTypes
@@ -77,9 +75,10 @@ namespace ZfInventoryTags
 	namespace ToolsTypes
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Tools, "ItemType.Tools")
-		UE_DEFINE_GAMEPLAY_TAG(Hands_Pickaxe, "ItemType.Tools.Pickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Hands_Axe, "ItemType.Tools.Axe")
-		UE_DEFINE_GAMEPLAY_TAG(Hands_Shovel, "ItemType.Tools.Shovel")	
+		UE_DEFINE_GAMEPLAY_TAG(Tools_Pickaxe, "ItemType.Tools.Pickaxe")
+		UE_DEFINE_GAMEPLAY_TAG(Tools_Axe, "ItemType.Tools.Axe")
+		UE_DEFINE_GAMEPLAY_TAG(Tools_Shovel, "ItemType.Tools.Shovel")
+		UE_DEFINE_GAMEPLAY_TAG(Tools_FishingRod, "ItemType.Tools.FishingRod")
 	}
 	
 	namespace ConsumableTypes
