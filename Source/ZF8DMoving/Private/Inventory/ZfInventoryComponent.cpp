@@ -58,7 +58,11 @@ void UZfInventoryComponent::BeginPlay()
     // Inicializa os slots apenas no servidor
     if (GetOwner() && GetOwner()->HasAuthority())
     {
-        Internal_InitializeSlots();
+        // Seta o owner e o tamanho inicial diretamente
+        InventoryList.OwnerComponent = this;
+        CurrentSlotCount = DefaultSlotCount;
+
+        UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::BeginPlay — " "Inventário inicializado com %d slots disponíveis."), CurrentSlotCount);
     }
 }
 
@@ -77,15 +81,12 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
 
     if (!ItemInstance)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfInventoryComponent::TryAddItemToInventory — "
-                 "ItemInstance é nulo."));
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::TryAddItemToInventory — " "ItemInstance é nulo."));
         return EZfItemMechanicResult::Failed_ItemNotFound;
     }
 
     // Tenta empilhar com itens existentes se for stackável
-    const UZfFragment_Stackable* StackFragment =
-        ItemInstance->GetFragment<UZfFragment_Stackable>();
+    const UZfFragment_Stackable* StackFragment = ItemInstance->GetFragment<UZfFragment_Stackable>();
 
     if (StackFragment && StackFragment->bAutoStackOnPickup)
     {
@@ -93,8 +94,8 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
         {
             // Item foi completamente absorvido por stacks existentes
             UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::TryAddItemToInventory — " 
-                "Item '%s' completamente empilhado em stacks existentes."),
-                *ItemInstance->GetItemName().ToString());
+            "Item '%s' completamente empilhado em stacks existentes."),
+            *ItemInstance->GetItemName().ToString());
             return EZfItemMechanicResult::Success;
         }
     }
@@ -104,25 +105,27 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
     const int32 EmptySlot = GetFirstEmptySlot();
     if (EmptySlot == INDEX_NONE)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfInventoryComponent::TryAddItemToInventory — "
-                 "Inventário cheio. Item '%s' não pode ser adicionado."),
-            *ItemInstance->GetItemName().ToString());
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::TryAddItemToInventory — " 
+        "Inventário cheio. Item '%s' não pode ser adicionado."), *ItemInstance->GetItemName().ToString());
         return EZfItemMechanicResult::Failed_InventoryFull;
     }
 
-    // Coloca no slot vazio encontrado
-    InventoryList.Slots[EmptySlot].ItemInstance = ItemInstance;
+    // Cria uma nova entrada no array apenas com o item
+    FZfInventorySlot NewSlot;
+    NewSlot.SlotIndex     = EmptySlot;
+    NewSlot.ItemInstance  = ItemInstance;
+    InventoryList.Slots.Add(NewSlot);
+    
     OutSlotIndex = EmptySlot;
 
     // Notifica os fragments do item
     ItemInstance->NotifyFragments_ItemAddedToInventory(this);
-
+    
     // Notifica a UI e outros sistemas via delegate
     OnItemAdded.Broadcast(ItemInstance, EmptySlot);
 
     // Marca o inventário como modificado para replicação
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::TryAddItemToInventory — "
@@ -180,12 +183,10 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToSpecificSlot(UZfItemIns
         OnItemAdded.Broadcast(ItemInstance, SlotIndex);
     }
 
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfInventoryComponent::TryAddItemToSpecificSlot — "
-             "Item '%s' adicionado ao slot %d."),
-        *ItemInstance->GetItemName().ToString(), SlotIndex);
+    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::TryAddItemToSpecificSlot — " "Item '%s' adicionado ao slot %d."),
+    *ItemInstance->GetItemName().ToString(), SlotIndex);
 
     return EZfItemMechanicResult::Success;
 }
@@ -292,7 +293,7 @@ EZfItemMechanicResult UZfInventoryComponent::RemoveItemAtSlot(
     // Notifica a UI
     OnItemRemoved.Broadcast(ItemInstance, SlotIndex);
 
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::RemoveItemAtSlot — "
@@ -362,7 +363,7 @@ EZfItemMechanicResult UZfInventoryComponent::RemoveAmountFromStack(
         return RemoveItemInstance(ItemInstance);
     }
 
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
     return EZfItemMechanicResult::Success;
 }
 
@@ -382,8 +383,7 @@ EZfItemMechanicResult UZfInventoryComponent::MoveItemBetweenSlots(
     // Valida os dois slots
     if (!IsValidSlotIndex(FromSlotIndex) || !IsValidSlotIndex(ToSlotIndex))
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfInventoryComponent::MoveItemBetweenSlots — "
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::MoveItemBetweenSlots — "
                  "Slot inválido. From: %d | To: %d"),
             FromSlotIndex, ToSlotIndex);
         return EZfItemMechanicResult::Failed_InvalidSlot;
@@ -422,7 +422,7 @@ EZfItemMechanicResult UZfInventoryComponent::MoveItemBetweenSlots(
         OnItemMoved.Broadcast(ItemAtDestination, ToSlotIndex, FromSlotIndex);
     }
 
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::MoveItemBetweenSlots — "
@@ -523,7 +523,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryEquipItem(
         // Remove do inventário apenas se o equip foi bem sucedido
         Internal_ClearSlot(SlotIndex);
         OnItemRemoved.Broadcast(ItemInstance, SlotIndex);
-        Internal_MarkInventoryDirty();
+        InventoryList.MarkArrayDirty();
 
         UE_LOG(LogZfInventory, Log,
             TEXT("UZfInventoryComponent::TryEquipItem — "
@@ -552,7 +552,7 @@ EZfItemMechanicResult UZfInventoryComponent::ReceiveUnequippedItem(UZfItemInstan
         InventoryList.Slots[PreferredSlotIndex].ItemInstance = ItemInstance;
         ItemInstance->NotifyFragments_ItemAddedToInventory(this);
         OnItemAdded.Broadcast(ItemInstance, PreferredSlotIndex);
-        Internal_MarkInventoryDirty();
+        InventoryList.MarkArrayDirty();
 
         UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::ReceiveUnequippedItem — " "Item '%s' retornou ao slot preferido %d."),
         *ItemInstance->GetItemName().ToString(), PreferredSlotIndex);
@@ -600,7 +600,7 @@ void UZfInventoryComponent::SortInventoryAlphabetically()
     }
 
     OnInventoryRefreshed.Broadcast();
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::SortInventoryAlphabetically — "
@@ -644,7 +644,7 @@ void UZfInventoryComponent::SortInventoryByItemType()
     }
 
     OnInventoryRefreshed.Broadcast();
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::SortInventoryByItemType — "
@@ -681,7 +681,7 @@ void UZfInventoryComponent::SortInventoryByRarity()
     }
 
     OnInventoryRefreshed.Broadcast();
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::SortInventoryByRarity — "
@@ -713,7 +713,7 @@ void UZfInventoryComponent::CompactInventory()
     }
 
     OnInventoryRefreshed.Broadcast();
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::CompactInventory — "
@@ -725,14 +725,16 @@ void UZfInventoryComponent::CompactInventory()
 // CONSULTA
 // ============================================================
 
-UZfItemInstance* UZfInventoryComponent::GetItemAtSlot(
-    int32 SlotIndex) const
+UZfItemInstance* UZfInventoryComponent::GetItemAtSlot(int32 SlotIndex) const
 {
-    if (!IsValidSlotIndex(SlotIndex))
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
-        return nullptr;
+        if (Slot.SlotIndex == SlotIndex)
+        {
+            return Slot.ItemInstance;
+        }
     }
-    return InventoryList.Slots[SlotIndex].ItemInstance;
+    return nullptr;
 }
 
 int32 UZfInventoryComponent::GetSlotIndexOfItem(
@@ -775,13 +777,22 @@ TArray<UZfItemInstance*> UZfInventoryComponent::GetItemsByTag(
 
 int32 UZfInventoryComponent::GetFirstEmptySlot() const
 {
+    // Coleta todos os SlotIndex ocupados
+    TSet<int32> OccupiedSlots;
     for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
-        if (!Slot.ItemInstance)
+        OccupiedSlots.Add(Slot.SlotIndex);
+    }
+
+    // Retorna o primeiro índice não ocupado
+    for (int32 i = 0; i < CurrentSlotCount; i++)
+    {
+        if (!OccupiedSlots.Contains(i))
         {
-            return Slot.SlotIndex;
+            return i;
         }
     }
+
     return INDEX_NONE;
 }
 
@@ -810,16 +821,21 @@ bool UZfInventoryComponent::IsInventoryFull() const
 
 bool UZfInventoryComponent::IsSlotEmpty(int32 SlotIndex) const
 {
-    if (!IsValidSlotIndex(SlotIndex))
+    // Slot vazio = não existe entrada no array com esse índice
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
-        return false;
+        if (Slot.SlotIndex == SlotIndex)
+        {
+            return false;
+        }
     }
-    return InventoryList.Slots[SlotIndex].ItemInstance == nullptr;
+    return true;
 }
 
 bool UZfInventoryComponent::IsValidSlotIndex(int32 SlotIndex) const
 {
-    return InventoryList.Slots.IsValidIndex(SlotIndex);
+    // Válido se estiver dentro do range do inventário
+    return SlotIndex >= 0 && SlotIndex < CurrentSlotCount;
 }
 
 TArray<UZfItemInstance*> UZfInventoryComponent::GetAllItems() const
@@ -852,35 +868,25 @@ int32 UZfInventoryComponent::AddExtraSlots(int32 ExtraSlots)
     }
 
     // Calcula quantos slots realmente podem ser adicionados
-    const int32 SlotsAvailableToAdd =
-        MaxAbsoluteSlotCount - CurrentSlotCount;
+    const int32 SlotsAvailableToAdd = MaxAbsoluteSlotCount - CurrentSlotCount;
 
     const int32 SlotsToAdd = FMath::Min(ExtraSlots, SlotsAvailableToAdd);
 
     if (SlotsToAdd <= 0)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfInventoryComponent::AddExtraSlots — "
-                 "Limite máximo de slots atingido (%d)."),
-            MaxAbsoluteSlotCount);
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::AddExtraSlots — " "Limite máximo de slots atingido (%d)."),
+        MaxAbsoluteSlotCount);
         return 0;
     }
 
-    // Adiciona os novos slots vazios
-    for (int32 i = 0; i < SlotsToAdd; i++)
-    {
-        Internal_AddEmptySlot(CurrentSlotCount + i);
-    }
-
+    // Adiciona quantidade maxima de slot
     CurrentSlotCount += SlotsToAdd;
 
     OnInventorySizeChanged.Broadcast(CurrentSlotCount);
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfInventoryComponent::AddExtraSlots — "
-             "%d slots adicionados. Total: %d/%d"),
-        SlotsToAdd, CurrentSlotCount, MaxAbsoluteSlotCount);
+    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::AddExtraSlots — " "%d slots adicionados. Total: %d/%d"),
+    SlotsToAdd, CurrentSlotCount, MaxAbsoluteSlotCount);
 
     return SlotsToAdd;
 }
@@ -938,7 +944,7 @@ EZfItemMechanicResult UZfInventoryComponent::RemoveExtraSlots(
     CurrentSlotCount = FirstSlotToRemove;
 
     OnInventorySizeChanged.Broadcast(CurrentSlotCount);
-    Internal_MarkInventoryDirty();
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::RemoveExtraSlots — "
@@ -952,8 +958,7 @@ EZfItemMechanicResult UZfInventoryComponent::RemoveExtraSlots(
 // RPCs
 // ============================================================
 
-bool UZfInventoryComponent::ServerRequestMoveItem_Validate(
-    int32 FromSlotIndex, int32 ToSlotIndex)
+bool UZfInventoryComponent::ServerRequestMoveItem_Validate(int32 FromSlotIndex, int32 ToSlotIndex)
 {
     // Valida que os índices são razoáveis antes de processar
     return IsValidSlotIndex(FromSlotIndex) && IsValidSlotIndex(ToSlotIndex);
@@ -1049,10 +1054,12 @@ void UZfInventoryComponent::ClientNotifyOperationFailed_Implementation(
 // FUNÇÕES INTERNAS
 // ============================================================
 
-void UZfInventoryComponent::Internal_InitializeSlots()
+/*/void UZfInventoryComponent::Internal_InitializeSlots()
 {
     InventoryList.Slots.Empty();
     InventoryList.OwnerComponent = this;
+    
+    
 
     for (int32 i = 0; i < DefaultSlotCount; i++)
     {
@@ -1060,12 +1067,14 @@ void UZfInventoryComponent::Internal_InitializeSlots()
     }
 
     CurrentSlotCount = DefaultSlotCount;
+    
+    InventoryList.MarkArrayDirty();
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::Internal_InitializeSlots — "
              "%d slots inicializados."), DefaultSlotCount);
 }
-
+*/
 void UZfInventoryComponent::Internal_FindEquipmentComponent()
 {
     if (GetOwner())
@@ -1127,7 +1136,7 @@ bool UZfInventoryComponent::Internal_TryStackWithExistingItems(
         // Atualiza o stack do item incoming
         ItemInstance->SetCurrentStack(Overflow);
 
-        Internal_MarkInventoryDirty();
+        InventoryList.MarkArrayDirty();
 
         // Se não tem overflow, o item foi completamente absorvido
         if (Overflow <= 0)
@@ -1140,20 +1149,11 @@ bool UZfInventoryComponent::Internal_TryStackWithExistingItems(
     return false;
 }
 
-void UZfInventoryComponent::Internal_AddEmptySlot(int32 SlotIndex)
-{
-    FZfInventorySlot NewSlot;
-    NewSlot.SlotIndex = SlotIndex;
-    NewSlot.ItemInstance = nullptr;
-    InventoryList.Slots.Add(NewSlot);
-}
-
 void UZfInventoryComponent::Internal_ClearSlot(int32 SlotIndex)
 {
-    if (IsValidSlotIndex(SlotIndex))
-    {
-        InventoryList.Slots[SlotIndex].ItemInstance = nullptr;
-    }
+    // Remove a entrada do array completamente
+    // em vez de setar ItemInstance = nullptr
+    InventoryList.Slots.RemoveAll([SlotIndex](const FZfInventorySlot& Slot){return Slot.SlotIndex == SlotIndex;});
 }
 
 bool UZfInventoryComponent::Internal_CheckIsServer(
@@ -1192,13 +1192,6 @@ bool UZfInventoryComponent::Internal_CheckEquipmentComponent(
         return false;
     }
     return true;
-}
-
-void UZfInventoryComponent::Internal_MarkInventoryDirty()
-{
-    // Marca o FastArraySerializer como modificado
-    // para que o Unreal envie as mudanças pela rede
-    InventoryList.MarkArrayDirty();
 }
 
 // ============================================================

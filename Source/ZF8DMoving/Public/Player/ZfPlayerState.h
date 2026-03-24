@@ -8,7 +8,7 @@
 #include "AbilitySystemInterface.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfEquipmentComponent.h"
-#include "Player/Class/ZfPrimaryDataAssetClass.h"
+#include "Player/Class/ZfClassBaseSettings.h"
 #include "ZfPlayerState.generated.h"
 
 class UZfMainAttributeSet;

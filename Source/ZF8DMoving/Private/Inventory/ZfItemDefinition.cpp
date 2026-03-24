@@ -3,6 +3,7 @@
 
 #include "Inventory/ZfItemDefinition.h"
 #include "Inventory/ZfInventoryTypes.h"
+#include "Inventory/Fragments/ZfFragment_ItemUnique.h"
 #include "Misc/DataValidation.h"
 
 // ============================================================
@@ -31,32 +32,24 @@ EDataValidationResult UZfItemDefinition::IsDataValid(FDataValidationContext& Con
     // Valida que o item tem nome configurado
     if (ItemName.IsEmpty())
     {
-        Context.AddError(FText::FromString(TEXT("ZfItemDefinition: ItemName não pode estar vazio.")));
+        Context.AddWarning(FText::FromString(TEXT("ZfItemDefinition: ItemName não pode estar vazio.")));
         Result = EDataValidationResult::Invalid;
     }
 
     // Valida que o item tem ao menos uma tag de tipo
     if (ItemTags.IsEmpty())
     {
-        Context.AddError(FText::FromString(TEXT("ZfItemDefinition: ItemTags não pode estar vazio." "Adicione ao menos uma tag de tipo de item.")));
+        Context.AddWarning(FText::FromString(TEXT("ZfItemDefinition: ItemTags não pode estar vazio." "Adicione ao menos uma tag de tipo de item.")));
         Result = EDataValidationResult::Invalid;
     }
 
     // Valida consistência de item Único
-    if (bIsUnique)
+    if (const UZfFragment_ItemUnique* UniqueFragment = FindFragment<UZfFragment_ItemUnique>())
     {
-        // Item Único deve ter raridade Unique
-        if (BaseRarity != EZfItemRarity::Unique)
-        {
-            Context.AddError(FText::FromString(TEXT("ZfItemDefinition: Item marcado como Único (bIsUnique)" "deve ter BaseRarity = Unique.")));
-            Result = EDataValidationResult::Invalid;
-        }
-
         // Item Único deve ter ao menos um modifier fixo
-        if (UniqueModifiers.IsEmpty())
+        if (UniqueFragment->UniqueModifiers.IsEmpty())
         {
-            Context.AddWarning(FText::FromString(
-                TEXT("ZfItemDefinition: Item Único sem UniqueModifiers configurados.")));
+            Context.AddWarning(FText::FromString(TEXT("ZfItemDefinition: Item Único sem UniqueModifiers configurados.")));
         }
     }
 
@@ -107,15 +100,9 @@ FString UZfItemDefinition::GetDebugString() const
     FString DebugInfo = FString::Printf(
         TEXT("=== ZfItemDefinition Debug ===\n")
         TEXT("Name: %s\n")
-        TEXT("Rarity: %s\n")
-        TEXT("IsUnique: %s\n")
-        TEXT("BaseMarketValue: %.2f\n")
         TEXT("Tags: %s\n")
         TEXT("Fragments (%d):\n"),
         *ItemName.ToString(),
-        *UEnum::GetValueAsString(BaseRarity),
-        bIsUnique ? TEXT("Yes") : TEXT("No"),
-        BaseMarketValue,
         *ItemTags.ToString(),
         Fragments.Num());
 
@@ -132,20 +119,21 @@ FString UZfItemDefinition::GetDebugString() const
     }
 
     // Lista modifiers únicos se aplicável
-    if (bIsUnique && UniqueModifiers.Num() > 0)
+    if (const UZfFragment_ItemUnique* UniqueItem = FindFragment<UZfFragment_ItemUnique>())
     {
-        DebugInfo += FString::Printf(
-            TEXT("UniqueModifiers (%d):\n"), UniqueModifiers.Num());
-
-        for (const FZfAppliedModifier& Modifier : UniqueModifiers)
+        if (UniqueItem->UniqueModifiers.Num() > 0)
         {
-            DebugInfo += FString::Printf(
-                TEXT("  - Row: %s | Rank: %d | Value: %.2f\n"),
-                *Modifier.ModifierRowName.ToString(),
-                Modifier.CurrentRank,
-                Modifier.CurrentValue);
+            DebugInfo += FString::Printf(TEXT("UniqueModifiers (%d):\n"), UniqueItem->UniqueModifiers.Num());
+
+            for (const FDataTableRowHandle& Handle : UniqueItem->UniqueModifiers)
+            {
+                if (GEngine)
+                {
+                    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan,
+                        FString::Printf(TEXT("Item Equipado: %s"), *Handle.RowName.ToString()));
+                }
+            }
         }
     }
-
     return DebugInfo;
 }

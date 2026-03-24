@@ -15,6 +15,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
+#include "Player/ZfPlayerState.h"
 
 // ============================================================
 // Constructor
@@ -37,29 +38,25 @@ AZfItemPickup::AZfItemPickup()
     // ----------------------------------------------------------
 
     // Esfera de colisão como root — define área de coleta
-    CollisionSphere = CreateDefaultSubobject<USphereComponent>(
-        TEXT("CollisionSphere"));
+    CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
     SetRootComponent(CollisionSphere);
     CollisionSphere->SetSphereRadius(100.0f);
     CollisionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
     // Mesh estática — exibida quando item tem StaticMesh no Definition
-    StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(
-        TEXT("StaticMeshComponent"));
+    StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
     StaticMeshComponent->SetupAttachment(CollisionSphere);
     StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     StaticMeshComponent->SetRelativeLocation(FVector::ZeroVector);
 
     // Mesh esquelética — alternativa para itens com SkeletalMesh
-    SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(
-        TEXT("SkeletalMeshComponent"));
+    SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
     SkeletalMeshComponent->SetupAttachment(CollisionSphere);
     SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SkeletalMeshComponent->SetVisibility(false);
 
     // Widget 3D com informações do item
-    ItemInfoWidget = CreateDefaultSubobject<UWidgetComponent>(
-        TEXT("ItemInfoWidget"));
+    ItemInfoWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidget"));
     ItemInfoWidget->SetupAttachment(CollisionSphere);
     ItemInfoWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 80.0f));
     ItemInfoWidget->SetWidgetSpace(EWidgetSpace::World);
@@ -139,9 +136,6 @@ void AZfItemPickup::InitializePickup(UZfItemInstance* InItemInstance)
 
     // Armazena o ItemInstance — será replicado automaticamente
     ItemInstance = InItemInstance;
-
-    // Carrega o mesh localmente no servidor
-    Internal_LoadAndApplyMesh();
 
     // Atualiza o widget com informações do item
     Internal_UpdateItemInfoWidget();
@@ -279,7 +273,6 @@ void AZfItemPickup::OnRep_ItemInstance()
 
     if (ItemInstance)
     {
-        Internal_LoadAndApplyMesh();
         Internal_UpdateItemInfoWidget();
 
         UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::OnRep_ItemInstance — " "ItemInstance replicado: '%s'"),
@@ -352,85 +345,6 @@ UZfItemDefinition* AZfItemPickup::GetItemDefinition() const
 // FUNÇÕES INTERNAS
 // ============================================================
 
-void AZfItemPickup::Internal_LoadAndApplyMesh()
-{
-    UZfItemDefinition* Definition = GetItemDefinition();
-    if (!Definition)
-    {
-        return;
-    }
-
-    // Verifica qual mesh usar — prefere SkeletalMesh se disponível
-    const bool bHasSkeletalMesh = !Definition->SkeletalMesh.IsNull();
-    const bool bHasStaticMesh = !Definition->StaticMesh.IsNull();
-
-    if (!bHasSkeletalMesh && !bHasStaticMesh)
-    {
-        UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::Internal_LoadAndApplyMesh — " "Item '%s' não tem mesh configurado no ItemDefinition."),
-            *Definition->ItemName.ToString());
-        return;
-    }
-
-    // Cancela carregamento anterior se houver
-    if (MeshStreamingHandle.IsValid())
-    {
-        MeshStreamingHandle->CancelHandle();
-        MeshStreamingHandle.Reset();
-    }
-
-    // Carrega o mesh assincronamente via AssetManager
-    FStreamableManager& StreamableManager =
-        UAssetManager::GetStreamableManager();
-
-    if (bHasSkeletalMesh)
-    {
-        // Carrega SkeletalMesh assincronamente
-        MeshStreamingHandle = StreamableManager.RequestAsyncLoad(Definition->SkeletalMesh.ToSoftObjectPath(),[this, Definition]()
-            {
-                if (!IsValid(this))
-                {
-                    return;
-                }
-
-                USkeletalMesh* LoadedMesh = Definition->SkeletalMesh.Get();
-
-                if (LoadedMesh && SkeletalMeshComponent)
-                {
-                    StaticMeshComponent->SetVisibility(false);
-                    SkeletalMeshComponent->SetSkeletalMesh(LoadedMesh);
-                    SkeletalMeshComponent->SetVisibility(true);
-
-                    UE_LOG(LogZfInventory, Verbose,
-                        TEXT("AZfItemPickup::Internal_LoadAndApplyMesh — " "SkeletalMesh '%s' carregado."), *LoadedMesh->GetName());
-                }
-            });
-    }
-    else if (bHasStaticMesh)
-    {
-        // Carrega StaticMesh assincronamente
-        MeshStreamingHandle = StreamableManager.RequestAsyncLoad(Definition->StaticMesh.ToSoftObjectPath(),
-            [this, Definition]()
-            {
-                if (!IsValid(this))
-                {
-                    return;
-                }
-
-                UStaticMesh* LoadedMesh = Definition->StaticMesh.Get();
-
-                if (LoadedMesh && StaticMeshComponent)
-                {
-                    SkeletalMeshComponent->SetVisibility(false);
-                    StaticMeshComponent->SetStaticMesh(LoadedMesh);
-                    StaticMeshComponent->SetVisibility(true);
-
-                    UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::Internal_LoadAndApplyMesh — " "StaticMesh '%s' carregado."),
-                        *LoadedMesh->GetName());
-                }
-            });
-    }
-}
-
 void AZfItemPickup::Internal_UpdateItemInfoWidget()
 {
     // O Widget Blueprint deve bindar ao GetItemInstance()
@@ -476,9 +390,7 @@ void AZfItemPickup::Internal_OnAutoDestroyTimerExpired()
     Destroy();
 }
 
-bool AZfItemPickup::Internal_GetCollectorInventory(
-    AActor* CollectorActor,
-    UZfInventoryComponent*& OutInventory) const
+bool AZfItemPickup::Internal_GetCollectorInventory(AActor* CollectorActor, UZfInventoryComponent*& OutInventory) const
 {
     OutInventory = nullptr;
 
@@ -486,31 +398,36 @@ bool AZfItemPickup::Internal_GetCollectorInventory(
     {
         return false;
     }
-
-    OutInventory =
-        CollectorActor->FindComponentByClass<UZfInventoryComponent>();
+    APawn* Pawn = Cast<APawn>(CollectorActor);
+    
+    if (!Pawn)
+    {
+        return false;
+    }
+    AZfPlayerState* PS = Pawn->GetPlayerState<AZfPlayerState>();
+    
+    if (!PS)
+    {
+        return false;
+    }
+    
+    OutInventory = PS->FindComponentByClass<UZfInventoryComponent>();
 
     return OutInventory != nullptr;
 }
 
-bool AZfItemPickup::Internal_CheckIsServer(
-    const FString& FunctionName) const
+bool AZfItemPickup::Internal_CheckIsServer(const FString& FunctionName) const
 {
     const UWorld* World = GetWorld();
     if (!World)
     {
-        UE_LOG(LogZfInventory, Error,
-            TEXT("AZfItemPickup::%s — GetWorld() retornou nulo."),
-            *FunctionName);
+        UE_LOG(LogZfInventory, Error, TEXT("AZfItemPickup::%s — GetWorld() retornou nulo."), *FunctionName);
         return false;
     }
 
     if (World->GetNetMode() == NM_Client)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("AZfItemPickup::%s — "
-                 "Operação de servidor chamada no cliente!"),
-            *FunctionName);
+        UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::%s — " "Operação de servidor chamada no cliente!"), *FunctionName);
         return false;
     }
 

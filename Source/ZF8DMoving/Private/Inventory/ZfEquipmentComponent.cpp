@@ -687,9 +687,7 @@ void UZfEquipmentComponent::OnBackpackEquipped(int32 ExtraSlots)
 
     const int32 SlotsAdded = InventoryComponent->AddExtraSlots(ExtraSlots);
 
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfEquipmentComponent::OnBackpackEquipped — "
-             "%d slots adicionados ao inventário."), SlotsAdded);
+    UE_LOG(LogZfInventory, Log, TEXT("UZfEquipmentComponent::OnBackpackEquipped — " "%d slots adicionados ao inventário."), SlotsAdded);
 }
 
 void UZfEquipmentComponent::OnBackpackUnequipped(int32 ExtraSlots)
@@ -701,9 +699,7 @@ void UZfEquipmentComponent::OnBackpackUnequipped(int32 ExtraSlots)
 
     InventoryComponent->RemoveExtraSlots(ExtraSlots);
 
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfEquipmentComponent::OnBackpackUnequipped — "
-             "%d slots removidos do inventário."), ExtraSlots);
+    UE_LOG(LogZfInventory, Log, TEXT("UZfEquipmentComponent::OnBackpackUnequipped — " "%d slots removidos do inventário."), ExtraSlots);
 }
 
 // ============================================================

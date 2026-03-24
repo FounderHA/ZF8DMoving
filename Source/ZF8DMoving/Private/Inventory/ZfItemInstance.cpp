@@ -13,6 +13,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Inventory/Fragments/ZfFragment_ItemUnique.h"
 
 // ============================================================
 // Constructor
@@ -83,9 +84,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
     // Valida o ItemDefinition
     if (!InItemDefinition)
     {
-        UE_LOG(LogZfInventory, Error,
-            TEXT("UZfItemInstance::InitializeItemInstance — "
-                 "InItemDefinition é nulo. Item não será inicializado."));
+        UE_LOG(LogZfInventory, Error, TEXT("UZfItemInstance::InitializeItemInstance — " "InItemDefinition é nulo. Item não será inicializado."));
         return;
     }
 
@@ -110,7 +109,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
     Internal_InitializeBaseStats();
 
     // Se for item Único, aplica modifiers fixos do PDA
-    if (InItemDefinition->bIsUnique)
+    if (InItemDefinition->FindFragment<UZfFragment_ItemUnique>())
     {
         Internal_InitializeUniqueModifiers();
     }
@@ -868,17 +867,18 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
     }
 
     // Copia os modifiers fixos do PDA diretamente
-    for (const FZfAppliedModifier& UniqueModifier :
-         ItemDefinition->UniqueModifiers)
+    if (ItemDefinition->FindFragment<UZfFragment_ItemUnique>())
     {
-        AppliedModifiers.Add(UniqueModifier);
+       /* for (const FDataTableRowHandle& Handle : ItemDefinition->UniqueModifiers)
+        {
+            AppliedModifiers.Add(Handle);
 
-        UE_LOG(LogZfInventory, Verbose,
-            TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
-                 "Modifier único '%s' aplicado ao GUID: %s."),
-            *UniqueModifier.ModifierRowName.ToString(),
-            *ItemGuid.ToString());
+            UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — " "Modifier único '%s' aplicado ao GUID: %s."),
+                *Handle.ModifierRowName.ToString(), *ItemGuid.ToString());
+        }
+        */
     }
+    
 }
 
 void UZfItemInstance::Internal_ApplyQualityRowToStats(

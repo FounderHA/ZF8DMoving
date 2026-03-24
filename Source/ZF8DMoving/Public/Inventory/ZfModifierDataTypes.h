@@ -28,7 +28,7 @@
 // ============================================================
 
 USTRUCT(BlueprintType)
-struct ZF8DMOVING_API FZfModifierDataTableRow : public FTableRowBase
+struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
 {
     GENERATED_BODY()
 
@@ -39,7 +39,7 @@ struct ZF8DMOVING_API FZfModifierDataTableRow : public FTableRowBase
     // Nome legível exibido na UI do inventário
     // Ex: "Aumento de Velocidade de Movimento"
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
-    FText DisplayName;
+    FText DisplayName = FText::FromString(TEXT("None"));
 
     // Descrição exibida no tooltip do modifier na UI
     // Ex: "Aumenta a velocidade de movimento do personagem"
@@ -257,20 +257,19 @@ struct ZF8DMOVING_API FZfItemModifierConfig
 
     // Quantidade total máxima de modifiers que este item pode ter.
     // Ex: um capacete épico pode ter até 4 modifiers no total.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Config",
-        meta = (ClampMin = "0", ClampMax = "20"))
-    int32 MaxTotalModifiers = 3;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0", ClampMax = "5",  UIMax = "5"))
+    int32 MaxTotalModifiers = 0;
 
     // Limites por classe de modifier para este item específico.
     // Ex: [{Offensive, 2}, {Utility, 1}] = máx 2 ofensivos e 1 utilitário.
     // Se uma classe não está na lista, considera-se limite = MaxTotalModifiers.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Config")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FZfModifierClassLimit> ModifierClassLimits;
 
     // DataTable de modifiers compatíveis com este item.
     // Soft reference para carregamento assíncrono via AssetManager.
     // Cada tipo de item pode ter sua própria DataTable de modifiers.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Config")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftObjectPtr<UDataTable> ModifierDataTable;
 
     // Retorna o limite máximo de uma classe específica de modifier.
