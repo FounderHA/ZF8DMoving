@@ -3,7 +3,9 @@
 
 #include "Inventory/ZfItemDefinition.h"
 #include "Inventory/ZfInventoryTypes.h"
+#include "Inventory/Fragments/ZfFragment_ItemRarity.h"
 #include "Inventory/Fragments/ZfFragment_ItemUnique.h"
+#include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "Misc/DataValidation.h"
 
 // ============================================================
@@ -68,24 +70,21 @@ EDataValidationResult UZfItemDefinition::IsDataValid(FDataValidationContext& Con
         if (FragmentClasses.Contains(FragmentClass))
         {
             Context.AddError(FText::FromString(FString::Printf(
-                TEXT("ZfItemDefinition: Fragment duplicado encontrado: %s. "
-                     "Cada tipo de fragment deve aparecer apenas uma vez."),
+                TEXT("ZfItemDefinition: Fragment duplicado encontrado: %s. " "Cada tipo de fragment deve aparecer apenas uma vez."),
                 *FragmentClass->GetName())));
             Result = EDataValidationResult::Invalid;
         }
         FragmentClasses.Add(FragmentClass);
     }
 
-    // Valida ModifierConfig — DataTable obrigatório se MaxTotalModifiers > 0
-    if (ModifierConfig.MaxTotalModifiers > 0 &&
-        ModifierConfig.ModifierDataTable.IsNull())
+    if (HasFragment<UZfFragment_Modifiers>() && HasFragment<UZfFragment_ItemUnique>())
     {
-        Context.AddError(FText::FromString(
-            TEXT("ZfItemDefinition: ModifierConfig tem MaxTotalModifiers > 0 "
-                 "mas ModifierDataTable não está configurado.")));
-        Result = EDataValidationResult::Invalid;
+        Context.AddError(FText::FromString(FString::Printf(TEXT("ZfItemDefinition: Não é Possível ter os Fragmentos de Modifiers e ItemUnique em conjunto"))));
     }
-
+    if (HasFragment<UZfFragment_ItemRarity>() && HasFragment<UZfFragment_ItemUnique>())
+    {
+        Context.AddError(FText::FromString(FString::Printf(TEXT("ZfItemDefinition: Não é Possível ter os Fragmentos de ItemRarity e ItemUnique em conjunto"))));
+    }
     return Result;
 }
 #endif

@@ -113,24 +113,12 @@ public:
     TArray<TObjectPtr<UZfItemFragment>> Fragments;
 
     // ----------------------------------------------------------
-    // MODIFIERS
-    // Configuração de modifiers para este item específico.
-    // Define quantos modifiers, quais classes e qual DataTable usar.
-    // Deixe vazio para itens sem modifiers (consumíveis, quest items, etc.)
-    // ----------------------------------------------------------
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Modifiers")
-    FZfItemModifierConfig ModifierConfig;
-    
-
-    // ----------------------------------------------------------
     // MARKET VALUE
     // Valor base usado pelo sistema de Market Value para
     // calcular o preço de venda para NPCs.
     // O valor final é calculado em runtime pelo ItemInstance
     // baseado neste valor + raridade + tier + modifiers.
     // ----------------------------------------------------------
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Economy", meta = (ClampMin = "0.0"))
     float BaseMarketValue = 10.0f;
 

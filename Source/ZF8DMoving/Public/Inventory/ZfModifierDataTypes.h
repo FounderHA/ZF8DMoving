@@ -15,7 +15,7 @@
 #include "ZfModifierDataTypes.generated.h"
 
 // ============================================================
-// FZfModifierDataTableRow
+// FZfModifierDataTypes
 // ============================================================
 // Representa uma linha completa na DataTable de modifiers.
 // Cada linha é um modifier único (ex: "MoveSpeed", "MaxHealth").

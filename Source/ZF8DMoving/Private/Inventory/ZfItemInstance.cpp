@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Inventory/Fragments/ZfFragment_ItemUnique.h"
+#include "Inventory/Fragments/ZfFragment_Modifiers.h"
 
 // ============================================================
 // Constructor
@@ -490,12 +491,18 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
         return false;
     }
 
+    //Verifica de tem Fragmento de Modifiers
+    if (HasFragment<UZfFragment_Modifiers>())
+    {
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::AddAppliedModifier — " "Não Possui o Fragmento de Modifiers."));
+        return false;
+    }
+    
     // Verifica se já existe modifier com o mesmo nome (sem duplicatas)
     if (HasAppliedModifier(NewModifier.ModifierRowName))
     {
         UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfItemInstance::AddAppliedModifier — "
-                 "Modifier '%s' já existe no item GUID: %s."),
+            TEXT("UZfItemInstance::AddAppliedModifier — " "Modifier '%s' já existe no item GUID: %s."),
             *NewModifier.ModifierRowName.ToString(), *ItemGuid.ToString());
         return false;
     }
@@ -503,18 +510,26 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
     // Verifica limite total de modifiers
     if (!ItemDefinition)
     {
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("UZfItemInstance::AddAppliedModifier — " "Modifier '%s' já existe no item GUID: %s."),
+            *NewModifier.ModifierRowName.ToString(), *ItemGuid.ToString());
         return false;
     }
 
-    const int32 MaxTotal = ItemDefinition->ModifierConfig.MaxTotalModifiers;
+    const UZfFragment_Modifiers* Modifiers = GetFragment<UZfFragment_Modifiers>();
+    const int32 MaxTotal = Modifiers->ModifierConfig.MaxTotalModifiers;
+    
     if (AppliedModifiers.Num() >= MaxTotal)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfItemInstance::AddAppliedModifier — "
-                 "Item GUID: %s atingiu o limite máximo de modifiers (%d)."),
-            *ItemGuid.ToString(), MaxTotal);
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::AddAppliedModifier — " "Item GUID: %s atingiu o limite máximo de modifiers (%d)."),
+                *ItemGuid.ToString(), MaxTotal);
         return false;
     }
+        
+            
+        
+    
+    
 
     // Adiciona o modifier
     AppliedModifiers.Add(NewModifier);
@@ -523,13 +538,8 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
     RecalculateMarketValue();
 
     UE_LOG(LogZfInventory, Log,
-        TEXT("UZfItemInstance::AddAppliedModifier — "
-             "Modifier '%s' adicionado ao item GUID: %s. "
-             "Total: %d/%d"),
-        *NewModifier.ModifierRowName.ToString(),
-        *ItemGuid.ToString(),
-        AppliedModifiers.Num(),
-        MaxTotal);
+        TEXT("UZfItemInstance::AddAppliedModifier — " "Modifier '%s' adicionado ao item GUID: %s. " "Total: %d/%d"),
+        *NewModifier.ModifierRowName.ToString(), *ItemGuid.ToString(), AppliedModifiers.Num(), MaxTotal);
 
     return true;
 }
@@ -611,24 +621,31 @@ bool UZfItemInstance::HasAppliedModifier(const FName& ModifierRowName) const
         });
 }
 
-bool UZfItemInstance::CanAddModifierOfClass(
-    EZfModifierClass ModifierClass) const
+bool UZfItemInstance::CanAddModifierOfClass(EZfModifierClass ModifierClass) const
 {
     if (!ItemDefinition)
     {
         return false;
     }
 
+    //Verifica de tem Fragmento de Modifiers
+    if (HasFragment<UZfFragment_Modifiers>())
+    {
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::AddAppliedModifier — " "Não Possui o Fragmento de Modifiers."));
+        return false;
+    }
+    
     // Verifica limite total
-    const int32 MaxTotal = ItemDefinition->ModifierConfig.MaxTotalModifiers;
+
+    const UZfFragment_Modifiers* Modifiers = GetFragment<UZfFragment_Modifiers>();
+    const int32 MaxTotal = Modifiers->ModifierConfig.MaxTotalModifiers;
     if (AppliedModifiers.Num() >= MaxTotal)
     {
         return false;
     }
 
     // Verifica limite por classe
-    const int32 ClassLimit =
-        ItemDefinition->ModifierConfig.GetClassLimit(ModifierClass);
+    const int32 ClassLimit = Modifiers->ModifierConfig.GetClassLimit(ModifierClass);
     const int32 CurrentClassCount = CountModifiersOfClass(ModifierClass);
 
     return CurrentClassCount < ClassLimit;
@@ -665,8 +682,7 @@ bool UZfItemInstance::CorruptItem()
 
     if (IsCorrupted())
     {
-        UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::CorruptItem — " "Item GUID: %s já está corrompido."),
-            *ItemGuid.ToString());
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::CorruptItem — " "Item GUID: %s já está corrompido."), *ItemGuid.ToString());
         return false;
     }
 
@@ -697,10 +713,8 @@ void UZfItemInstance::SetIsRepairable(bool bRepairable)
     bIsRepairable = bRepairable;
 
     UE_LOG(LogZfInventory, Log,
-        TEXT("UZfItemInstance::SetIsRepairable — "
-             "GUID: %s | bIsRepairable: %s"),
-        *ItemGuid.ToString(),
-        bIsRepairable ? TEXT("true") : TEXT("false"));
+        TEXT("UZfItemInstance::SetIsRepairable — " "GUID: %s | bIsRepairable: %s"),
+        *ItemGuid.ToString(), bIsRepairable ? TEXT("true") : TEXT("false"));
 }
 
 // ============================================================
@@ -826,8 +840,7 @@ void UZfItemInstance::Internal_InitializeDurability()
         bIsRepairable = true;
 
         UE_LOG(LogZfInventory, Verbose,
-            TEXT("UZfItemInstance::Internal_InitializeDurability — "
-                 "GUID: %s | MaxDurability: %.1f"),
+            TEXT("UZfItemInstance::Internal_InitializeDurability — " "GUID: %s | MaxDurability: %.1f"),
             *ItemGuid.ToString(), CurrentDurability);
     }
 }
@@ -866,17 +879,65 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
         return;
     }
 
-    // Copia os modifiers fixos do PDA diretamente
-    if (ItemDefinition->FindFragment<UZfFragment_ItemUnique>())
-    {
-       /* for (const FDataTableRowHandle& Handle : ItemDefinition->UniqueModifiers)
-        {
-            AppliedModifiers.Add(Handle);
+    // Busca o fragment de item único
+    const UZfFragment_ItemUnique* UniqueFragment = ItemDefinition->FindFragment<UZfFragment_ItemUnique>();
 
-            UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — " "Modifier único '%s' aplicado ao GUID: %s."),
-                *Handle.ModifierRowName.ToString(), *ItemGuid.ToString());
+    if (!UniqueFragment)
+    {
+        return;
+    }
+
+    // Itera cada handle selecionado no editor
+    for (const FDataTableRowHandle& Handle : UniqueFragment->UniqueModifiers)
+    {
+        // Valida se o handle tem DataTable e linha configurados
+        if (Handle.IsNull())
+        {
+            UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
+                "Handle nulo encontrado. Verifique o Fragment ItemUnique no editor."));
+            continue;
         }
-        */
+
+        // Busca os dados da linha no DataTable
+        const FZfModifierDataTypes* ModifierRow = Handle.GetRow<FZfModifierDataTypes>(TEXT("Internal_InitializeUniqueModifiers"));
+
+        if (!ModifierRow)
+        {
+            UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — " "Linha '%s' não encontrada no DataTable '%s'."),
+                *Handle.RowName.ToString(), Handle.DataTable ? *Handle.DataTable->GetName() : TEXT("None"));
+            continue;
+        }
+
+        // Cria o FZfAppliedModifier a partir dos dados da linha
+        FZfAppliedModifier NewModifier;
+        NewModifier.ModifierRowName   = Handle.RowName;
+        NewModifier.ModifierClass     = ModifierRow->ModifierClass;
+        NewModifier.bIsDebuffModifier = ModifierRow->bIsDebuffModifier;
+
+        // Itens únicos sempre usam o rank máximo disponível
+        const int32 MaxRankIndex = ModifierRow->Ranks.Num() - 1;
+        if (ModifierRow->Ranks.IsValidIndex(MaxRankIndex))
+        {
+            const FZfModifierRankData& RankData = ModifierRow->Ranks[MaxRankIndex];
+
+            NewModifier.CurrentRank           = RankData.RankLevel;
+            NewModifier.CurrentValue          = RankData.RankRange.MaxValue;
+            NewModifier.CurrentRollPercentage = 1.0f;
+            NewModifier.MaxRollPercentage     = 1.0f;
+        }
+        else
+        {
+            UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
+                "Modifier '%s' não tem Ranks configurados no DataTable."),*Handle.RowName.ToString());
+            continue;
+        }
+
+        // Adiciona o modifier ao item
+        AppliedModifiers.Add(NewModifier);
+
+        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
+                 "Modifier único '%s' | Rank: %d | Valor: %.2f | GUID: %s"),
+            *Handle.RowName.ToString(), NewModifier.CurrentRank, NewModifier.CurrentValue, *ItemGuid.ToString());
     }
     
 }

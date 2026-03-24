@@ -322,8 +322,7 @@ public:
     // ----------------------------------------------------------
 
     // Requisição do cliente para mover item entre slots
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
 
     // Requisição do cliente para equipar item de um slot
@@ -335,8 +334,7 @@ public:
     void ServerRequestDropItem(int32 SlotIndex);
 
     // Requisição do cliente para ordenar o inventário
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestSortInventory(int32 SortTypeIndex);
 
     // ----------------------------------------------------------

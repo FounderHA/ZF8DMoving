@@ -217,14 +217,12 @@ public:
     template<typename T>
     const T* GetFragment() const
     {
-        static_assert(TIsDerivedFrom<T, UZfItemFragment>::IsDerived,
-            "T deve ser uma subclasse de UZfItemFragment.");
+        static_assert(TIsDerivedFrom<T, UZfItemFragment>::IsDerived, "T deve ser uma subclasse de UZfItemFragment.");
 
         if (!ItemDefinition)
         {
             UE_LOG(LogZfInventory, Warning,
-                TEXT("UZfItemInstance::GetFragment — ItemDefinition é nulo. "
-                     "GUID: %s"), *ItemGuid.ToString());
+                TEXT("UZfItemInstance::GetFragment — ItemDefinition é nulo. " "GUID: %s"), *ItemGuid.ToString());
             return nullptr;
         }
 
