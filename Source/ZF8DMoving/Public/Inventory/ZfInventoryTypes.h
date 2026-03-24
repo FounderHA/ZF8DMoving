@@ -113,12 +113,11 @@ enum class EZfEquipmentSlot : uint8
 UENUM(BlueprintType)
 enum class EZfItemRarity : uint8
 {
-    Normal      UMETA(DisplayName = "Normal"),      // 0 - Cinza
+    Common      UMETA(DisplayName = "Common"),      // 0 - Cinza
     Uncommon    UMETA(DisplayName = "Uncommon"),    // 1 - Verde
     Rare        UMETA(DisplayName = "Rare"),        // 2 - Azul
     Epic        UMETA(DisplayName = "Epic"),        // 3 - Roxo
     Legendary   UMETA(DisplayName = "Legendary"),   // 4 - Laranja
-    Unique      UMETA(DisplayName = "Unique"),      // 5 - Dourado (modifiers fixos, imutável)
 };
 
 // -----------------------------------------------------------

@@ -54,19 +54,13 @@ class URotatingMovementComponent;
 // Disparado quando o item é coletado por um ator
 // @param CollectorActor — ator que coletou o item
 // @param ItemInstance — instância do item coletado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-    FOnItemPickedUp,
-    AActor*, CollectorActor,
-    UZfItemInstance*, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, AActor*, CollectorActor, UZfItemInstance*, ItemInstance);
 
 // ============================================================
 // AZfItemPickup
 // ============================================================
 
-UCLASS(
-    BlueprintType,
-    Blueprintable
-)
+UCLASS(BlueprintType, Blueprintable)
 class ZF8DMOVING_API AZfItemPickup : public AActor
 {
     GENERATED_BODY()
@@ -90,15 +84,13 @@ public:
     // Usado tanto para overlap automático quanto para
     // detectar se o jogador está próximo o suficiente
     // para interação direta.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config",
-        meta = (ClampMin = "10.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config", meta = (ClampMin = "10.0"))
     float PickupRadius = 100.0f;
 
     // Tempo em segundos antes do pickup ser destruído
     // automaticamente se não for coletado.
     // 0.0 = nunca destroi automaticamente.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config",
-        meta = (ClampMin = "0.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config", meta = (ClampMin = "0.0"))
     float AutoDestroyAfterSeconds = 300.0f;
 
     // Se verdadeiro, o pickup rotaciona suavemente no eixo Z
@@ -174,8 +166,7 @@ public:
     // REPLICAÇÃO
     // ----------------------------------------------------------
 
-    virtual void GetLifetimeReplicatedProps(
-        TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // ----------------------------------------------------------
     // CICLO DE VIDA DO ATOR
@@ -253,10 +244,6 @@ private:
     // ----------------------------------------------------------
     // FUNÇÕES INTERNAS
     // ----------------------------------------------------------
-
-    // Carrega e aplica o mesh do item assincronamente.
-    // Chamado após receber o ItemInstance (servidor e clientes).
-    void Internal_LoadAndApplyMesh();
 
     // Configura o widget com nome e raridade do item.
     void Internal_UpdateItemInfoWidget();

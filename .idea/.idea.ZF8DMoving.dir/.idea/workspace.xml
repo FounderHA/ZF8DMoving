@@ -9,17 +9,41 @@
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultGame.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultGame.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/ArcadeEditorSphere.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/ArcadeEditorSphere1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/Backpack_Blue.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/Backpack_Brown.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/Backpack_Green.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/Backpack_Orange.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/Backpack_Pink.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/EditorCube.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/EditorCylinder.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/M_Blue.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/M_Brown.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/M_Green.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/M_Orange.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/M_Pink.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/NewDataTable.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/NewDataTable.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventoryPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventoryPanel.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerState.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerState.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryTags.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemDefinition.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemDefinition.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemInstance.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/Class/ZfPrimaryDataAssetClass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/Class/ZfClassBaseSettings.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Stackable.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Stackable.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemDefinition.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemDefinition.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemInstance.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/ZF8DMoving.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ZF8DMoving.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/ZF8DMoving.uproject.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemPickup.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemPickup.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfModifierDataTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfModifierDataTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/Class/ZfPrimaryDataAssetClass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/Class/ZfClassBaseSettings.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPlayerState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPlayerState.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +57,10 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://30" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Private/Logging/StructuredLog.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Misc/MTAccessDetector.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/String/FormatStringSanErrors.inl" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfEquipmentComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfInventoryComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -43,6 +70,7 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_Durability.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_Equippable.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_InventoryExpansion.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_ItemRarity.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_Quality.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_SetPiece.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_Stackable.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -56,6 +84,7 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Durability.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Equippable.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_InventoryExpansion.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_ItemRarity.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Quality.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_SetPiece.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Stackable.h" root0="FORCE_HIGHLIGHTING" />
@@ -85,7 +114,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Uproject.ZF8DMoving.executor": "Debug",
-    "git-widget-placeholder": "founder/refatoreinventory",
+    "git-widget-placeholder": "founder/testeinventory",
     "ignore.virus.scanning.warn.message": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -236,6 +265,8 @@
       <workItem from="1774214921711" duration="193000" />
       <workItem from="1774216269935" duration="115000" />
       <workItem from="1774216777211" duration="18372000" />
+      <workItem from="1774236040284" duration="1604000" />
+      <workItem from="1774281072522" duration="27678000" />
     </task>
     <servers />
   </component>

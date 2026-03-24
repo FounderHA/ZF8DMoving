@@ -59,7 +59,7 @@ public:
     // Nome do item exibido na UI do inventário e tooltips.
     // Ex: "Espada Longa de Ferro", "Poção de Vida Maior"
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Identity")
-    FText ItemName;
+    FText ItemName = FText::FromString(TEXT("None"));
 
     // Descrição do item exibida no tooltip do inventário.
     // Ex: "Uma espada forjada nas minas de ferro do norte."
@@ -82,31 +82,12 @@ public:
     //                       "Inventory.Item.Weapon.Sword"
     // ----------------------------------------------------------
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Classification")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Identity", meta =(GameplayTagFilter = "ItemType"))
     FGameplayTagContainer ItemTags;
 
     // ----------------------------------------------------------
-    // RARIDADE
+    // Actor Spawn - seta o ActorSpawn do item
     // ----------------------------------------------------------
-
-    // Raridade base do item ao ser dropado.
-    // Unique = modifiers fixos definidos em UniqueModifiers abaixo.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Rarity")
-    EZfItemRarity BaseRarity = EZfItemRarity::Normal;
-
-    // ----------------------------------------------------------
-    // MESHES — visuais 3D do item no mundo e equipado
-    // ----------------------------------------------------------
-
-    // Mesh estática — usada quando o item está no chão (ItemPickup)
-    // ou como prop de decoração.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Visuals")
-    TSoftObjectPtr<UStaticMesh> StaticMesh;
-
-    // Mesh esquelética — usada quando o item está equipado no personagem.
-    // Ex: espada na mão, capacete na cabeça.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Visuals")
-    TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
     
     // Actor de pickup específico deste item.
     // Cada item pode ter seu próprio actor de pickup com visual,
@@ -114,7 +95,7 @@ public:
     // Spawned pelo sistema de drop quando o item é jogado no mundo.
     // Soft reference — carregado assincronamente via AssetManager
     // apenas quando necessário (ao dropar o item).
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Visuals")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Identity")
     TSoftClassPtr<class AZfItemPickup> ItemPickupActorClass;
 
     // ----------------------------------------------------------
@@ -140,24 +121,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Modifiers")
     FZfItemModifierConfig ModifierConfig;
-
-    // ----------------------------------------------------------
-    // UNIQUE ITEM
-    // Configuração exclusiva para itens de raridade Unique.
-    // Se bIsUnique = true, os modifiers abaixo são fixos e
-    // não podem ser alterados por nenhuma mecânica do jogo
-    // (Reroll, Extraction, Corruption, etc.)
-    // ----------------------------------------------------------
-
-    // Se verdadeiro, este item é Único — modifiers fixos e imutáveis.
-    // A raridade deve ser EZfItemRarity::Unique.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Unique", meta = (EditCondition = "BaseRarity == EZfItemRarity::Unique"))
-    bool bIsUnique = false;
-
-    // Modifiers fixos do item Único — definidos aqui no PDA.
-    // Não são rolados em runtime — são aplicados diretamente ao criar a instância.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Unique", meta = (EditCondition = "bIsUnique"))
-    TArray<FZfAppliedModifier> UniqueModifiers;
+    
 
     // ----------------------------------------------------------
     // MARKET VALUE
@@ -238,6 +202,7 @@ public:
     // Validação no editor — garante consistência dos dados configurados.
     // Chamado ao salvar o asset no editor.
     virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+
 #endif
 
     // ----------------------------------------------------------

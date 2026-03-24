@@ -45,7 +45,7 @@ class UAbilitySystemComponent;
 // UZfItemInstance
 // ============================================================
 
-UCLASS(BlueprintType, Blueprintable, Within = Actor)
+UCLASS(BlueprintType, Blueprintable, EditInlineNew, DefaultToInstanced, Within = Actor)
 class ZF8DMOVING_API UZfItemInstance : public UObject
 {
     GENERATED_BODY()
@@ -82,7 +82,7 @@ public:
     // Referência ao ItemDefinition (PDA) deste item.
     // Soft reference replicada — clientes carregam o asset localmente.
     // NUNCA modifique após a inicialização.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Identity")
+    UPROPERTY(Replicated, BlueprintReadWrite, Category = "Item|Identity")
     TObjectPtr<UZfItemDefinition> ItemDefinition;
 
     // ----------------------------------------------------------
@@ -98,7 +98,7 @@ public:
     // Raridade do item — influencia quantidade de modifiers
     // e valor de mercado.
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Progression")
-    EZfItemRarity ItemRarity = EZfItemRarity::Normal;
+    EZfItemRarity ItemRarity = EZfItemRarity::Common;
 
     // Qualidade atual do item (0 a MAX_ITEM_QUALITY = 9).
     // Aumenta via mecânica de upgrade usando o QualityDataTable.

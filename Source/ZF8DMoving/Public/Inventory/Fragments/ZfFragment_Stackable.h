@@ -19,8 +19,7 @@ public:
 
 	// Quantidade máxima de itens que podem existir em um único slot.
 	// Ex: Poção de vida = 20, Minério de ferro = 64, Moeda = 9999
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Stackable",
-		meta = (ClampMin = "1"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Stackable", meta = (ClampMin = "1"))
 	int32 MaxStackSize = 1;
 
 	// Se verdadeiro, ao adicionar ao inventário, tenta empilhar

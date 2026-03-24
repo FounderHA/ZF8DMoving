@@ -90,13 +90,13 @@ public:
 
     // Número inicial de slots do inventário.
     // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "500"))
-    int32 DefaultSlotCount = 30;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 DefaultSlotCount = 20;
 
     // Número máximo absoluto de slots — nunca ultrapassa esse valor
     // mesmo com múltiplas mochilas equipadas.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "500"))
-    int32 MaxAbsoluteSlotCount = 200;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 MaxAbsoluteSlotCount = 100;
 
     // ----------------------------------------------------------
     // DELEGATES — UI e outros sistemas se inscrevem aqui
@@ -327,13 +327,11 @@ public:
     void ServerRequestMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
 
     // Requisição do cliente para equipar item de um slot
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestEquipItem(int32 SlotIndex);
 
     // Requisição do cliente para dropar item no mundo
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestDropItem(int32 SlotIndex);
 
     // Requisição do cliente para ordenar o inventário
@@ -410,10 +408,6 @@ private:
     // FUNÇÕES INTERNAS
     // ----------------------------------------------------------
 
-    // Inicializa os slots do inventário com o DefaultSlotCount.
-    // Chamado no BeginPlay apenas no servidor.
-    void Internal_InitializeSlots();
-
     // Busca o EquipmentComponent no ator dono.
     // Chamado no BeginPlay.
     void Internal_FindEquipmentComponent();
@@ -422,10 +416,6 @@ private:
     // Retorna true se o item foi completamente absorvido por stacks.
     // @param ItemInstance — item a empilhar
     bool Internal_TryStackWithExistingItems(UZfItemInstance* ItemInstance);
-
-    // Adiciona um slot vazio ao array de inventário.
-    // @param SlotIndex — índice do novo slot
-    void Internal_AddEmptySlot(int32 SlotIndex);
 
     // Remove um item do slot sem notificações (uso interno).
     // @param SlotIndex — slot a limpar
@@ -437,7 +427,4 @@ private:
 
     // Valida se o EquipmentComponent está disponível.
     bool Internal_CheckEquipmentComponent(const FString& FunctionName) const;
-
-    // Notifica os callbacks do FastArraySerializer após mudanças.
-    void Internal_MarkInventoryDirty();
 };

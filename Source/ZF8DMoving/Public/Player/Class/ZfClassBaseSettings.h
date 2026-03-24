@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "ZfPrimaryDataAssetClass.generated.h"
+#include "ZfClassBaseSettings.generated.h"
 
 
 UCLASS(BlueprintType)
