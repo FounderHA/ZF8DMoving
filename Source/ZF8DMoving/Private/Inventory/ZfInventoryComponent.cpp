@@ -295,7 +295,8 @@ void UZfInventoryComponent::BeginPlay()
 
     // Busca o EquipmentComponent no ator dono
     Internal_FindEquipmentComponent();
-
+    
+    
     // Inicializa os slots apenas no servidor
     if (GetOwner() && GetOwner()->HasAuthority())
     {
@@ -327,6 +328,11 @@ void UZfInventoryComponent::BeginPlay()
 
 void FZfInventorySlot::PreReplicatedRemove(const FZfInventoryList& InArraySerializer)
 {
+    UE_LOG(LogZfInventory, Warning,
+    TEXT("FZfInventorySlot::PreReplicatedRemove — SlotIndex: %d | OwnerComponent: %s"),
+    SlotIndex,
+    InArraySerializer.OwnerComponent ? TEXT("VÁLIDO") : TEXT("NULO"));
+    
     if (InArraySerializer.OwnerComponent && ItemInstance)
     {
         InArraySerializer.OwnerComponent->OnItemRemoved.Broadcast(ItemInstance, SlotIndex);
@@ -334,9 +340,18 @@ void FZfInventorySlot::PreReplicatedRemove(const FZfInventoryList& InArraySerial
 }
 
 void FZfInventorySlot::PostReplicatedAdd(const FZfInventoryList& InArraySerializer)
-{
+   {
+    UE_LOG(LogZfInventory, Warning,
+        TEXT("FZfInventorySlot::PostReplicatedAdd — SlotIndex: %d | OwnerComponent: %s"),
+        SlotIndex,
+        InArraySerializer.OwnerComponent ? TEXT("VÁLIDO") : TEXT("NULO"));
+    
     if (InArraySerializer.OwnerComponent && ItemInstance)
     {
+        UE_LOG(LogZfInventory, Warning,
+         TEXT("FZfInventorySlot::PostReplicatedAdd — Broadcast disparado para item: %s"),
+         *ItemInstance->GetItemName().ToString());
+        
         InArraySerializer.OwnerComponent->OnItemAdded.Broadcast(ItemInstance, SlotIndex);
     }
 }
@@ -801,6 +816,7 @@ bool UZfInventoryComponent::InternalTryStackWithExistingItems(UZfItemInstance* I
         // Atualiza o stack do item incoming
         ItemInstance->SetCurrentStack(Overflow);
 
+        AddReplicatedSubObject(ItemInstance);
         InventoryList.MarkArrayDirty();
 
         // Se não tem overflow, o item foi completamente absorvido
@@ -820,13 +836,15 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
     if (!IsValidSlotIndex(FromSlotIndex) || !IsValidSlotIndex(ToSlotIndex))
     {
         UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Slot inválido. From: %d | To: %d"),
-            FromSlotIndex, ToSlotIndex);
+        FromSlotIndex, ToSlotIndex);
         return EZfItemMechanicResult::Failed_InvalidSlot;
     }
 
     // Slots iguais — nada a fazer
     if (FromSlotIndex == ToSlotIndex)
     {
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Slot inválido. From: %d é igual a To: %d"),
+        FromSlotIndex, ToSlotIndex);
         return EZfItemMechanicResult::Success;
     }
 
@@ -834,19 +852,14 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
 
     if (!ItemToMove)
     {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Slot de origem %d está vazio."), FromSlotIndex);
+        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Slot de origem %d está vazio."), FromSlotIndex);
         return EZfItemMechanicResult::Failed_ItemNotFound;
     }
-
-    
-    
 
     if (IsSlotEmpty(ToSlotIndex))
     {
         InternalRemoveItemAtSlot(FromSlotIndex);
         InternalAddItem(ItemToMove, ToSlotIndex);
-        
     }
     else
     {
@@ -861,11 +874,11 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
         InternalAddItem(ItemAtDestination, FromSlotIndex);
     }
     
-    
-
     // Notifica a UI
     OnItemMoved.Broadcast(ItemToMove, FromSlotIndex, ToSlotIndex);
 
+    InventoryList.MarkArrayDirty();
+    
     /*
     if (ItemAtDestination)
     {
@@ -873,7 +886,7 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
     }
     */
     
-    InventoryList.MarkArrayDirty();
+    
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Item '%s' movido do slot %d para %d."),
