@@ -176,7 +176,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
 
     // Tenta adicionar o item ao inventário do coletor
     int32 OutSlotIndex = INDEX_NONE;
-    const EZfItemMechanicResult Result = CollectorInventory->TryAddItemToInventory(ItemInstance, OutSlotIndex);
+    const EZfItemMechanicResult Result = CollectorInventory->TryAddItemToInventory(ItemInstance);
 
     if (Result == EZfItemMechanicResult::Success)
     {
@@ -195,7 +195,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
             *CollectedItem->GetItemName().ToString(), *CollectorActor->GetName());
 
         // Destrói o pickup após a coleta
-        SetLifeSpan(0.5f);
+        SetLifeSpan(0.01f);
     }
     else
     {

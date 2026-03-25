@@ -75,6 +75,105 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryRefreshed);
 // UZfInventoryComponent
 // ============================================================
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+UENUM(BlueprintType)
+enum class EZfInventorySortType : uint8
+{
+    Alphabetical    UMETA(DisplayName = "Alphabetical"),
+    ByItemType      UMETA(DisplayName = "By Item Type"),
+    ByRarity        UMETA(DisplayName = "By Rarity"),
+    ByTier          UMETA(DisplayName = "By Tier"),
+    ByQuantity      UMETA(DisplayName = "By Quantity"),
+    Compact         UMETA(DisplayName = "Compact"),
+};
+
+// -----------------------------------------------------------
+// FZfInventorySlot
+// Um slot no inventário com seu índice e item.
+// Herda de FFastArraySerializerItem para replicação delta eficiente.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfInventorySlot : public FFastArraySerializerItem
+{
+    GENERATED_BODY()
+
+    // Índice único deste slot no inventário (0 a MaxSlots-1)
+    // INDEX_NONE = slot inválido
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Slot")
+    int32 SlotIndex = INDEX_NONE;
+
+    // Item neste slot (nullptr = vazio)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Slot")
+    TObjectPtr<UZfItemInstance> ItemInstance = nullptr;
+
+    // Callbacks do FastArraySerializer — notificam mudanças nos clientes
+    void PreReplicatedRemove(const struct FZfInventoryList& InArraySerializer);
+    void PostReplicatedAdd(const FZfInventoryList& InArraySerializer);
+    void PostReplicatedChange(const FZfInventoryList& InArraySerializer);
+};
+
+// -----------------------------------------------------------
+// FZfInventoryList
+// FastArray de slots do inventário.
+// Usa replicação delta — só envia o que mudou pela rede.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfInventoryList : public FFastArraySerializer
+{
+    GENERATED_BODY()
+
+    // Todos os slots do inventário
+    UPROPERTY()
+    TArray<FZfInventorySlot> Slots;
+
+    // Referência ao componente dono — usado nos callbacks de replicação
+    // NotReplicated pois é apenas referência local
+    UPROPERTY(NotReplicated)
+    TObjectPtr<UZfInventoryComponent> OwnerComponent = nullptr;
+
+    // Função obrigatória do FFastArraySerializer para replicação delta
+    bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
+    {
+        return FastArrayDeltaSerialize<FZfInventorySlot, FZfInventoryList>(Slots, DeltaParams, *this);
+    }
+};
+
+// Trait obrigatório para habilitar a replicação delta no FZfInventoryList
+template<>
+struct TStructOpsTypeTraits<FZfInventoryList> : public TStructOpsTypeTraitsBase2<FZfInventoryList>
+{
+    enum { WithNetDeltaSerializer = true };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 UCLASS(ClassGroup = (Zf),BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 {
@@ -126,16 +225,7 @@ public:
     // FUNÇÕES PRINCIPAIS — ADICIONAR ITEM
     // ----------------------------------------------------------
 
-    // Tenta adicionar um item ao inventário.
-    // Se o item é stackável e já existe stack do mesmo tipo,
-    // tenta empilhar antes de ocupar novo slot.
-    // Deve ser chamado apenas no servidor.
-    // @param ItemInstance — instância do item a adicionar
-    // @param OutSlotIndex — slot onde foi adicionado (se Success)
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult TryAddItemToInventory(UZfItemInstance* ItemInstance, int32& OutSlotIndex);
-
+    
     // Tenta adicionar um item em um slot específico.
     // Se o slot já tiver item, troca os itens de lugar.
     // @param ItemInstance — instância do item a adicionar
@@ -158,20 +248,7 @@ public:
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — REMOVER ITEM
     // ----------------------------------------------------------
-
-    // Remove um item do inventário pelo índice do slot.
-    // @param SlotIndex — slot a remover
-    // @param OutItemInstance — item removido
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult RemoveItemAtSlot(int32 SlotIndex, UZfItemInstance*& OutItemInstance);
-
-    // Remove um item do inventário pela referência do ItemInstance.
-    // @param ItemInstance — item a remover
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult RemoveItemInstance(UZfItemInstance* ItemInstance);
-
+    
     // Remove uma quantidade de um item stackável.
     // Remove o item inteiro se a quantidade zerar.
     // @param ItemInstance — item stackável a remover
@@ -183,15 +260,7 @@ public:
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — MOVER ITEM
     // ----------------------------------------------------------
-
-    // Move um item de um slot para outro.
-    // Se o slot destino tiver item, troca os dois de lugar.
-    // @param FromSlotIndex — slot de origem
-    // @param ToSlotIndex — slot de destino
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult MoveItemBetweenSlots(int32 FromSlotIndex, int32 ToSlotIndex);
-
+    
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — EQUIPAR
     // ----------------------------------------------------------
@@ -218,81 +287,25 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
     EZfItemMechanicResult ReceiveUnequippedItem(UZfItemInstance* ItemInstance, int32 PreferredSlotIndex);
 
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — ORGANIZAÇÃO
-    // ----------------------------------------------------------
-
-    // Ordena o inventário em ordem alfabética pelo nome do item.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Sort")
-    void SortInventoryAlphabetically();
-
-    // Ordena o inventário por tipo de item (usando tags).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Sort")
-    void SortInventoryByItemType();
-
-    // Ordena o inventário por raridade (mais raro primeiro).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Sort")
-    void SortInventoryByRarity();
-
-    // Compacta o inventário — move todos os itens para os primeiros
-    // slots disponíveis eliminando slots vazios entre itens.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Sort")
-    void CompactInventory();
+    
 
     // ----------------------------------------------------------
     // FUNÇÕES DE CONSULTA
     // ----------------------------------------------------------
+    
+    
 
-    // Retorna o ItemInstance em um slot específico.
-    // Retorna nullptr se o slot estiver vazio ou inválido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    UZfItemInstance* GetItemAtSlot(int32 SlotIndex) const;
 
-    // Retorna o índice do slot de um ItemInstance.
-    // Retorna INDEX_NONE se não encontrado.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetSlotIndexOfItem(UZfItemInstance* ItemInstance) const;
 
-    // Verifica se o inventário contém um ItemInstance específico.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool ContainsItem(UZfItemInstance* ItemInstance) const;
 
-    // Retorna todos os itens que possuem uma tag específica.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    TArray<UZfItemInstance*> GetItemsByTag(const FGameplayTag& Tag) const;
 
-    // Retorna o primeiro slot vazio disponível.
-    // Retorna INDEX_NONE se o inventário estiver cheio.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetFirstEmptySlot() const;
 
-    // Retorna o número de slots atualmente disponíveis (vazios).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetAvailableSlotCount() const;
+    
+   
 
-    // Retorna o número total de slots do inventário (incluindo ocupados).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetTotalSlotCount() const;
+    
 
-    // Verifica se o inventário está cheio.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool IsInventoryFull() const;
-
-    // Verifica se um slot está vazio.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool IsSlotEmpty(int32 SlotIndex) const;
-
-    // Verifica se um índice de slot é válido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool IsValidSlotIndex(int32 SlotIndex) const;
-
-    // Retorna todos os ItemInstances do inventário (sem slots vazios).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    TArray<UZfItemInstance*> GetAllItems() const;
-
-    // Retorna todos os slots do inventário (incluindo vazios).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    TArray<FZfInventorySlot> GetAllSlots() const;
+    
 
     // ----------------------------------------------------------
     // EXPANSÃO DE SLOTS
@@ -300,42 +313,22 @@ public:
     // equipada/desequipada via UZfFragment_InventoryExpansion.
     // ----------------------------------------------------------
 
-    // Adiciona slots extras ao inventário.
-    // Respeita MaxAbsoluteSlotCount.
-    // @param ExtraSlots — quantidade de slots a adicionar
-    // @return quantidade de slots efetivamente adicionados
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Expansion")
-    int32 AddExtraSlots(int32 ExtraSlots);
-
-    // Remove slots extras do inventário.
-    // Se houver itens nos slots que serão removidos,
-    // tenta movê-los para slots livres anteriores.
-    // @param SlotsToRemove — quantidade de slots a remover
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Expansion")
-    EZfItemMechanicResult RemoveExtraSlots(int32 SlotsToRemove);
 
     // ----------------------------------------------------------
     // RPCs — CLIENT → SERVER
     // Clientes não modificam o inventário diretamente.
     // Enviam requisições ao servidor via RPC.
     // ----------------------------------------------------------
-
-    // Requisição do cliente para mover item entre slots
-    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
-    void ServerRequestMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
-
+    
     // Requisição do cliente para equipar item de um slot
-    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestEquipItem(int32 SlotIndex);
 
     // Requisição do cliente para dropar item no mundo
-    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestDropItem(int32 SlotIndex);
 
-    // Requisição do cliente para ordenar o inventário
-    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Inventory|RPC")
-    void ServerRequestSortInventory(int32 SortTypeIndex);
+    
 
     // ----------------------------------------------------------
     // RPCs — SERVER → CLIENT
@@ -409,20 +402,199 @@ private:
     // Busca o EquipmentComponent no ator dono.
     // Chamado no BeginPlay.
     void Internal_FindEquipmentComponent();
+    
+
+
+    //============================================================================================================================================================
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+    
+public:
+
+    // ============================================================
+    // FUNÇÕES PRINCIPAIS - RPC
+    // ============================================================
+
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryAddItemToInventory(UZfItemInstance* ItemInstance);
+   
+    // Remove um item do inventário pelo índice do slot.
+    // @param SlotIndex — slot a remover
+    // @param OutItemInstance — item removido
+    // @return resultado da operação
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryRemoveItemFromInventory(int32 SlotIndex);
+
+    // Requisição do cliente para mover item entre slots
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory|RPC")
+    void ServerTryMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
+
+    
+    // ============================================================
+    // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
+    // ============================================================
+
+    // Tenta adicionar um item ao inventário.
+    // Se o item é stackável e já existe stack do mesmo tipo,
+    // tenta empilhar antes de ocupar novo slot.
+    // Deve ser chamado apenas no servidor.
+    // @param ItemInstance — instância do item a adicionar
+    // @param OutSlotIndex — slot onde foi adicionado (se Success)
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryAddItemToInventory(UZfItemInstance* ItemInstance);
+   
+    // Remove um item do inventário pelo índice do slot.
+    // @param SlotIndex — slot a remover
+    // @param OutItemInstance — item removido
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryRemoveItemFromInventory(int32 SlotIndex);
+
+    // Adiciona slots extras ao inventário.
+    // Respeita MaxAbsoluteSlotCount.
+    // @param ExtraSlots — quantidade de slots a adicionar
+    // @return quantidade de slots efetivamente adicionados
+    UFUNCTION(Category = "Zf|Inventory|Expansion")
+    int32 AddExtraSlots(int32 ExtraSlots);
+
+    // Remove slots extras do inventário.
+    // Se houver itens nos slots que serão removidos,
+    // tenta movê-los para slots livres anteriores.
+    // @param SlotsToRemove — quantidade de slots a remover
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory|Expansion")
+    EZfItemMechanicResult RemoveExtraSlots(int32 SlotsToRemove);
+
+    // ============================================================
+    // FUNÇÕES PRINCIPAIS - ORGANIZAÇÃO
+    // ============================================================
+    
+    // Requisição do cliente para ordenar o inventário
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTrySortInventory(EZfInventorySortType SortType);
+
+    // ============================================================
+    // FUNÇÕES DE CONSULTA
+    // ============================================================
+
+    // Retorna o ItemInstance em um slot específico.
+    // Retorna nullptr se o slot estiver vazio ou inválido.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    UZfItemInstance* GetItemAtSlot(int32 SlotIndex) const;
+
+    // Retorna o índice do slot de um ItemInstance.
+    // Retorna INDEX_NONE se não encontrado.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetSlotIndexOfItem(UZfItemInstance* ItemInstance) const;
+
+    // Retorna o primeiro slot vazio disponível.
+    // Retorna INDEX_NONE se o inventário estiver cheio.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetFirstEmptySlot() const;
+
+    // Retorna todos os itens que possuem uma tag específica.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    TArray<UZfItemInstance*> GetItemsByTag(const FGameplayTag& Tag) const;
+
+    // Retorna o número de slots atualmente disponíveis (vazios).
+    //@param int32 - Para verificar quantos itens tem na mochila passe 
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableSlots() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableDefaultSlots() const;
+
+    // Retorna o número total de slots do inventário (incluindo ocupados).
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetTotalSlots() const;
+
+    // Verifica se um slot está vazio.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    bool IsSlotEmpty(int32 SlotIndex) const;
+
+    // Retorna todos os ItemInstances do inventário (sem slots vazios).
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    TArray<UZfItemInstance*> GetAllItems() const;
+
+    // Verifica se um índice de slot é válido.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    bool IsValidSlotIndex(int32 SlotIndex) const;
+    
+protected:
+
+private:
+
+    // ============================================================
+    // FUNÇÕES INTERNAS - GERENCIAMENTO
+    // ============================================================
+
+    // Adiciona o item do inventário a partir do ItemInstance.
+    // @param ItemInstance - Item a ser Adicionado
+    // @param int32 - Slot do Item a ser Adicionado
+    void InternalAddItem(UZfItemInstance* InItemInstance, int32 TargetSlot);
+
+    // Remove o item do inventário a partir do ItemInstance.
+    // @param ItemInstance - Item a ser Removido
+    void InternalRemoveItemFromInstance(UZfItemInstance* OutItemInstance);
+
+    // Remove o item do inventário a partir do Slot.
+    // @param int32 - Item a ser Removido
+    void InternalRemoveItemAtSlot(int32 SlotIndex);
 
     // Tenta fazer stack de um item com stacks existentes.
     // Retorna true se o item foi completamente absorvido por stacks.
     // @param ItemInstance — item a empilhar
-    bool Internal_TryStackWithExistingItems(UZfItemInstance* ItemInstance);
+    bool InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance);
 
-    // Remove um item do slot sem notificações (uso interno).
-    // @param SlotIndex — slot a limpar
-    void Internal_ClearSlot(int32 SlotIndex);
+    // Move um item de um slot para outro.
+    // Se o slot destino tiver item, troca os dois de lugar.
+    // @param FromSlotIndex — slot de origem
+    // @param ToSlotIndex — slot de destino
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult InternalMoveItemBetweenSlots(int32 FromSlotIndex, int32 ToSlotIndex);
 
+    
+    // ============================================================
+    // FUNÇÕES INTERNAS - ORGANIZAÇÃO
+    // ============================================================
+    
+    // Ordena o inventário em ordem alfabética pelo nome do item.
+    UFUNCTION(Category = "Zf|Inventory|Sort")
+    void InternalSortInventoryAlphabetically();
+
+    // Ordena o inventário por tipo de item (usando tags).
+    UFUNCTION(Category = "Zf|Inventory|Sort")
+    void InternalSortInventoryByItemType();
+
+    // Ordena o inventário por raridade (mais raro primeiro).
+    UFUNCTION(Category = "Zf|Inventory|Sort")
+    void InternalSortInventoryByRarity();
+
+    // Compacta o inventário — move todos os itens para os primeiros
+    // slots disponíveis eliminando slots vazios entre itens.
+    UFUNCTION(Category = "Zf|Inventory|Sort")
+    void InternalCompactInventory();
+    
+    // ============================================================
+    // FUNÇÕES INTERNAS - VALIDAÇÃO
+    // ============================================================
+    
     // Valida se uma operação pode ser executada no servidor.
     // Loga warning se chamada no cliente.
-    bool Internal_CheckIsServer(const FString& FunctionName) const;
-
-    // Valida se o EquipmentComponent está disponível.
-    bool Internal_CheckEquipmentComponent(const FString& FunctionName) const;
+    bool InternalCheckIsServer(const FString& FunctionName) const;
 };
