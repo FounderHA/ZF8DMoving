@@ -355,64 +355,6 @@ struct ZF8DMOVING_API FZfAppliedModifier
 // FAST ARRAYS — INVENTÁRIO E EQUIPAMENTO
 // ============================================================
 
-// -----------------------------------------------------------
-// FZfInventorySlot
-// Um slot no inventário com seu índice e item.
-// Herda de FFastArraySerializerItem para replicação delta eficiente.
-// -----------------------------------------------------------
-USTRUCT(BlueprintType)
-struct ZF8DMOVING_API FZfInventorySlot : public FFastArraySerializerItem
-{
-    GENERATED_BODY()
-
-    // Índice único deste slot no inventário (0 a MaxSlots-1)
-    // INDEX_NONE = slot inválido
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Slot")
-    int32 SlotIndex = INDEX_NONE;
-
-    // Item neste slot (nullptr = vazio)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Slot")
-    TObjectPtr<class UZfItemInstance> ItemInstance = nullptr;
-
-    // Callbacks do FastArraySerializer — notificam mudanças nos clientes
-    void PreReplicatedRemove(const struct FZfInventoryList& InArraySerializer);
-    void PostReplicatedAdd(const struct FZfInventoryList& InArraySerializer);
-    void PostReplicatedChange(const struct FZfInventoryList& InArraySerializer);
-};
-
-// -----------------------------------------------------------
-// FZfInventoryList
-// FastArray de slots do inventário.
-// Usa replicação delta — só envia o que mudou pela rede.
-// -----------------------------------------------------------
-USTRUCT(BlueprintType)
-struct ZF8DMOVING_API FZfInventoryList : public FFastArraySerializer
-{
-    GENERATED_BODY()
-
-    // Todos os slots do inventário
-    UPROPERTY()
-    TArray<FZfInventorySlot> Slots;
-
-    // Referência ao componente dono — usado nos callbacks de replicação
-    // NotReplicated pois é apenas referência local
-    UPROPERTY(NotReplicated)
-    TObjectPtr<class UZfInventoryComponent> OwnerComponent = nullptr;
-
-    // Função obrigatória do FFastArraySerializer para replicação delta
-    bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
-    {
-        return FFastArraySerializer::FastArrayDeltaSerialize<FZfInventorySlot, FZfInventoryList>(
-            Slots, DeltaParams, *this);
-    }
-};
-
-// Trait obrigatório para habilitar a replicação delta no FZfInventoryList
-template<>
-struct TStructOpsTypeTraits<FZfInventoryList> : public TStructOpsTypeTraitsBase2<FZfInventoryList>
-{
-    enum { WithNetDeltaSerializer = true };
-};
 
 // -----------------------------------------------------------
 // FZfEquipmentSlotEntry

@@ -7,33 +7,6 @@
 #include "Inventory/ZfInventoryComponent.h"
 
 
-void FZfInventorySlot::PreReplicatedRemove(
-	const FZfInventoryList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent && ItemInstance)
-	{
-		InArraySerializer.OwnerComponent->OnItemRemoved.Broadcast(ItemInstance, SlotIndex);
-	}
-}
-
-void FZfInventorySlot::PostReplicatedAdd(
-	const FZfInventoryList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent && ItemInstance)
-	{
-		InArraySerializer.OwnerComponent->OnItemAdded.Broadcast(ItemInstance, SlotIndex);
-	}
-}
-
-void FZfInventorySlot::PostReplicatedChange(
-	const FZfInventoryList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent)
-	{
-		InArraySerializer.OwnerComponent->OnInventoryRefreshed.Broadcast();
-	}
-}
-
 void FZfEquipmentSlotEntry::PreReplicatedRemove(
 	const FZfEquipmentList& InArraySerializer)
 {
