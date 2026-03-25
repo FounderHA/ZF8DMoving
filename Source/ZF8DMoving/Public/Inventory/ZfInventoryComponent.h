@@ -32,7 +32,6 @@
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "ZfInventoryTypes.h"
-#include "ZfItemDefinition.h"
 #include "ZfItemInstance.h"
 #include "ZfInventoryComponent.generated.h"
 
@@ -181,82 +180,18 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 
 public:
 
-    UZfInventoryComponent();
-
-    // ----------------------------------------------------------
-    // CONFIGURAÇÃO
-    // ----------------------------------------------------------
-
-    // Número inicial de slots do inventário.
-    // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
-    int32 DefaultSlotCount = 20;
-
-    // Número máximo absoluto de slots — nunca ultrapassa esse valor
-    // mesmo com múltiplas mochilas equipadas.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
-    int32 MaxAbsoluteSlotCount = 100;
-
-    // ----------------------------------------------------------
-    // DELEGATES — UI e outros sistemas se inscrevem aqui
-    // ----------------------------------------------------------
-
-    // Chamado quando item é adicionado
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemAddedToInventory OnItemAdded;
-
-    // Chamado quando item é removido
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemRemovedFromInventory OnItemRemoved;
-
-    // Chamado quando item é movido entre slots
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemMovedInInventory OnItemMoved;
-
-    // Chamado quando o tamanho do inventário muda
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnInventorySizeChanged OnInventorySizeChanged;
-
-    // Chamado após reorganização ou ordenação completa
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnInventoryRefreshed OnInventoryRefreshed;
+    
 
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — ADICIONAR ITEM
     // ----------------------------------------------------------
 
     
-    // Tenta adicionar um item em um slot específico.
-    // Se o slot já tiver item, troca os itens de lugar.
-    // @param ItemInstance — instância do item a adicionar
-    // @param SlotIndex — índice do slot desejado
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult TryAddItemToSpecificSlot(UZfItemInstance* ItemInstance, int32 SlotIndex);
-
-    // Cria e adiciona um novo item ao inventário a partir de um ItemDefinition.
-    // Gera o ItemInstance, rola os modifiers e adiciona ao inventário.
-    // Deve ser chamado apenas no servidor.
-    // @param ItemDefinition — definição do item a criar
-    // @param Tier — tier do item
-    // @param Rarity — raridade do item
-    // @param OutItemInstance — instância criada (se Success)
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult CreateAndAddItemToInventory(UZfItemDefinition* ItemDefinition, int32 Tier, EZfItemRarity Rarity, UZfItemInstance*& OutItemInstance);
-
+    
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — REMOVER ITEM
     // ----------------------------------------------------------
     
-    // Remove uma quantidade de um item stackável.
-    // Remove o item inteiro se a quantidade zerar.
-    // @param ItemInstance — item stackável a remover
-    // @param Amount — quantidade a remover
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult RemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
-
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — MOVER ITEM
     // ----------------------------------------------------------
@@ -343,19 +278,9 @@ public:
     // @param FailureResult — motivo da falha
     UFUNCTION(Client, Reliable)
     void ClientNotifyOperationFailed(EZfItemMechanicResult FailureResult);
+    
 
-    // ----------------------------------------------------------
-    // REPLICAÇÃO
-    // ----------------------------------------------------------
-
-    // Registra as propriedades replicadas do componente
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    // ----------------------------------------------------------
-    // CICLO DE VIDA DO COMPONENTE
-    // ----------------------------------------------------------
-
-    virtual void BeginPlay() override;
+    
 
     // ----------------------------------------------------------
     // DEBUG
@@ -371,34 +296,13 @@ public:
 
 protected:
 
-    // ----------------------------------------------------------
-    // DADOS REPLICADOS
-    // ----------------------------------------------------------
-
-    // Lista de slots do inventário — replicada via FastArraySerializer
-    UPROPERTY(Replicated)
-    FZfInventoryList InventoryList;
-
-    // Tamanho atual do inventário (número de slots disponíveis)
-    // Replicado para que a UI do cliente possa exibir corretamente
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
-    int32 CurrentSlotCount = 0;
-
-    // ----------------------------------------------------------
-    // REFERÊNCIAS INTERNAS
-    // ----------------------------------------------------------
-
     // Referência ao EquipmentComponent no mesmo ator.
     // Resolvida no BeginPlay — não replicada.
     UPROPERTY()
     TObjectPtr<UZfEquipmentComponent> EquipmentComponent;
 
 private:
-
-    // ----------------------------------------------------------
-    // FUNÇÕES INTERNAS
-    // ----------------------------------------------------------
-
+    
     // Busca o EquipmentComponent no ator dono.
     // Chamado no BeginPlay.
     void Internal_FindEquipmentComponent();
@@ -414,34 +318,105 @@ private:
 
 
 
+    
+
+public:
+
+    UZfInventoryComponent();
+
+    // Registra as propriedades replicadas do componente
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    virtual void BeginPlay() override;
+    
+    // ============================================================
+    // DELEGATES — UI e outros sistemas se inscrevem aqui
+    // ============================================================
+
+    // Chamado quando item é adicionado
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemAddedToInventory OnItemAdded;
+
+    // Chamado quando item é removido
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemRemovedFromInventory OnItemRemoved;
+
+    // Chamado quando item é movido entre slots
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemMovedInInventory OnItemMoved;
+
+    // Chamado quando o tamanho do inventário muda
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnInventorySizeChanged OnInventorySizeChanged;
+
+    // Chamado após reorganização ou ordenação completa
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnInventoryRefreshed OnInventoryRefreshed;
 
     
 
+protected:
 
+    // ============================================================
+    // CONFIGURAÇÃO
+    // ============================================================
 
+    // Número inicial de slots do inventário.
+    // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 DefaultSlotCount = 20;
 
+    // Número máximo absoluto de slots — nunca ultrapassa esse valor
+    // mesmo com múltiplas mochilas equipadas.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 MaxAbsoluteSlotCount = 100;
+        
+    // ============================================================
+    // DADOS REPLICADOS
+    // ============================================================
 
+    // Lista de slots do inventário — replicada via FastArraySerializer
+    UPROPERTY(Replicated)
+    FZfInventoryList InventoryList;
+
+    // Tamanho atual do inventário (número de slots disponíveis)
+    // Replicado para que a UI do cliente possa exibir corretamente
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
+    int32 CurrentSlotCount = 0;
     
 public:
 
     // ============================================================
-    // FUNÇÕES PRINCIPAIS - RPC
+    // FUNÇÕES SERVER - GERENCIAMENTO
     // ============================================================
 
+    // Adiciona um item do inventário pela instancia.
+    // @param ItemInstance — item adicionado
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryAddItemToInventory(UZfItemInstance* ItemInstance);
    
     // Remove um item do inventário pelo índice do slot.
     // @param SlotIndex — slot a remover
-    // @param OutItemInstance — item removido
-    // @return resultado da operação
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryRemoveItemFromInventory(int32 SlotIndex);
 
-    // Requisição do cliente para mover item entre slots
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory|RPC")
+    // Move item entre Slots
+    // @param int32 — Slot de onde veio seu item
+    // @param int32 — Slot onde está indo seu item
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
 
+    // Remove uma quantidade de um item stackável.
+    // Remove o item inteiro se a quantidade zerar.
+    // @param ItemInstance — item stackável a remover
+    // @param Amount — quantidade a remover
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
+    
+    // Requisição do cliente para ordenar o inventário
+    // @param EZfInventorySortType — Tipo de Reorganização
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTrySortInventory(EZfInventorySortType SortType);
     
     // ============================================================
     // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
@@ -452,17 +427,23 @@ public:
     // tenta empilhar antes de ocupar novo slot.
     // Deve ser chamado apenas no servidor.
     // @param ItemInstance — instância do item a adicionar
-    // @param OutSlotIndex — slot onde foi adicionado (se Success)
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryAddItemToInventory(UZfItemInstance* ItemInstance);
    
     // Remove um item do inventário pelo índice do slot.
     // @param SlotIndex — slot a remover
-    // @param OutItemInstance — item removido
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveItemFromInventory(int32 SlotIndex);
+
+    // Remove uma quantidade de um item stackável.
+    // Remove o item inteiro se a quantidade zerar.
+    // @param ItemInstance — item stackável a remover
+    // @param Amount — quantidade a remover
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
 
     // Adiciona slots extras ao inventário.
     // Respeita MaxAbsoluteSlotCount.
@@ -478,14 +459,6 @@ public:
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory|Expansion")
     EZfItemMechanicResult RemoveExtraSlots(int32 SlotsToRemove);
-
-    // ============================================================
-    // FUNÇÕES PRINCIPAIS - ORGANIZAÇÃO
-    // ============================================================
-    
-    // Requisição do cliente para ordenar o inventário
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
-    void ServerTrySortInventory(EZfInventorySortType SortType);
 
     // ============================================================
     // FUNÇÕES DE CONSULTA
@@ -534,8 +507,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     bool IsValidSlotIndex(int32 SlotIndex) const;
     
-protected:
-
 private:
 
     // ============================================================
@@ -565,7 +536,7 @@ private:
     // @param FromSlotIndex — slot de origem
     // @param ToSlotIndex — slot de destino
     // @return resultado da operação
-    UFUNCTION(Category = "Zf|Inventory")
+    UFUNCTION()
     EZfItemMechanicResult InternalMoveItemBetweenSlots(int32 FromSlotIndex, int32 ToSlotIndex);
 
     
