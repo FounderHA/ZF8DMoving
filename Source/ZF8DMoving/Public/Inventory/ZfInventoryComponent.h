@@ -324,6 +324,9 @@ public:
 
     UZfInventoryComponent();
 
+    // OBRIGATÓRIO para UObjects dentro do array
+    virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+    
     // Registra as propriedades replicadas do componente
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -568,4 +571,8 @@ private:
     // Valida se uma operação pode ser executada no servidor.
     // Loga warning se chamada no cliente.
     bool InternalCheckIsServer(const FString& FunctionName) const;
+
+private:
+    FZfInventorySlot* FindSlotByIndex(int32 SlotIndex);
+
 };

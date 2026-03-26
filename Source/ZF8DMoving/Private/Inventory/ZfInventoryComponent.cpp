@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/ActorChannel.h"
 
 
 // ============================================================
@@ -268,6 +269,8 @@ UZfInventoryComponent::UZfInventoryComponent()
     SetIsReplicatedByDefault(true);
 }
 
+
+
 // ============================================================
 // REPLICAÇÃO
 // ============================================================
@@ -283,6 +286,22 @@ void UZfInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
     // Tamanho atual replicado para todos (UI de outros jogadores pode precisar)
     DOREPLIFETIME(UZfInventoryComponent, CurrentSlotCount);
+}
+
+bool UZfInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+    for (FZfInventorySlot& Entry : InventoryList.Slots)
+    {
+        if (IsValid(Entry.ItemInstance))
+        {
+            // Replica o UObject e suas variáveis internas
+            bWroteSomething |= Channel->ReplicateSubobject(Entry.ItemInstance, *Bunch, *RepFlags);
+        }
+    }
+
+    return bWroteSomething;
 }
 
 // ============================================================
@@ -390,6 +409,7 @@ void UZfInventoryComponent::ServerTryMoveItem_Implementation(int32 FromSlotIndex
     {
         InternalMoveItemBetweenSlots(FromSlotIndex, ToSlotIndex);
     }
+    
 }
 
 void UZfInventoryComponent::ServerTryRemoveAmountFromStack_Implementation(UZfItemInstance* ItemInstance, int32 Amount)
@@ -454,7 +474,8 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
     
     // Cria uma nova entrada no array apenas com o item
     InternalAddItem(InItemInstance, EmptySlot);
-
+    OnItemAdded.Broadcast(InItemInstance,EmptySlot);
+    
     // Marca o inventário como modificado para replicação
     InventoryList.MarkArrayDirty();
 
@@ -530,6 +551,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
     {
         // Stack zerou — remove o item do inventário
         InternalRemoveItemFromInstance(ItemInstance);
+        OnItemRemoved.Broadcast(ItemInstance, GetSlotIndexOfItem(ItemInstance));
         return EZfItemMechanicResult::Success;
     }
 
@@ -752,9 +774,9 @@ void UZfInventoryComponent::InternalAddItem(UZfItemInstance* InItemInstance, int
     
     FZfInventorySlot NewSlot;
     NewSlot.SlotIndex = TargetSlot;
-    NewSlot.ItemInstance= InItemInstance;
+    NewSlot.ItemInstance = InItemInstance;
     InventoryList.Slots.Add(NewSlot);
-
+    
     AddReplicatedSubObject(InItemInstance);
     OnItemAdded.Broadcast(InItemInstance,TargetSlot);
 }
@@ -771,7 +793,6 @@ void UZfInventoryComponent::InternalRemoveItemFromInstance(UZfItemInstance* OutI
     });
 
     RemoveReplicatedSubObject(OutItemInstance);
-    OnItemRemoved.Broadcast(OutItemInstance, SlotIndex);
 }
 
 void UZfInventoryComponent::InternalRemoveItemAtSlot(int32 SlotIndex)
@@ -822,6 +843,7 @@ bool UZfInventoryComponent::InternalTryStackWithExistingItems(UZfItemInstance* I
         // Se não tem overflow, o item foi completamente absorvido
         if (Overflow <= 0)
         {
+            OnItemAdded.Broadcast(ItemInstance,Overflow);
             return true;
         }
     }
@@ -845,7 +867,7 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
     {
         UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Slot inválido. From: %d é igual a To: %d"),
         FromSlotIndex, ToSlotIndex);
-        return EZfItemMechanicResult::Success;
+        return EZfItemMechanicResult::Failed_InvalidSlot;
     }
 
     UZfItemInstance* ItemToMove = GetItemAtSlot(FromSlotIndex);
@@ -856,38 +878,28 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
         return EZfItemMechanicResult::Failed_ItemNotFound;
     }
 
+    FZfInventorySlot* SlotA = FindSlotByIndex(FromSlotIndex);
+    FZfInventorySlot* SlotB = FindSlotByIndex(ToSlotIndex);
+    
     if (IsSlotEmpty(ToSlotIndex))
     {
         InternalRemoveItemAtSlot(FromSlotIndex);
         InternalAddItem(ItemToMove, ToSlotIndex);
     }
     else
-    {
-        // Pega o item no slot de destino
-        UZfItemInstance* ItemAtDestination = GetItemAtSlot(ToSlotIndex);
-
-        // Faz a troca
-        InternalRemoveItemAtSlot(FromSlotIndex);
-        InternalRemoveItemAtSlot(ToSlotIndex);
+    { 
+        Swap(SlotA->ItemInstance, SlotB->ItemInstance);
         
-        InternalAddItem(ItemToMove, ToSlotIndex);
-        InternalAddItem(ItemAtDestination, FromSlotIndex);
+        InventoryList.MarkItemDirty(*SlotA);
+        InventoryList.MarkItemDirty(*SlotB);
     }
     
     // Notifica a UI
     OnItemMoved.Broadcast(ItemToMove, FromSlotIndex, ToSlotIndex);
-
+    OnInventoryRefreshed.Broadcast();
+    
     InventoryList.MarkArrayDirty();
     
-    /*
-    if (ItemAtDestination)
-    {
-        OnItemMoved.Broadcast(ItemAtDestination, ToSlotIndex, FromSlotIndex);
-    }
-    */
-    
-    
-
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Item '%s' movido do slot %d para %d."),
         *ItemToMove->GetItemName().ToString(), FromSlotIndex, ToSlotIndex);
@@ -1061,4 +1073,13 @@ bool UZfInventoryComponent::InternalCheckIsServer(const FString& FunctionName) c
     }
 
     return true;
+}
+
+FZfInventorySlot* UZfInventoryComponent::FindSlotByIndex(int32 SlotIndex)
+{
+    return InventoryList.Slots.FindByPredicate(
+        [SlotIndex](const FZfInventorySlot& Slot)
+        {
+            return Slot.SlotIndex == SlotIndex;
+        });
 }

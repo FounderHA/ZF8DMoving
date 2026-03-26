@@ -414,8 +414,7 @@ public:
     // ----------------------------------------------------------
 
     // Retorna string completa com todos os dados do item para debug.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Debug")
-    FString GetDebugString() const;
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Debug") FString GetDebugString() const;
 
     // Desenha informações do item no mundo via DrawDebugString.
     // @param WorldContextObject — contexto de mundo

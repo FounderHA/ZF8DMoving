@@ -180,6 +180,7 @@ enum class EZfItemMechanicResult : uint8
     Failed_StackFull        UMETA(DisplayName = "Failed: Stack Full"),
     Failed_IncompatibleItem UMETA(DisplayName = "Failed: Incompatible Item Tag"),
     Failed_SlotBlocked      UMETA(DisplayName = "Failed: Slot Blocked By Two Handed Weapon")
+    
 };
 
 // ============================================================
