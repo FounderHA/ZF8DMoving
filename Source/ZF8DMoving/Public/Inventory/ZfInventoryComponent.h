@@ -60,7 +60,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemRemovedFromInventory, UZfIte
 // @param ItemInstance — o item movido
 // @param FromSlot — slot de origem
 // @param ToSlot — slot de destino
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemMovedInInventory, UZfItemInstance*, ItemInstance, int32, FromSlot, int32, ToSlot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemMovedInInventory);
 
 // Disparado quando o tamanho do inventário muda
 // @param NewSize — novo tamanho total de slots
@@ -261,7 +261,7 @@ public:
 
     // Requisição do cliente para dropar item no mundo
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
-    void ServerRequestDropItem(int32 SlotIndex);
+    void ServerTryDropItem(int32 SlotIndex);
 
     
 
@@ -290,10 +290,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Debug")
     void DebugLogInventory() const;
 
-    // Desenha o estado do inventário na tela via DrawDebugString
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Debug")
-    void DrawDebugInventory() const;
-
 protected:
 
     // Referência ao EquipmentComponent no mesmo ator.
@@ -307,8 +303,7 @@ private:
     // Chamado no BeginPlay.
     void Internal_FindEquipmentComponent();
     
-
-
+    
     //============================================================================================================================================================
 
 
@@ -448,6 +443,10 @@ public:
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
 
+    UFUNCTION(Category = "Zf|Inventory")
+    void TrySpawnPickupItem(UZfItemInstance* ItemInstance);
+
+    
     // Adiciona slots extras ao inventário.
     // Respeita MaxAbsoluteSlotCount.
     // @param ExtraSlots — quantidade de slots a adicionar
@@ -521,13 +520,9 @@ private:
     // @param int32 - Slot do Item a ser Adicionado
     void InternalAddItem(UZfItemInstance* InItemInstance, int32 TargetSlot);
 
-    // Remove o item do inventário a partir do ItemInstance.
-    // @param ItemInstance - Item a ser Removido
-    void InternalRemoveItemFromInstance(UZfItemInstance* OutItemInstance);
-
     // Remove o item do inventário a partir do Slot.
     // @param int32 - Item a ser Removido
-    void InternalRemoveItemAtSlot(int32 SlotIndex);
+    void InternalRemoveItem(int32 SlotIndex);
 
     // Tenta fazer stack de um item com stacks existentes.
     // Retorna true se o item foi completamente absorvido por stacks.
