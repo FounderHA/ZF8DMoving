@@ -377,19 +377,12 @@ void UZfInventoryComponent::ServerTryDropItem_Implementation(int32 SlotIndex)
 
 void UZfInventoryComponent::ServerTrySortInventory_Implementation(EZfInventorySortType SortType)
 {
-    if (InternalCheckIsServer(TEXT("ServerTryRemoveItemFromInventory_Implementation")))
+    if (!InternalCheckIsServer(TEXT("ServerTrySortInventory")))
     {
-        switch (SortType)
-        {
-        case EZfInventorySortType::Alphabetical: InternalSortInventoryAlphabetically(); break;
-        case EZfInventorySortType::ByItemType: InternalSortInventoryByItemType();     break;
-        case EZfInventorySortType::ByRarity: InternalSortInventoryByRarity();       break;
-        case EZfInventorySortType::Compact: InternalCompactInventory();       break;
-        default: break;
-        }
+        return;
     }
-    
-    
+
+    InternalSortInventoryBySelected(SortType);
 }
 
 // ============================================================
@@ -904,150 +897,101 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
     return EZfItemMechanicResult::Success;
 }
 
+
 // ============================================================
 // FUNÇÕES INTERNAS - ORGANIZAÇÃO
 // ============================================================
 
-void UZfInventoryComponent::InternalSortInventoryAlphabetically()
+void UZfInventoryComponent::InternalSortInventoryBySelected(EZfInventorySortType SortType)
 {
-    if (!InternalCheckIsServer(TEXT("SortInventoryAlphabetically")))
+    if (!InternalCheckIsServer(TEXT("InternalSortInventoryBySelected")))
     {
         return;
     }
 
-    // Coleta todos os itens não nulos
+    // Coleta todos os ItemInstances presentes no inventário
     TArray<UZfItemInstance*> Items;
-    for (FZfInventorySlot& Slot : InventoryList.Slots)
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
         if (Slot.ItemInstance)
         {
             Items.Add(Slot.ItemInstance);
-            Slot.ItemInstance = nullptr;
         }
     }
 
-    // Ordena alfabeticamente pelo nome do item
-    Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+    // Ordena de acordo com o tipo selecionado
+    switch (SortType)
     {
-        return A.GetItemName().ToString() < B.GetItemName().ToString();
-    });
+    case EZfInventorySortType::Alphabetical:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            return A.GetItemName().ToString() < B.GetItemName().ToString();
+        });
+        break;
 
-    // Redistribui nos slots em ordem
+    case EZfInventorySortType::ByItemType:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            const FString TagA = A.GetItemTags().IsEmpty() ? TEXT("") : A.GetItemTags().GetByIndex(0).ToString();
+            const FString TagB = B.GetItemTags().IsEmpty() ? TEXT("") : B.GetItemTags().GetByIndex(0).ToString();
+            return TagA < TagB;
+        });
+        break;
+
+    case EZfInventorySortType::ByRarity:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            return static_cast<uint8>(A.ItemRarity) > static_cast<uint8>(B.ItemRarity);
+        });
+        break;
+
+    case EZfInventorySortType::ByTier:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            return A.ItemTier > B.ItemTier;
+        });
+        break;
+
+    case EZfInventorySortType::ByQuantity:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            return A.CurrentStack > B.CurrentStack;
+        });
+        break;
+
+    case EZfInventorySortType::ByQuality:
+        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        {
+            return A.CurrentQuality > B.CurrentQuality;
+        });
+        break;
+
+    case EZfInventorySortType::Compact:
+        // Compact não precisa de ordenação — só redistribui na ordem atual
+        break;
+
+    default:
+        break;
+    }
+
+    // Reconstrói o array de slots com SlotIndex sequencial e ordenado
+    InventoryList.Slots.Empty();
     for (int32 i = 0; i < Items.Num(); i++)
     {
-        InventoryList.Slots[i].ItemInstance = Items[i];
+        FZfInventorySlot NewSlot;
+        NewSlot.SlotIndex = i;
+        NewSlot.ItemInstance = Items[i];
+        InventoryList.Slots.Add(NewSlot);
     }
 
     OnInventoryRefreshed.Broadcast();
     InventoryList.MarkArrayDirty();
 
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfInventoryComponent::SortInventoryAlphabetically — " "Inventário ordenado alfabeticamente."));
+    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::InternalSortInventoryBySelected — "
+        "Inventário ordenado por '%s'. %d itens reorganizados."),
+        *UEnum::GetValueAsString(SortType), Items.Num());
 }
 
-void UZfInventoryComponent::InternalSortInventoryByItemType()
-{
-    if (!InternalCheckIsServer(TEXT("SortInventoryByItemType")))
-    {
-        return;
-    }
-
-    TArray<UZfItemInstance*> Items;
-    for (FZfInventorySlot& Slot : InventoryList.Slots)
-    {
-        if (Slot.ItemInstance)
-        {
-            Items.Add(Slot.ItemInstance);
-            Slot.ItemInstance = nullptr;
-        }
-    }
-
-    // Ordena pela primeira tag do item (string comparison)
-    Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
-    {
-        const FGameplayTagContainer TagsA = A.GetItemTags();
-        const FGameplayTagContainer TagsB = B.GetItemTags();
-
-        const FString TagStringA = TagsA.IsEmpty() ? TEXT("") : TagsA.GetByIndex(0).ToString();
-        const FString TagStringB = TagsB.IsEmpty() ? TEXT("") : TagsB.GetByIndex(0).ToString();
-
-        return TagStringA < TagStringB;
-    });
-
-    for (int32 i = 0; i < Items.Num(); i++)
-    {
-        InventoryList.Slots[i].ItemInstance = Items[i];
-    }
-
-    OnInventoryRefreshed.Broadcast();
-    InventoryList.MarkArrayDirty();
-
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::SortInventoryByItemType — " "Inventário ordenado por tipo."));
-}
-
-void UZfInventoryComponent::InternalSortInventoryByRarity()
-{
-    if (!InternalCheckIsServer(TEXT("SortInventoryByRarity")))
-    {
-        return;
-    }
-
-    TArray<UZfItemInstance*> Items;
-    for (FZfInventorySlot& Slot : InventoryList.Slots)
-    {
-        if (Slot.ItemInstance)
-        {
-            Items.Add(Slot.ItemInstance);
-            Slot.ItemInstance = nullptr;
-        }
-    }
-
-    // Ordena por raridade — mais raro primeiro (valor mais alto do enum)
-    Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
-    {
-        return static_cast<uint8>(A.ItemRarity) > static_cast<uint8>(B.ItemRarity);
-    });
-
-    for (int32 i = 0; i < Items.Num(); i++)
-    {
-        InventoryList.Slots[i].ItemInstance = Items[i];
-    }
-
-    OnInventoryRefreshed.Broadcast();
-    InventoryList.MarkArrayDirty();
-
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::SortInventoryByRarity — " "Inventário ordenado por raridade."));
-}
-
-void UZfInventoryComponent::InternalCompactInventory()
-{
-    if (!InternalCheckIsServer(TEXT("CompactInventory")))
-    {
-        return;
-    }
-
-    // Coleta itens em ordem
-    TArray<UZfItemInstance*> Items;
-    for (FZfInventorySlot& Slot : InventoryList.Slots)
-    {
-        if (Slot.ItemInstance)
-        {
-            Items.Add(Slot.ItemInstance);
-            Slot.ItemInstance = nullptr;
-        }
-    }
-
-    // Redistribui compactado nos primeiros slots
-    for (int32 i = 0; i < Items.Num(); i++)
-    {
-        InventoryList.Slots[i].ItemInstance = Items[i];
-    }
-
-    OnInventoryRefreshed.Broadcast();
-    InventoryList.MarkArrayDirty();
-
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::CompactInventory — " "Inventário compactado. %d itens reorganizados."), Items.Num());
-}
 
 // ============================================================
 // FUNÇÕES INTERNAS - VALIDAÇÃO

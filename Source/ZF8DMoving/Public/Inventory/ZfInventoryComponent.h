@@ -100,6 +100,7 @@ enum class EZfInventorySortType : uint8
     ByRarity        UMETA(DisplayName = "By Rarity"),
     ByTier          UMETA(DisplayName = "By Tier"),
     ByQuantity      UMETA(DisplayName = "By Quantity"),
+    ByQuality       UMETA(DisplayName = "By Quality"),
     Compact         UMETA(DisplayName = "Compact"),
 };
 
@@ -546,22 +547,9 @@ private:
     // FUNÇÕES INTERNAS - ORGANIZAÇÃO
     // ============================================================
     
-    // Ordena o inventário em ordem alfabética pelo nome do item.
+    // Ordena o inventário de acordo com o tipo selecionado.
     UFUNCTION(Category = "Zf|Inventory|Sort")
-    void InternalSortInventoryAlphabetically();
-
-    // Ordena o inventário por tipo de item (usando tags).
-    UFUNCTION(Category = "Zf|Inventory|Sort")
-    void InternalSortInventoryByItemType();
-
-    // Ordena o inventário por raridade (mais raro primeiro).
-    UFUNCTION(Category = "Zf|Inventory|Sort")
-    void InternalSortInventoryByRarity();
-
-    // Compacta o inventário — move todos os itens para os primeiros
-    // slots disponíveis eliminando slots vazios entre itens.
-    UFUNCTION(Category = "Zf|Inventory|Sort")
-    void InternalCompactInventory();
+    void InternalSortInventoryBySelected(EZfInventorySortType SortType);
     
     // ============================================================
     // FUNÇÕES INTERNAS - VALIDAÇÃO
