@@ -57,38 +57,25 @@ class UZfFragment_SetPiece;
 // Disparado quando um item é equipado com sucesso
 // @param ItemInstance — item equipado
 // @param SlotType — slot onde foi equipado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-    FOnItemEquipped,
-    UZfItemInstance*, ItemInstance,
-    EZfEquipmentSlot, SlotType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 
 // Disparado quando um item é desequipado
 // @param ItemInstance — item desequipado
 // @param SlotType — slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-    FOnItemUnequipped,
-    UZfItemInstance*, ItemInstance,
-    EZfEquipmentSlot, SlotType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, EZfEquipmentSlot, SlotType);
 
 // Disparado quando um item quebra enquanto equipado
 // @param ItemInstance — item que quebrou
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-    FOnEquippedItemBroken,
-    UZfItemInstance*, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemBroken, UZfItemInstance*, ItemInstance);
 
 // Disparado quando um item equipado é reparado
 // @param ItemInstance — item reparado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-    FOnEquippedItemRepaired,
-    UZfItemInstance*, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInstance*, ItemInstance);
 
 // Disparado quando os bônus de um Combo Set mudam
 // @param SetIdentifierTag — tag do set que mudou
 // @param ActivePieceCount — quantidade de peças atualmente equipadas
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-    FOnSetBonusChanged,
-    FGameplayTag, SetIdentifierTag,
-    int32, ActivePieceCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
 
 // ============================================================
 // FZfActiveSetBonus
@@ -115,15 +102,94 @@ struct ZF8DMOVING_API FZfActiveSetBonus
 };
 
 // ============================================================
+// FAST ARRAY
+// ============================================================
+
+
+// -----------------------------------------------------------
+// FZfEquipmentSlotEntry
+// Uma entrada no sistema de equipamento.
+// SlotIndex permite múltiplos slots do mesmo tipo (Ring_0, Ring_1).
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfEquipmentSlotEntry : public FFastArraySerializerItem
+{
+    GENERATED_BODY()
+
+    // Tipo do slot de equipamento
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
+    EZfEquipmentSlot SlotType = EZfEquipmentSlot::None;
+
+    // Tag identificadora do slot de equipamento
+    // Ex: EquipmentSlot.MainHand, EquipmentSlot.Ring
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot", meta = (Categories = "EquipmentSlot"))
+    FGameplayTag SlotTag;
+    
+    // Índice para múltiplos slots do mesmo tipo
+    // Ex: Ring → SlotIndex 0 e SlotIndex 1
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
+    int32 SlotIndex = 0;
+
+    // Item equipado (nullptr = slot vazio)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
+    TObjectPtr<UZfItemInstance> ItemInstance = nullptr;
+
+    // Callbacks de replicação
+    void PreReplicatedRemove(const struct FZfEquipmentList& InArraySerializer);
+    void PostReplicatedAdd(const FZfEquipmentList& InArraySerializer);
+    void PostReplicatedChange(const FZfEquipmentList& InArraySerializer);
+};
+
+// -----------------------------------------------------------
+// FZfEquipmentList
+// FastArray de slots equipados.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfEquipmentList : public FFastArraySerializer
+{
+    GENERATED_BODY()
+
+    // Todos os slots de equipamento com seus itens
+    UPROPERTY()
+    TArray<FZfEquipmentSlotEntry> EquippedItems;
+
+    // Referência ao componente dono
+    UPROPERTY(NotReplicated)
+    TObjectPtr<UZfEquipmentComponent> OwnerComponent = nullptr;
+
+    // Replicação delta do equipamento
+    bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
+    {
+        return FastArrayDeltaSerialize<FZfEquipmentSlotEntry, FZfEquipmentList>(
+            EquippedItems, DeltaParams, *this);
+    }
+};
+
+template<>
+struct TStructOpsTypeTraits<FZfEquipmentList> : public TStructOpsTypeTraitsBase2<FZfEquipmentList>
+{
+    enum { WithNetDeltaSerializer = true };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================================
 // UZfEquipmentComponent
 // ============================================================
 
-UCLASS(
-    ClassGroup = (Zf),
-    BlueprintType,
-    Blueprintable,
-    meta = (BlueprintSpawnableComponent)
-)
+UCLASS(ClassGroup = (Zf), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
 {
     GENERATED_BODY()
@@ -166,17 +232,7 @@ public:
     // FUNÇÕES PRINCIPAIS — EQUIPAR
     // ----------------------------------------------------------
 
-    // Tenta equipar um item em seu slot correspondente.
-    // Chamado pelo InventoryComponent após validações básicas.
-    // Valida: slot disponível, two-handed, tags de requisito,
-    //         item quebrado, slot bloqueado.
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param InventorySlotIndex — slot de origem no inventário
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 InventorySlotIndex);
-
+    
     // Tenta equipar um item em um slot específico de equipamento.
     // Útil para casos onde o jogador arrasta o item para um slot.
     // @param ItemInstance — item a equipar
@@ -435,9 +491,74 @@ private:
     // Gera uma ReplicationKey única para novos slots
     int32 Internal_GenerateReplicationKey() const;
 
+    
+    // Valida se o InventoryComponent está disponível
+    bool Internal_CheckInventoryComponent(const FString& FunctionName) const;
+
+
+
+
+
+
+    
+    // ============================================================
+    // FUNÇÕES SERVER - GERENCIAMENTO
+    // ============================================================
+
+    // Tenta equipar um item em seu slot correspondente.
+    // Valida: slot disponível, two-handed, tags de requisito,
+    //         item quebrado, slot bloqueado.
+    // Se já houver item no slot alvo, devolve ao InventoryComponent.
+    // @param ItemInstance — item a equipar
+    // @param InventorySlotIndex — slot de origem no inventário
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot);
+
+    
+    // ============================================================
+    // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
+    // ============================================================
+
+    // Tenta equipar um item em seu slot correspondente.
+    // Valida: slot disponível, two-handed, tags de requisito,
+    //         item quebrado, slot bloqueado.
+    // Se já houver item no slot alvo, devolve ao InventoryComponent.
+    // @param ItemInstance — item a equipar
+    // @param InventorySlotIndex — slot de origem no inventário
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot);
+
+    
+    // ============================================================
+    // FUNÇÕES DE CONSULTA
+    // ============================================================
+    
+    // ============================================================
+    // FUNÇÕES INTERNAS - GERENCIAMENTO
+    // ============================================================
+
+    // Equipa o item a partir do ItemInstance.
+    // @param ItemInstance - Item a ser Adicionado
+    void InternalEquipItem(UZfItemInstance* InItemInstance);
+    
+    // ============================================================
+    // FUNÇÕES INTERNAS - ORGANIZAÇÃO
+    // ============================================================
+
+    // ============================================================
+    // FUNÇÕES INTERNAS - VALIDAÇÃO
+    // ============================================================
+
     // Valida se uma operação pode ser executada no servidor
     bool Internal_CheckIsServer(const FString& FunctionName) const;
 
-    // Valida se o InventoryComponent está disponível
-    bool Internal_CheckInventoryComponent(const FString& FunctionName) const;
+
+
+
+
+
+    
+
+
 };

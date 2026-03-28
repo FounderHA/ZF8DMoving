@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "Inventory/ZfInventoryTypes.h"
+#include "Inventory/ZfEquipmentTags.h"
 #include "ZfFragment_Equippable.generated.h"
 
 UENUM(BlueprintType)
@@ -38,6 +39,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Equippable")
     EZfEquipmentSlot EquipmentSlot = EZfEquipmentSlot::None;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragment|Equippable", meta =(GameplayTagFilter = "EquipmentSlot"))
+    FGameplayTagContainer EquipmentTags;
+    
     // Define se o item ocupa uma ou duas mãos.
     // Só é relevante para itens nos slots MainHand e OffHand.
     // Para todos os outros slots, use NotApplicable.
