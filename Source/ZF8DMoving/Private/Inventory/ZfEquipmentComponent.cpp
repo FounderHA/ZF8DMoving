@@ -15,6 +15,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Player/ZfPlayerState.h"
 
 // ============================================================
 // Constructor
@@ -53,93 +54,15 @@ void UZfEquipmentComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Busca componentes no ator dono
-    Internal_FindInventoryComponent();
-
-    // Inicializa slots apenas no servidor
-    if (GetOwner() && GetOwner()->HasAuthority())
+    if (GetOwner())
     {
-        Internal_InitializeEquipmentSlots();
+        InventoryComponent = Cast<AZfPlayerState>(GetOwner())->FindComponentByClass<UZfInventoryComponent>();
     }
 }
 
 // ============================================================
 // EQUIPAR
 // ============================================================
-
-EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(
-    UZfItemInstance* ItemInstance,
-    int32 InventorySlotIndex)
-{
-    if (!Internal_CheckIsServer(TEXT("TryEquipItem")))
-    {
-        return EZfItemMechanicResult::Failed_InvalidOperation;
-    }
-
-    if (!ItemInstance)
-    {
-        return EZfItemMechanicResult::Failed_ItemNotFound;
-    }
-
-    // Valida se pode ser equipado e obtém o motivo se não puder
-    EZfItemMechanicResult ValidationResult;
-    if (!CanEquipItem(ItemInstance, ValidationResult))
-    {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfEquipmentComponent::TryEquipItem — "
-                 "Item '%s' não pode ser equipado: %s"),
-            *ItemInstance->GetItemName().ToString(),
-            *UEnum::GetValueAsString(ValidationResult));
-        return ValidationResult;
-    }
-
-    // Obtém o fragment Equippable para saber o slot alvo
-    const UZfFragment_Equippable* EquippableFragment =
-        ItemInstance->GetFragment<UZfFragment_Equippable>();
-
-    // Determina o slot alvo
-    EZfEquipmentSlot TargetSlotType = EquippableFragment->EquipmentSlot;
-    int32 TargetSlotIndex = 0;
-
-    // Busca o primeiro slot livre do tipo correto se bAutoFindFreeSlot
-    if (EquippableFragment->bAutoFindFreeSlot)
-    {
-        bool bFoundFreeSlot = false;
-        for (const FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
-        {
-            if (Entry.SlotType == TargetSlotType && !Entry.ItemInstance)
-            {
-                TargetSlotIndex = Entry.SlotIndex;
-                bFoundFreeSlot = true;
-                break;
-            }
-        }
-
-        // Se não há slot livre, usa o primeiro slot do tipo
-        // (vai trocar o item existente)
-        if (!bFoundFreeSlot)
-        {
-            for (const FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
-            {
-                if (Entry.SlotType == TargetSlotType)
-                {
-                    TargetSlotIndex = Entry.SlotIndex;
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        TargetSlotIndex = EquippableFragment->PreferredSlotIndex;
-    }
-
-    return TryEquipItemToSpecificSlot(
-        ItemInstance,
-        TargetSlotType,
-        TargetSlotIndex,
-        InventorySlotIndex);
-}
 
 EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemToSpecificSlot(
     UZfItemInstance* ItemInstance,
@@ -161,20 +84,17 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemToSpecificSlot(
     if (IsEquipmentSlotBlocked(SlotType, SlotIndex))
     {
         UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfEquipmentComponent::TryEquipItemToSpecificSlot — "
-                 "Slot bloqueado por arma de duas mãos."));
+            TEXT("UZfEquipmentComponent::TryEquipItemToSpecificSlot — " "Slot bloqueado por arma de duas mãos."));
         return EZfItemMechanicResult::Failed_SlotBlocked;
     }
 
     // Busca a entrada do slot no EquipmentList
-    FZfEquipmentSlotEntry* SlotEntry =
-        Internal_FindSlotEntry(SlotType, SlotIndex);
+    FZfEquipmentSlotEntry* SlotEntry = Internal_FindSlotEntry(SlotType, SlotIndex);
 
     if (!SlotEntry)
     {
         UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfEquipmentComponent::TryEquipItemToSpecificSlot — "
-                 "Slot %s[%d] não existe neste EquipmentComponent."),
+            TEXT("UZfEquipmentComponent::TryEquipItemToSpecificSlot — " "Slot %s[%d] não existe neste EquipmentComponent."),
             *UEnum::GetValueAsString(SlotType), SlotIndex);
         return EZfItemMechanicResult::Failed_InvalidSlot;
     }
@@ -199,8 +119,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemToSpecificSlot(
         SlotEntry->ItemInstance = nullptr;
 
         // Se era two-handed, libera o OffHand
-        const UZfFragment_Equippable* ExistingEquippable =
-            ExistingItem->GetFragment<UZfFragment_Equippable>();
+        const UZfFragment_Equippable* ExistingEquippable = ExistingItem->GetFragment<UZfFragment_Equippable>();
         if (ExistingEquippable && ExistingEquippable->IsTwoHanded())
         {
             Internal_UnblockOffHandSlot();
@@ -257,7 +176,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemToSpecificSlot(
     ItemInstance->NotifyFragments_ItemEquipped(this, GetOwner());
 
     // Dispara delegate
-    OnItemEquipped.Broadcast(ItemInstance, SlotType);
+    OnItemEquipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First());
 
     // Marca o array como dirty para replicação
     EquipmentList.MarkArrayDirty();
@@ -593,9 +512,7 @@ EZfEquipmentSlot UZfEquipmentComponent::GetEquipmentSlotOfItem(
     return EZfEquipmentSlot::None;
 }
 
-bool UZfEquipmentComponent::CanEquipItem(
-    UZfItemInstance* ItemInstance,
-    EZfItemMechanicResult& OutReason) const
+bool UZfEquipmentComponent::CanEquipItem(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const
 {
     if (!ItemInstance)
     {
@@ -604,8 +521,7 @@ bool UZfEquipmentComponent::CanEquipItem(
     }
 
     // Verifica se tem o fragment Equippable
-    const UZfFragment_Equippable* EquippableFragment =
-        ItemInstance->GetFragment<UZfFragment_Equippable>();
+    const UZfFragment_Equippable* EquippableFragment = ItemInstance->GetFragment<UZfFragment_Equippable>();
 
     if (!EquippableFragment)
     {
@@ -631,8 +547,7 @@ bool UZfEquipmentComponent::CanEquipItem(
     if (!EquippableFragment->RequiredActorTags.IsEmpty())
     {
         // Obtém as tags do ator via AbilitySystem
-        UAbilitySystemComponent* ASC =
-            Internal_GetAbilitySystemComponent();
+        UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
 
         if (ASC)
         {
@@ -1022,9 +937,7 @@ void UZfEquipmentComponent::Internal_UnblockOffHandSlot()
              "Slot OffHand liberado."));
 }
 
-FZfEquipmentSlotEntry* UZfEquipmentComponent::Internal_FindSlotEntry(
-    EZfEquipmentSlot SlotType,
-    int32 SlotIndex)
+FZfEquipmentSlotEntry* UZfEquipmentComponent::Internal_FindSlotEntry(EZfEquipmentSlot SlotType, int32 SlotIndex)
 {
     for (FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
     {
@@ -1057,30 +970,6 @@ int32 UZfEquipmentComponent::Internal_GenerateReplicationKey() const
     // + um offset para evitar colisões
     static int32 KeyCounter = 0;
     return ++KeyCounter;
-}
-
-bool UZfEquipmentComponent::Internal_CheckIsServer(
-    const FString& FunctionName) const
-{
-    const UWorld* World = GetWorld();
-    if (!World)
-    {
-        UE_LOG(LogZfInventory, Error,
-            TEXT("UZfEquipmentComponent::%s — GetWorld() retornou nulo."),
-            *FunctionName);
-        return false;
-    }
-
-    if (World->GetNetMode() == NM_Client)
-    {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfEquipmentComponent::%s — "
-                 "Operação de servidor chamada no cliente!"),
-            *FunctionName);
-        return false;
-    }
-
-    return true;
 }
 
 bool UZfEquipmentComponent::Internal_CheckInventoryComponent(
@@ -1179,3 +1068,140 @@ void UZfEquipmentComponent::DrawDebugEquipment() const
         false,
         1.2f);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void FZfEquipmentSlotEntry::PreReplicatedRemove(const FZfEquipmentList& InArraySerializer)
+{
+    if (InArraySerializer.OwnerComponent && ItemInstance)
+    {
+        InArraySerializer.OwnerComponent->OnItemUnequipped.Broadcast(ItemInstance, SlotType);
+    }
+}
+
+void FZfEquipmentSlotEntry::PostReplicatedAdd(const FZfEquipmentList& InArraySerializer)
+{
+    if (InArraySerializer.OwnerComponent && ItemInstance)
+    {
+        InArraySerializer.OwnerComponent->OnItemEquipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First());
+    }
+}
+
+void FZfEquipmentSlotEntry::PostReplicatedChange(const FZfEquipmentList& InArraySerializer)
+{
+    // Mudança genérica — equipamento atualizado
+}
+
+// Definição central da categoria de log do sistema de inventário.
+// Declarada em ZfInventoryTypes.h com DECLARE_LOG_CATEGORY_EXTERN.
+// Uso em qualquer arquivo: UE_LOG(LogZfInventory, Log, TEXT("..."));
+DEFINE_LOG_CATEGORY(LogZfInventory);
+
+
+// ============================================================
+// FUNÇÕES SERVER - GERENCIAMENTO
+// ============================================================
+
+void UZfEquipmentComponent::ServerTryEquipItem_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot)
+{
+    if (Internal_CheckIsServer("ServerTryEquipItem_Implementation"))
+    {
+        TryEquipItem(ItemInstance, FromInventorySlot);
+    }
+}
+
+
+// ============================================================
+// FUNÇÕES PRINCIPAIS - GERENCIAMENTO
+// ============================================================
+
+EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* InItemInstance, int32 FromInventorySlot)
+{
+    if (!Internal_CheckIsServer(TEXT("TryEquipItem")))
+    {
+        return EZfItemMechanicResult::Failed_InvalidOperation;
+    }
+
+    if (!InItemInstance)
+    {
+        return EZfItemMechanicResult::Failed_ItemNotFound;
+    }
+
+    const UZfFragment_Equippable* EquippableFragment = InItemInstance->GetFragment<UZfFragment_Equippable>();
+
+    if (!EquippableFragment)
+    {
+        return EZfItemMechanicResult::Failed_CannotEquip;
+    }
+    
+    InternalEquipItem(InItemInstance);
+    EquipmentList.MarkArrayDirty();
+    OnItemEquipped.Broadcast(InItemInstance,EquippableFragment->EquipmentTags.First());
+
+
+    if (InventoryComponent)
+    {
+        InventoryComponent->TryRemoveItemFromInventory(FromInventorySlot);
+    }
+
+    return EZfItemMechanicResult::Success;
+}
+
+
+
+// ============================================================
+// FUNÇÕES INTERNAS - ORGANIZAÇÃO
+// ============================================================
+
+void UZfEquipmentComponent::InternalEquipItem(UZfItemInstance* InItemInstance)
+{
+    check(InItemInstance != nullptr);
+    
+    const UZfFragment_Equippable* EquippableFragment = InItemInstance->GetFragment<UZfFragment_Equippable>();
+    
+    FZfEquipmentSlotEntry NewSlot;
+    NewSlot.SlotTag = EquippableFragment->EquipmentTags.First();
+    NewSlot.ItemInstance = InItemInstance;
+    EquipmentList.EquippedItems.Add(NewSlot);
+    
+    AddReplicatedSubObject(InItemInstance);
+}
+
+// ============================================================
+// FUNÇÕES INTERNAS - VALIDAÇÃO
+// ============================================================
+
+bool UZfEquipmentComponent::Internal_CheckIsServer(const FString& FunctionName) const
+{
+    const UWorld* World = GetWorld();
+    if (!World)
+    {
+        UE_LOG(LogZfInventory, Error,
+            TEXT("UZfEquipmentComponent::%s — GetWorld() retornou nulo."), *FunctionName);
+        return false;
+    }
+
+    if (World->GetNetMode() == NM_Client)
+    {
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("UZfEquipmentComponent::%s — " "Operação de servidor chamada no cliente!"), *FunctionName);
+        return false;
+    }
+
+    return true;
+}
+

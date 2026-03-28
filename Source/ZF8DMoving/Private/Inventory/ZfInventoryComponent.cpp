@@ -16,19 +16,6 @@
 #include "Player/ZfPlayerState.h"
 
 
-// ============================================================
-// ADICIONAR ITEM
-// ============================================================
-
-
-// ============================================================
-// REMOVER ITEM
-// ============================================================
-
-
-
-
-
 EZfItemMechanicResult UZfInventoryComponent::TryEquipItemFromSlot(int32 SlotIndex)
 {
     if (!InternalCheckIsServer(TEXT("TryEquipItemFromSlot")))
@@ -94,7 +81,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryEquipItem(UZfItemInstance* ItemI
     }
 
     // Delega ao EquipmentComponent — ele valida slots, two-handed, etc.
-    const EZfItemMechanicResult EquipResult = EquipmentComponent->TryEquipItem(ItemInstance, SlotIndex);
+    /*const EZfItemMechanicResult EquipResult = EquipmentComponent->TryEquipItem(ItemInstance);
 
     if (EquipResult == EZfItemMechanicResult::Success)
     {
@@ -105,9 +92,9 @@ EZfItemMechanicResult UZfInventoryComponent::TryEquipItem(UZfItemInstance* ItemI
 
         UE_LOG(LogZfInventory, Log,
             TEXT("UZfInventoryComponent::TryEquipItem — " "Item '%s' equipado com sucesso."), *ItemInstance->GetItemName().ToString());
-    }
+    }*/
 
-    return EquipResult;
+    return EZfItemMechanicResult::Failed_ItemNotFound;
 }
 
 EZfItemMechanicResult UZfInventoryComponent::ReceiveUnequippedItem(UZfItemInstance* ItemInstance, int32 PreferredSlotIndex)
@@ -141,14 +128,10 @@ EZfItemMechanicResult UZfInventoryComponent::ReceiveUnequippedItem(UZfItemInstan
     return TryAddItemToInventory(ItemInstance);
 }
 
-
-
 void UZfInventoryComponent::ServerRequestEquipItem_Implementation(int32 SlotIndex)
 {
     TryEquipItemFromSlot(SlotIndex);
 }
-
-
 
 void UZfInventoryComponent::ClientNotifyInventoryUpdated_Implementation()
 {
@@ -223,6 +206,12 @@ void UZfInventoryComponent::DebugLogInventory() const
 
 
 
+
+
+
+
+
+
 // ============================================================
 // CONSTRUCTOR
 // ============================================================
@@ -234,6 +223,7 @@ UZfInventoryComponent::UZfInventoryComponent()
 
     // Habilita replicação do componente
     SetIsReplicatedByDefault(true);
+    bReplicateUsingRegisteredSubObjectList = true;
 }
 
 // ============================================================
@@ -253,22 +243,6 @@ void UZfInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
     DOREPLIFETIME(UZfInventoryComponent, CurrentSlotCount);
 }
 
-bool UZfInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-    bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-    for (FZfInventorySlot& Entry : InventoryList.Slots)
-    {
-        if (IsValid(Entry.ItemInstance))
-        {
-            // Replica o UObject e suas variáveis internas
-            bWroteSomething |= Channel->ReplicateSubobject(Entry.ItemInstance, *Bunch, *RepFlags);
-        }
-    }
-
-    return bWroteSomething;
-}
-
 // ============================================================
 // CICLO DE VIDA - BEGINPLAY, TICK...
 // ============================================================
@@ -278,9 +252,8 @@ void UZfInventoryComponent::BeginPlay()
     Super::BeginPlay();
 
     // Busca o EquipmentComponent no ator dono
-    Internal_FindEquipmentComponent();
-    
-    
+    EquipmentComponent = Cast<AZfPlayerState>(GetOwner())->FindComponentByClass<UZfEquipmentComponent>();
+ 
     // Inicializa os slots apenas no servidor
     if (GetOwner() && GetOwner()->HasAuthority())
     {
@@ -541,7 +514,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
     return EZfItemMechanicResult::Success;
 }
 
-void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance)
+void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) const
 {
     // Spawna o ItemPickup no mundo
     if (GetOwner() && ItemInstance->GetItemDefinition())
@@ -790,6 +763,15 @@ bool UZfInventoryComponent::IsValidSlotIndex(int32 SlotIndex) const
     return SlotIndex >= 0 && SlotIndex < CurrentSlotCount;
 }
 
+FZfInventorySlot* UZfInventoryComponent::FindSlotByIndex(int32 SlotIndex)
+{
+    return InventoryList.Slots.FindByPredicate(
+        [SlotIndex](const FZfInventorySlot& Slot)
+        {
+            return Slot.SlotIndex == SlotIndex;
+        });
+}
+
 // ============================================================
 // FUNÇÕES INTERNAS - GERENCIAMENTO
 // ============================================================
@@ -804,7 +786,6 @@ void UZfInventoryComponent::InternalAddItem(UZfItemInstance* InItemInstance, int
     InventoryList.Slots.Add(NewSlot);
     
     AddReplicatedSubObject(InItemInstance);
-    OnItemAdded.Broadcast(InItemInstance,TargetSlot);
 }
 
 void UZfInventoryComponent::InternalRemoveItem(int32 SlotIndex)
@@ -1089,13 +1070,4 @@ bool UZfInventoryComponent::InternalCheckIsServer(const FString& FunctionName) c
     }
 
     return true;
-}
-
-FZfInventorySlot* UZfInventoryComponent::FindSlotByIndex(int32 SlotIndex)
-{
-    return InventoryList.Slots.FindByPredicate(
-        [SlotIndex](const FZfInventorySlot& Slot)
-        {
-            return Slot.SlotIndex == SlotIndex;
-        });
 }

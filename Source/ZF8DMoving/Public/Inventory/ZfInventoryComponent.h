@@ -259,10 +259,7 @@ public:
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
     void ServerRequestEquipItem(int32 SlotIndex);
 
-    // Requisição do cliente para dropar item no mundo
-    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
-    void ServerTryDropItem(int32 SlotIndex);
-
+    
     
 
     // ----------------------------------------------------------
@@ -318,9 +315,6 @@ private:
 public:
 
     UZfInventoryComponent();
-
-    // OBRIGATÓRIO para UObjects dentro do array
-    virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
     
     // Registra as propriedades replicadas do componente
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -410,6 +404,12 @@ public:
     // @param Amount — quantidade a remover
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
+
+    // Dropa item do inventário
+    //@param SlotIndex — Index do item no inventário
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory|RPC")
+    void ServerTryDropItem(int32 SlotIndex);
+
     
     // Requisição do cliente para ordenar o inventário
     // @param EZfInventorySortType — Tipo de Reorganização
@@ -443,8 +443,10 @@ public:
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
 
+    // Spawna pickupclass com inicialização do ItemInstance
+    // @param ItemInstance — Informações do Item para o pickup
     UFUNCTION(Category = "Zf|Inventory")
-    void TrySpawnPickupItem(UZfItemInstance* ItemInstance);
+    void TrySpawnPickupItem(UZfItemInstance* ItemInstance) const;
 
     
     // Adiciona slots extras ao inventário.
@@ -508,6 +510,8 @@ public:
     // Verifica se um índice de slot é válido.
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     bool IsValidSlotIndex(int32 SlotIndex) const;
+
+    FZfInventorySlot* FindSlotByIndex(int32 SlotIndex);
     
 private:
 
@@ -566,8 +570,5 @@ private:
     // Valida se uma operação pode ser executada no servidor.
     // Loga warning se chamada no cliente.
     bool InternalCheckIsServer(const FString& FunctionName) const;
-
-private:
-    FZfInventorySlot* FindSlotByIndex(int32 SlotIndex);
 
 };
