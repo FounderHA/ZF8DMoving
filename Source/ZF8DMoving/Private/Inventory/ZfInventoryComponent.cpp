@@ -319,6 +319,7 @@ void FZfInventorySlot::PostReplicatedChange(const FZfInventoryList& InArraySeria
     {
         InArraySerializer.OwnerComponent->OnInventoryRefreshed.Broadcast();
         InArraySerializer.OwnerComponent->OnItemMoved.Broadcast();
+        InArraySerializer.OwnerComponent->OnInventorySizeChanged.Broadcast();
     }
 }
 
@@ -470,6 +471,37 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveItemFromInventory(int32 Sl
     return EZfItemMechanicResult::Success;
 }
 
+EZfItemMechanicResult UZfInventoryComponent::TryAddItemToSpecificSlot(UZfItemInstance* InItemInstance, int32 TargetSlotIndex)
+{
+    if (!InItemInstance)
+    {
+        return EZfItemMechanicResult::Failed_ItemNotFound;
+    }
+
+    if (!IsValidSlotIndex(TargetSlotIndex))
+    {
+        return EZfItemMechanicResult::Failed_InvalidSlot;
+    }
+
+    if (!IsSlotEmpty(TargetSlotIndex))
+    {
+        TryAddItemToInventory(InItemInstance);
+        return EZfItemMechanicResult::Failed_SlotBlocked;
+    }
+
+    InternalAddItem(InItemInstance, TargetSlotIndex);
+    OnItemAdded.Broadcast(InItemInstance, TargetSlotIndex);
+    InventoryList.MarkArrayDirty();
+
+    InItemInstance->NotifyFragments_ItemAddedToInventory(this);
+
+    UE_LOG(LogZfInventory, Log,
+        TEXT("TryAddItemToSpecificSlot — Item '%s' adicionado ao slot %d."),
+        *InItemInstance->GetItemName().ToString(), TargetSlotIndex);
+
+    return EZfItemMechanicResult::Success;
+}
+
 EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemInstance* ItemInstance, int32 Amount)
 {
     if (!InternalCheckIsServer(TEXT("RemoveAmountFromStack")))
@@ -551,87 +583,29 @@ void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) co
     }
 }
 
-int32 UZfInventoryComponent::AddExtraSlots(int32 ExtraSlots)
+void UZfInventoryComponent::UpdateSlotCountFromEquippedBackpack()
 {
-    if (!InternalCheckIsServer(TEXT("AddExtraSlots")))
+    int32 ExtraSlots = 0;
+
+    if (EquipmentComponent)
     {
-        return 0;
-    }
+        // Busca o item no slot de mochila usando a tag
+        UZfItemInstance* BackpackItem = EquipmentComponent->GetItemAtSlotTag(FGameplayTag::RequestGameplayTag(TEXT("EquipmentSlot.Slot.Backpack")));
 
-    // Calcula quantos slots realmente podem ser adicionados
-    const int32 SlotsAvailableToAdd = MaxAbsoluteSlotCount - CurrentSlotCount;
-
-    const int32 SlotsToAdd = FMath::Min(ExtraSlots, SlotsAvailableToAdd);
-
-    if (SlotsToAdd <= 0)
-    {
-        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::AddExtraSlots — " "Limite máximo de slots atingido (%d)."), MaxAbsoluteSlotCount);
-        return 0;
-    }
-
-    // Adiciona quantidade maxima de slot
-    CurrentSlotCount += SlotsToAdd;
-
-    OnInventorySizeChanged.Broadcast(CurrentSlotCount);
-    InventoryList.MarkArrayDirty();
-
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::AddExtraSlots — " "%d slots adicionados. Total: %d/%d"),
-        SlotsToAdd, CurrentSlotCount, MaxAbsoluteSlotCount);
-
-    return SlotsToAdd;
-}
-
-EZfItemMechanicResult UZfInventoryComponent::RemoveExtraSlots(int32 SlotsToRemove)
-{
-    if (!InternalCheckIsServer(TEXT("RemoveExtraSlots")))
-    {
-        return EZfItemMechanicResult::Failed_InvalidOperation;
-    }
-
-    // Não pode ter menos que o mínimo padrão
-    const int32 MinSlots = DefaultSlotCount;
-    const int32 ActualSlotsToRemove = FMath::Min(SlotsToRemove, CurrentSlotCount - MinSlots);
-
-    if (ActualSlotsToRemove <= 0)
-    {
-        UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::RemoveExtraSlots — " "Não é possível remover slots abaixo do mínimo (%d)."), MinSlots);
-        return EZfItemMechanicResult::Failed_InvalidOperation;
-    }
-
-    // Verifica se há itens nos slots que serão removidos
-    const int32 FirstSlotToRemove = CurrentSlotCount - ActualSlotsToRemove;
-    for (int32 i = FirstSlotToRemove; i < CurrentSlotCount; i++)
-    {
-        
-        if (!IsSlotEmpty(i))
+        if (BackpackItem)
         {
-            // Tenta mover o item para um slot livre anterior
-            UZfItemInstance* ItemToMove = GetItemAtSlot(i);
-            const int32 FreeSlot = GetFirstEmptySlot();
+            const UZfFragment_InventoryExpansion* ExpansionFragment = BackpackItem->GetFragment<UZfFragment_InventoryExpansion>();
 
-            if (FreeSlot != INDEX_NONE && FreeSlot < FirstSlotToRemove)
+            if (ExpansionFragment)
             {
-                InternalAddItem(ItemToMove, FreeSlot);
-                InternalRemoveItem(i);
-                OnItemMoved.Broadcast();
-            }
-            else
-            {
-                UE_LOG(LogZfInventory, Warning, TEXT("UZfInventoryComponent::RemoveExtraSlots — " "Não há slots livres para mover item do slot %d."), i);
-                return EZfItemMechanicResult::Failed_InventoryFull;
+                ExtraSlots = ExpansionFragment->ExtraSlotCount;
             }
         }
     }
-
-    // Remove os slots do final do array
-    CurrentSlotCount = FirstSlotToRemove;
-
-    OnInventorySizeChanged.Broadcast(CurrentSlotCount);
+    
+    CurrentSlotCount = FMath::Min(DefaultSlotCount + ExtraSlots, MaxAbsoluteSlotCount);
     InventoryList.MarkArrayDirty();
-
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::RemoveExtraSlots — " "%d slots removidos. Total: %d"), ActualSlotsToRemove, CurrentSlotCount);
-
-    return EZfItemMechanicResult::Success;
+    //OnInventorySizeChanged.Broadcast();
 }
 
 // ============================================================
@@ -717,6 +691,74 @@ int32 UZfInventoryComponent::GetAvailableDefaultSlots() const
         }
     }
     return DefaultSlotCount - OccupiedDefaultSlots;
+}
+
+int32 UZfInventoryComponent::GetAvailableSlotsWithExpansion(UZfItemInstance* BackpackInstance) const
+{
+    int32 ExtraSlots = 0;
+
+    if (BackpackInstance)
+    {
+        if (const UZfFragment_InventoryExpansion* ExpansionFragment = BackpackInstance->GetFragment<UZfFragment_InventoryExpansion>())
+        {
+            ExtraSlots = ExpansionFragment->ExtraSlotCount;
+        }
+    }
+
+    const int32 ExpandedCapacity = FMath::Min(DefaultSlotCount + ExtraSlots, MaxAbsoluteSlotCount);
+
+    int32 OccupiedSlots = 0;
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
+    {
+        if (Slot.SlotIndex < ExpandedCapacity)
+        {
+            OccupiedSlots++;
+        }
+    }
+
+    return ExpandedCapacity - OccupiedSlots;
+}
+
+int32 UZfInventoryComponent::GetItemCountFromInitialSlot(int32 InitialSlotIndex) const
+{
+    int32 Count = 0;
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
+    {
+        if (Slot.SlotIndex >= InitialSlotIndex && Slot.ItemInstance)
+        {
+            Count++;
+        }
+    }
+    return Count;
+}
+
+void UZfInventoryComponent::RelocateItemsAboveCapacity(int32 NewCapacity)
+{
+    TSet<int32> OccupiedSlots;
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
+    {
+        OccupiedSlots.Add(Slot.SlotIndex);
+    }
+
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
+    {
+        if (Slot.SlotIndex >= NewCapacity && Slot.ItemInstance)
+        {
+            // Acha o primeiro slot livre abaixo da nova capacidade
+            for (int32 i = 0; i < NewCapacity; i++)
+            {
+                if (!OccupiedSlots.Contains(i))
+                {
+                    InternalRemoveItem(Slot.SlotIndex);
+                    InternalAddItem(Slot.ItemInstance, i);
+                    OccupiedSlots.Add(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    InventoryList.MarkArrayDirty();
 }
 
 int32 UZfInventoryComponent::GetTotalSlots() const
@@ -991,7 +1033,6 @@ void UZfInventoryComponent::InternalSortInventoryBySelected(EZfInventorySortType
         "Inventário ordenado por '%s'. %d itens reorganizados."),
         *UEnum::GetValueAsString(SortType), Items.Num());
 }
-
 
 // ============================================================
 // FUNÇÕES INTERNAS - VALIDAÇÃO

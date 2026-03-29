@@ -62,7 +62,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped, UZfItemInstance*, 
 // Disparado quando um item é desequipado
 // @param ItemInstance — item desequipado
 // @param SlotType — slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, EZfEquipmentSlot, SlotType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 
 // Disparado quando um item quebra enquanto equipado
 // @param ItemInstance — item que quebrou
@@ -76,6 +76,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInst
 // @param SetIdentifierTag — tag do set que mudou
 // @param ActivePieceCount — quantidade de peças atualmente equipadas
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
+
+// Disparado quando a mochila muda
+// @param ActivePieceCount — quantidade de peças atualmente equipadas
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBackpackChanged, FGameplayTag, BackpackTag);
+
+
 
 // ============================================================
 // FZfActiveSetBonus
@@ -128,7 +134,7 @@ struct ZF8DMOVING_API FZfEquipmentSlotEntry : public FFastArraySerializerItem
     // Índice para múltiplos slots do mesmo tipo
     // Ex: Ring → SlotIndex 0 e SlotIndex 1
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
-    int32 SlotIndex = 0;
+    int32 SlotPosition = 0;
 
     // Item equipado (nullptr = slot vazio)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
@@ -228,39 +234,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
     FOnSetBonusChanged OnSetBonusChanged;
 
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — EQUIPAR
-    // ----------------------------------------------------------
-
+    UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
+    FOnBackpackChanged OnBackpackChanged;
     
-    // Tenta equipar um item em um slot específico de equipamento.
-    // Útil para casos onde o jogador arrasta o item para um slot.
-    // @param ItemInstance — item a equipar
-    // @param SlotType — tipo do slot alvo
-    // @param SlotIndex — índice do slot (para múltiplos do mesmo tipo)
-    // @param InventorySlotIndex — slot de origem no inventário
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipItemToSpecificSlot(UZfItemInstance* ItemInstance, EZfEquipmentSlot SlotType, int32 SlotIndex, int32 InventorySlotIndex);
-
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — DESEQUIPAR
     // ----------------------------------------------------------
 
-    // Desequipa o item em um slot específico.
-    // Devolve o item ao InventoryComponent.
-    // @param SlotType — tipo do slot
-    // @param SlotIndex — índice do slot
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    EZfItemMechanicResult UnequipItemAtSlot(EZfEquipmentSlot SlotType, int32 SlotIndex = 0);
-
-    // Desequipa um item pela referência do ItemInstance.
-    // @param ItemInstance — item a desequipar
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    EZfItemMechanicResult UnequipItem(UZfItemInstance* ItemInstance);
-
+    
     // Desequipa todos os itens equipados de uma vez.
     // Devolve todos ao inventário.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
@@ -338,7 +319,7 @@ public:
     // @param ItemInstance — item a verificar
     // @param OutReason — motivo de falha se não puder equipar
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    bool CanEquipItem(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const;
+    bool CanEquipItemOld(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const;
 
     // ----------------------------------------------------------
     // FUNÇÕES DE COMBO SET
@@ -374,10 +355,7 @@ public:
     // RPCs — CLIENT → SERVER
     // ----------------------------------------------------------
 
-    // Requisição do cliente para desequipar item de um slot
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Equipment|RPC")
-    void ServerRequestUnequipItem( EZfEquipmentSlot SlotType, int32 SlotIndex);
+    
 
     // Requisição do cliente para troca rápida
     UFUNCTION(Server, Reliable, WithValidation,
@@ -396,15 +374,6 @@ public:
 
     virtual void BeginPlay() override;
 
-    // ----------------------------------------------------------
-    // DEBUG
-    // ----------------------------------------------------------
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Debug")
-    void DebugLogEquipment() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Debug")
-    void DrawDebugEquipment() const;
 
 protected:
 
@@ -480,11 +449,7 @@ private:
     // Se houver item no OffHand ao liberar, mantém equipado
     void Internal_UnblockOffHandSlot();
 
-    // Busca a entrada de slot no EquipmentList
-    // @param SlotType — tipo do slot
-    // @param SlotIndex — índice do slot
-    FZfEquipmentSlotEntry* Internal_FindSlotEntry(EZfEquipmentSlot SlotType, int32 SlotIndex);
-
+    
     // Versão const de Internal_FindSlotEntry
     const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(EZfEquipmentSlot SlotType, int32 SlotIndex) const;
 
@@ -500,6 +465,19 @@ private:
 
 
 
+
+
+
+
+
+
+
+
+
+
+    
+
+public:
     
     // ============================================================
     // FUNÇÕES SERVER - GERENCIAMENTO
@@ -510,38 +488,105 @@ private:
     //         item quebrado, slot bloqueado.
     // Se já houver item no slot alvo, devolve ao InventoryComponent.
     // @param ItemInstance — item a equipar
-    // @param InventorySlotIndex — slot de origem no inventário
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot);
+    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition);
 
-    
+    // Tenta deequipar um item em seu slot correspondente.
+    // Valida: slot disponível, two-handed, tags de requisito,
+    //         item quebrado, slot bloqueado.
+    // Se já houver item no slot alvo, devolve ao InventoryComponent.
+    // @param ItemInstance — item a equipar
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment|RPC")
+    void ServerTryUnequipItem(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
+        
     // ============================================================
     // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
     // ============================================================
 
     // Tenta equipar um item em seu slot correspondente.
+    // Valida: slot disponível, two-handed, tags de requisito, item quebrado, slot bloqueado.
+    // @param ItemInstance — item a equipar
+    // @param InventorySlotIndex — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 TagetInventorySlot, int32 SlotPosition);
+
+    // Tenta equipar mochila
+    // Se já houver item no slot alvo, devolve ao InventoryComponent.
+    // @param ItemInstance — item a equipar
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryUnequipItem(FGameplayTag SlotTag, int32 TagetInventorySlot, int32 SlotPosition);
+
+    // Tenta deequipar um item em seu slot correspondente.
     // Valida: slot disponível, two-handed, tags de requisito,
     //         item quebrado, slot bloqueado.
     // Se já houver item no slot alvo, devolve ao InventoryComponent.
     // @param ItemInstance — item a equipar
-    // @param InventorySlotIndex — slot de origem no inventário
-    // @return resultado da operação
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
     UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot);
+    EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
+
+    // Tenta desequipar mochila
+    // Se já houver item no slot alvo, devolve ao InventoryComponent.
+    // @param ItemInstance — item a equipar
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryUnequipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
 
     
     // ============================================================
     // FUNÇÕES DE CONSULTA
     // ============================================================
+
+    // Verifica se Consigo Equipar o Item.
+    // @param ItemInstance — item a equipar
+    // @param FromInventorySlot — slot de origem no inventário
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    EZfItemMechanicResult CanEquipItem(UZfItemInstance* InItemInstance, int32 FromInventorySlot, int32 SlotPosition);
+
+    // Pega EquipmentSlot Tag.
+    // @param ItemInstance — item a Equipado
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    FGameplayTag GetEquipmentSlotTagOfItem(UZfItemInstance* ItemInstance) const;
+
+    // Retorna o ItemInstance equipado em um slot pela sua tag.
+    // @param SlotTag — EquipmentSlot Tag do Item
+    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    UZfItemInstance* GetItemAtSlotTag(FGameplayTag SlotTag, int32 SlotPosition = 0) const;
+
     
+private:
+
     // ============================================================
     // FUNÇÕES INTERNAS - GERENCIAMENTO
     // ============================================================
-
+    
     // Equipa o item a partir do ItemInstance.
     // @param ItemInstance - Item a ser Adicionado
-    void InternalEquipItem(UZfItemInstance* InItemInstance);
+    void InternalEquipItem(UZfItemInstance* InItemInstance, int32 SlotPosition);
     
+    // Equipa o item a partir do ItemInstance.
+    // @param ItemInstance - Item a ser Adicionado
+    // @param SlotPosition — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    void InternalUnequipItem(UZfItemInstance* InItemInstance, int32 SlotPosition);
+
+        
+    // Busca a entrada de slot no EquipmentList
+    // @param SlotTag — Tag do slot
+    // @param SlotPosition — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    FZfEquipmentSlotEntry* InternalFindSlotEntry(FGameplayTag SlotTag, int32 SlotPosition);
+
     // ============================================================
     // FUNÇÕES INTERNAS - ORGANIZAÇÃO
     // ============================================================
@@ -551,7 +596,7 @@ private:
     // ============================================================
 
     // Valida se uma operação pode ser executada no servidor
-    bool Internal_CheckIsServer(const FString& FunctionName) const;
+    bool InternalCheckIsServer(const FString& FunctionName) const;
 
 
 
