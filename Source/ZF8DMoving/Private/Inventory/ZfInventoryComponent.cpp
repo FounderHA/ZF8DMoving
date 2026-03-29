@@ -823,7 +823,7 @@ void UZfInventoryComponent::InternalAddItem(UZfItemInstance* InItemInstance, int
     AddReplicatedSubObject(InItemInstance);
 }
 
-void UZfInventoryComponent::InternalRemoveItem(int32 SlotIndex)
+void UZfInventoryComponent::  InternalRemoveItem(int32 SlotIndex)
 {
     UZfItemInstance* ItemInstance = GetItemAtSlot(SlotIndex);
     check(ItemInstance != nullptr);
