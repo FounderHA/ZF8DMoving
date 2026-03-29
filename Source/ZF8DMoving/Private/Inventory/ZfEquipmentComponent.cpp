@@ -35,8 +35,7 @@ UZfEquipmentComponent::UZfEquipmentComponent()
 // REPLICAÇÃO
 // ============================================================
 
-void UZfEquipmentComponent::GetLifetimeReplicatedProps(
-    TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UZfEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -132,8 +131,7 @@ EZfItemMechanicResult UZfEquipmentComponent::QuickSwapItem(
 // DURABILIDADE
 // ============================================================
 
-void UZfEquipmentComponent::NotifyEquippedItemBroken(
-    UZfItemInstance* ItemInstance)
+void UZfEquipmentComponent::NotifyEquippedItemBroken(UZfItemInstance* ItemInstance)
 {
     if (!ItemInstance)
     {
@@ -155,14 +153,12 @@ void UZfEquipmentComponent::NotifyEquippedItemBroken(
     // Dispara delegate para a UI mostrar aviso ao player
     OnEquippedItemBroken.Broadcast(ItemInstance);
 
-    UE_LOG(LogZfInventory, Warning,
-        TEXT("UZfEquipmentComponent::NotifyEquippedItemBroken — "
-             "Item equipado '%s' quebrou. Bônus desativados."),
-        *ItemInstance->GetItemName().ToString());
+    UE_LOG(LogZfInventory, Warning,TEXT("UZfEquipmentComponent::NotifyEquippedItemBroken — "
+    "Item equipado '%s' quebrou. Bônus desativados."),
+    *ItemInstance->GetItemName().ToString());
 }
 
-void UZfEquipmentComponent::NotifyEquippedItemRepaired(
-    UZfItemInstance* ItemInstance)
+void UZfEquipmentComponent::NotifyEquippedItemRepaired(UZfItemInstance* ItemInstance)
 {
     if (!ItemInstance)
     {
@@ -185,7 +181,7 @@ void UZfEquipmentComponent::NotifyEquippedItemRepaired(
 
     UE_LOG(LogZfInventory, Log,
         TEXT("UZfEquipmentComponent::NotifyEquippedItemRepaired — "
-             "Item equipado '%s' reparado. Bônus reativados."),
+        "Item equipado '%s' reparado. Bônus reativados."),
         *ItemInstance->GetItemName().ToString());
 }
 
@@ -502,8 +498,7 @@ void UZfEquipmentComponent::Internal_ApplyItemGameplayEffects(UZfItemInstance* I
     }
 }
 
-void UZfEquipmentComponent::Internal_RemoveItemGameplayEffects(
-    UZfItemInstance* ItemInstance)
+void UZfEquipmentComponent::Internal_RemoveItemGameplayEffects(UZfItemInstance* ItemInstance)
 {
     if (!ItemInstance)
     {
@@ -532,9 +527,7 @@ void UZfEquipmentComponent::Internal_RemoveItemGameplayEffects(
     }
 }
 
-void UZfEquipmentComponent::Internal_UpdateSetBonuses(
-    UZfItemInstance* ItemInstance,
-    bool bWasEquipped)
+void UZfEquipmentComponent::Internal_UpdateSetBonuses(UZfItemInstance* ItemInstance, bool bWasEquipped)
 {
     if (!ItemInstance)
     {
