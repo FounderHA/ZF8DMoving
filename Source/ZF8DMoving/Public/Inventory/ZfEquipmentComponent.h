@@ -57,12 +57,12 @@ class UZfFragment_SetPiece;
 // Disparado quando um item é equipado com sucesso
 // @param ItemInstance — item equipado
 // @param SlotType — slot onde foi equipado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEquipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
 
 // Disparado quando um item é desequipado
 // @param ItemInstance — item desequipado
 // @param SlotType — slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
 
 // Disparado quando um item quebra enquanto equipado
 // @param ItemInstance — item que quebrou
@@ -76,10 +76,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInst
 // @param SetIdentifierTag — tag do set que mudou
 // @param ActivePieceCount — quantidade de peças atualmente equipadas
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
-
-// Disparado quando a mochila muda
-// @param ActivePieceCount — quantidade de peças atualmente equipadas
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBackpackChanged, FGameplayTag, BackpackTag);
 
 
 
@@ -233,9 +229,6 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
     FOnSetBonusChanged OnSetBonusChanged;
-
-    UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
-    FOnBackpackChanged OnBackpackChanged;
     
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — DESEQUIPAR
