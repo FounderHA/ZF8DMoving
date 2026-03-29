@@ -64,7 +64,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemMovedInInventory);
 
 // Disparado quando o tamanho do inventário muda
 // @param NewSize — novo tamanho total de slots
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventorySizeChanged, int32, NewSize);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventorySizeChanged);
 
 // Disparado quando o inventário é completamente atualizado
 // (reorganização, ordenação, etc.)
@@ -436,6 +436,13 @@ public:
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveItemFromInventory(int32 SlotIndex);
 
+    // Tenta adicionar um item a um slot específico do inventário.
+    // @param ItemInstance — item a adicionar
+    // @param TargetSlotIndex — slot alvo
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryAddItemToSpecificSlot(UZfItemInstance* InItemInstance, int32 TargetSlotIndex);
+    
     // Remove uma quantidade de um item stackável.
     // Remove o item inteiro se a quantidade zerar.
     // @param ItemInstance — item stackável a remover
@@ -449,22 +456,10 @@ public:
     UFUNCTION(Category = "Zf|Inventory")
     void TrySpawnPickupItem(UZfItemInstance* ItemInstance) const;
 
+    // Atualiza o CurrentSlotCount baseado na mochila atualmente equipada.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
+    void UpdateSlotCountFromEquippedBackpack();
     
-    // Adiciona slots extras ao inventário.
-    // Respeita MaxAbsoluteSlotCount.
-    // @param ExtraSlots — quantidade de slots a adicionar
-    // @return quantidade de slots efetivamente adicionados
-    UFUNCTION(Category = "Zf|Inventory|Expansion")
-    int32 AddExtraSlots(int32 ExtraSlots);
-
-    // Remove slots extras do inventário.
-    // Se houver itens nos slots que serão removidos,
-    // tenta movê-los para slots livres anteriores.
-    // @param SlotsToRemove — quantidade de slots a remover
-    // @return resultado da operação
-    UFUNCTION(Category = "Zf|Inventory|Expansion")
-    EZfItemMechanicResult RemoveExtraSlots(int32 SlotsToRemove);
-
     // ============================================================
     // FUNÇÕES DE CONSULTA
     // ============================================================
@@ -496,6 +491,26 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     int32 GetAvailableDefaultSlots() const;
 
+    // Retorna quantos slots estão disponíveis considerando a capacidade padrão
+    // mais os slots extras da mochila sendo equipada.
+    // @param BackpackInstance — instância da mochila sendo equipada
+    // @return quantidade de slots livres no range expandido
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableSlotsWithExpansion(UZfItemInstance* BackpackInstance) const;
+
+    // Retorna quantos itens existem a partir de um slot específico até o final.
+    // Útil para verificar se há itens nos slots que serão perdidos
+    // ao trocar uma mochila maior por uma menor.
+    // @param InitialSlotIndex — slot inicial para contar
+    // @return quantidade de itens nos slots a partir de FromSlotIndex
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetItemCountFromInitialSlot(int32 InitialSlotIndex) const;
+
+    // Move itens dos slots acima da nova capacidade para os primeiros slots livres.
+    // @param NewCapacity — nova capacidade total após troca de mochila
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
+    void RelocateItemsAboveCapacity(int32 NewCapacity);
+    
     // Retorna o número total de slots do inventário (incluindo ocupados).
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     int32 GetTotalSlots() const;
