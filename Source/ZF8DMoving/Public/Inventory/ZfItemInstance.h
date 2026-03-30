@@ -315,7 +315,8 @@ public:
     // Pode ser alterado via gameplay (ex: corrupção bloqueia reparo).
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")
     void SetIsRepairable(bool bRepairable);
-
+    
+    
     // ----------------------------------------------------------
     // FUNÇÕES DE MODIFIER
     // ----------------------------------------------------------

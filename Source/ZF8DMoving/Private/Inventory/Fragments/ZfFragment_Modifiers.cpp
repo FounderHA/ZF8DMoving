@@ -19,6 +19,5 @@ EDataValidationResult UZfFragment_Modifiers::IsDataValid(FDataValidationContext&
 				 "mas ModifierDataTable não está configurado.")));
 		Result = EDataValidationResult::Invalid;
 	}
-
 	return Result;
 }

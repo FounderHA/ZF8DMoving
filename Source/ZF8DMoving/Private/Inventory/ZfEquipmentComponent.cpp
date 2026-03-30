@@ -1116,7 +1116,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
     else
     {
         int32 AvaliableSlots = InventoryComponent->GetAvailableSlotsWithExpansion(BackpackAtInventory);
-        int32 ItensToMove = InventoryComponent->GetItemCountFromInitialSlot(AvaliableSlots);
+        int32 ItensToMove = InventoryComponent->GetItemCountFromInitialSlot(InventoryComponent->GetDefaultSlotCount());
         
         if (AvaliableSlots - 1 - ItensToMove >= 0)
         {

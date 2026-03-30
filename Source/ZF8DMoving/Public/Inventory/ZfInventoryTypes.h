@@ -120,6 +120,47 @@ enum class EZfItemRarity : uint8
     Legendary   UMETA(DisplayName = "Legendary"),   // 4 - Laranja
 };
 
+USTRUCT(BlueprintType)
+struct FZfModifierRange
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    int32 Min = 0;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    int32 Max = 0;
+};
+
+extern const TMap<EZfItemRarity, FZfModifierRange> ZfModifierRangeByRarity;
+
+
+// -----------------------------------------------------------
+// FZfModifierCountByRarity
+// Define o range de quantidade de modifiers por raridade.
+// Configurado globalmente — igual para todos os itens do jogo.
+// Ex: Epic → Min 2, Max 3 modifiers sorteados ao dropar.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfModifierCountByRarity
+{
+    GENERATED_BODY()
+
+    // Raridade que esta configuração se aplica
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Count")
+    EZfItemRarity Rarity = EZfItemRarity::Common;
+
+    // Quantidade mínima de modifiers para esta raridade
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Count",
+        meta = (ClampMin = "0", ClampMax = "20"))
+    int32 MinModifiers = 0;
+
+    // Quantidade máxima de modifiers para esta raridade
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Count",
+        meta = (ClampMin = "0", ClampMax = "20"))
+    int32 MaxModifiers = 1;
+};
+
 // -----------------------------------------------------------
 // EZfModifierClass
 // Classe/categoria do modifier.

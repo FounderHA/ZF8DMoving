@@ -125,6 +125,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
         *UEnum::GetValueAsString(ItemRarity));
 }
 
+
 // ============================================================
 // FUNÇÕES DE ACESSO AOS DADOS
 // ============================================================
@@ -717,12 +718,12 @@ void UZfItemInstance::SetIsRepairable(bool bRepairable)
         *ItemGuid.ToString(), bIsRepairable ? TEXT("true") : TEXT("false"));
 }
 
+
 // ============================================================
 // NOTIFICAÇÃO AOS FRAGMENTS
 // ============================================================
 
-void UZfItemInstance::NotifyFragments_ItemAddedToInventory(
-    UZfInventoryComponent* InventoryComponent)
+void UZfItemInstance::NotifyFragments_ItemAddedToInventory(UZfInventoryComponent* InventoryComponent)
 {
     if (!ItemDefinition)
     {
@@ -738,8 +739,7 @@ void UZfItemInstance::NotifyFragments_ItemAddedToInventory(
     }
 }
 
-void UZfItemInstance::NotifyFragments_ItemRemovedFromInventory(
-    UZfInventoryComponent* InventoryComponent)
+void UZfItemInstance::NotifyFragments_ItemRemovedFromInventory(UZfInventoryComponent* InventoryComponent)
 {
     if (!ItemDefinition)
     {
@@ -755,9 +755,7 @@ void UZfItemInstance::NotifyFragments_ItemRemovedFromInventory(
     }
 }
 
-void UZfItemInstance::NotifyFragments_ItemEquipped(
-    UZfEquipmentComponent* EquipmentComponent,
-    AActor* EquippingActor)
+void UZfItemInstance::NotifyFragments_ItemEquipped(UZfEquipmentComponent* EquipmentComponent, AActor* EquippingActor)
 {
     if (!ItemDefinition)
     {
@@ -773,9 +771,7 @@ void UZfItemInstance::NotifyFragments_ItemEquipped(
     }
 }
 
-void UZfItemInstance::NotifyFragments_ItemUnequipped(
-    UZfEquipmentComponent* EquipmentComponent,
-    AActor* UnequippingActor)
+void UZfItemInstance::NotifyFragments_ItemUnequipped(UZfEquipmentComponent* EquipmentComponent, AActor* UnequippingActor)
 {
     if (!ItemDefinition)
     {
@@ -942,8 +938,7 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
     
 }
 
-void UZfItemInstance::Internal_ApplyQualityRowToStats(
-    const FZfQualityLevelRow& QualityRow)
+void UZfItemInstance::Internal_ApplyQualityRowToStats(const FZfQualityLevelRow& QualityRow)
 {
     // Override dos stats base pelos valores da linha do DataTable
     // Apenas substitui — não é cumulativo
