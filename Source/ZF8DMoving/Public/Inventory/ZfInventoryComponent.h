@@ -398,13 +398,20 @@ public:
     // @param int32 — Slot onde está indo seu item
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
-
+    
     // Remove uma quantidade de um item stackável.
     // Remove o item inteiro se a quantidade zerar.
     // @param ItemInstance — item stackável a remover
     // @param Amount — quantidade a remover
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
+    
+    // Divide um stack em dois.
+    // @param FromSlotIndex — slot de origem
+    // @param ToSlotIndex   — slot de destino (pode ser INDEX_NONE = primeiro slot livre)
+    // @param Amount        — quantidade a separar do stack original
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount);
 
     // Dropa item do inventário
     //@param SlotIndex — Index do item no inventário
@@ -450,6 +457,9 @@ public:
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
+    
+    UFUNCTION(Category = "Zf|Inventory")
+    void TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount);
 
     // Spawna pickupclass com inicialização do ItemInstance
     // @param ItemInstance — Informações do Item para o pickup

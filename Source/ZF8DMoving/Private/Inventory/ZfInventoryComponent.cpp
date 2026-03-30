@@ -322,6 +322,7 @@ void FZfInventorySlot::PostReplicatedChange(const FZfInventoryList& InArraySeria
         InArraySerializer.OwnerComponent->OnInventorySizeChanged.Broadcast();
     }
 }
+        
 
 // ============================================================
 // FUNÇÕES SERVER - GERENCIAMENTO
@@ -378,17 +379,24 @@ void UZfInventoryComponent::ServerTryDropItem_Implementation(int32 SlotIndex)
 
 void UZfInventoryComponent::ServerTrySortInventory_Implementation(EZfInventorySortType SortType)
 {
-    if (!InternalCheckIsServer(TEXT("ServerTrySortInventory")))
+    if (InternalCheckIsServer(TEXT("ServerTrySortInventory")))
     {
-        return;
+        InternalSortInventoryBySelected(SortType);
     }
+}
 
-    InternalSortInventoryBySelected(SortType);
+void UZfInventoryComponent::ServerTrySplitStack_Implementation(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount)
+{
+    if (InternalCheckIsServer(TEXT("ServerTrySplitStack")))
+    {
+        TrySplitStack(FromSlotIndex, ToSlotIndex, Amount);
+    }
 }
 
 // ============================================================
 // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
 // ============================================================
+
 
 EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstance* InItemInstance)
 {
@@ -423,11 +431,12 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
     
     // Cria uma nova entrada no array apenas com o item
     InternalAddItem(InItemInstance, EmptySlot);
-    OnItemAdded.Broadcast(InItemInstance,EmptySlot);
     
     // Marca o inventário como modificado para replicação
     InventoryList.MarkArrayDirty();
 
+    OnItemAdded.Broadcast(InItemInstance,EmptySlot);
+    
     // Notifica os fragments do item
     InItemInstance->NotifyFragments_ItemAddedToInventory(this);
     
@@ -537,6 +546,50 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
 
     InventoryList.MarkArrayDirty();
     return EZfItemMechanicResult::Success;
+}
+
+void UZfInventoryComponent::TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount)
+{
+    // Verifica se o item é valido no slot
+    UZfItemInstance* ItemInstance = GetItemAtSlot(FromSlotIndex);
+    if (!ItemInstance) return;
+
+    // Verifica se o item é stackável 
+    const UZfFragment_Stackable* StackFrag = ItemInstance->GetFragment<UZfFragment_Stackable>();
+    if (!StackFrag) return;
+
+    // Validação de quantidade
+    if (Amount <= 0 || Amount >= ItemInstance->CurrentStack) return;
+
+    // Resolve slot de destino
+    const int32 ResolvedSlot = (ToSlotIndex == INDEX_NONE) ? GetFirstEmptySlot() : ToSlotIndex;
+
+    if (ResolvedSlot == INDEX_NONE || !IsSlotEmpty(ResolvedSlot)) return;
+
+    // ---- Lógica do split ----
+    // 1. Cria nova instância do mesmo ItemDefinition
+    UZfItemInstance* NewItem = NewObject<UZfItemInstance>(GetOwner(), ItemInstance->GetClass());
+    //NewItem->SetNewGuid();
+    NewItem->SetCurrentStack(Amount);
+    
+    if (!NewItem) return;
+
+    // 2. Subtrai do stack original
+    ItemInstance->SetCurrentStack(ItemInstance->CurrentStack - Amount);
+    
+    // 3. Marca o slot original como dirty
+    if (FindSlotByIndex(FromSlotIndex)) InventoryList.MarkItemDirty(*FindSlotByIndex(FromSlotIndex));
+
+    // 4. Adiciona a nova instância no slot destino
+    InternalAddItem(NewItem, ResolvedSlot);
+    InventoryList.MarkArrayDirty();
+    
+    
+
+    OnItemAdded.Broadcast(NewItem, ResolvedSlot);
+    OnItemMoved.Broadcast();
+
+    UE_LOG(LogZfInventory, Log, TEXT("ServerTrySplitStack — Slot %d dividido: %d → slot %d"),FromSlotIndex, Amount, ResolvedSlot);
 }
 
 void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) const
@@ -735,6 +788,7 @@ int32 UZfInventoryComponent::GetItemCountFromInitialSlot(int32 InitialSlotIndex)
 void UZfInventoryComponent::RelocateItemsAboveCapacity(int32 NewCapacity)
 {
     TArray<UZfItemInstance*> ItemsToMove;
+    
     for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
         if (Slot.SlotIndex >= NewCapacity && Slot.ItemInstance)
@@ -877,7 +931,7 @@ bool UZfInventoryComponent::InternalTryStackWithExistingItems(UZfItemInstance* I
 }
 
 EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 FromSlotIndex, int32 ToSlotIndex)
-{
+ {
     // Valida os dois slots
     if (!IsValidSlotIndex(FromSlotIndex) || !IsValidSlotIndex(ToSlotIndex))
     {

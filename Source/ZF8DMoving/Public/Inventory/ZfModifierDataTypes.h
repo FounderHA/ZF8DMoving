@@ -255,6 +255,11 @@ struct ZF8DMOVING_API FZfItemModifierConfig
 {
     GENERATED_BODY()
 
+    // Quantidade total Minima de modifiers que este item pode ter.
+    // Ex: um capacete épico pode ter no minimo 2 modifiers.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0", ClampMax = "5",  UIMax = "5"))
+    int32 MinInitialModifiers = 0;
+    
     // Quantidade total máxima de modifiers que este item pode ter.
     // Ex: um capacete épico pode ter até 4 modifiers no total.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0", ClampMax = "5",  UIMax = "5"))
