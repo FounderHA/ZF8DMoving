@@ -775,11 +775,11 @@ DEFINE_LOG_CATEGORY(LogZfInventory);
 // FUNÇÕES SERVER - GERENCIAMENTO
 // ============================================================
 
-void UZfEquipmentComponent::ServerTryEquipItem_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition)
+void UZfEquipmentComponent::ServerTryEquipItem_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag)
 {
     if (InternalCheckIsServer("ServerTryEquipItem_Implementation"))
     {
-        TryEquipItem(ItemInstance, FromInventorySlot, SlotPosition);
+        TryEquipItem(ItemInstance, FromInventorySlot, SlotPosition, SlotTag);
     }
 }
 
@@ -795,8 +795,13 @@ void UZfEquipmentComponent::ServerTryUnequipItem_Implementation(FGameplayTag Slo
 // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
 // ============================================================
 
-EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemFromInventory, int32 FromInventorySlot, int32 SlotPosition)
+EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemFromInventory, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag)
 {
+    if (ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First() != SlotTag)
+    {
+        return EZfItemMechanicResult::Failed_CannotEquip;
+    }
+    
     // Valida se o item pode ser equipado (não nulo, não quebrado, tem fragment, slot livre)
     if (CanEquipItem(ItemFromInventory, FromInventorySlot, SlotPosition) != EZfItemMechanicResult::Success)
     {
@@ -892,48 +897,48 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
     // Verifica se o slot alvo no inventário já tem um item
     if (UZfItemInstance* ItemInstanceAtInventory = InventoryComponent->GetItemAtSlot(TagetInventorySlot))
     {
-        // CASO 1: Slot do inventário ocupado E o item pode ser equipado → TROCA
-        // Desequipa o atual, equipa o do inventário, e devolve o antigo no mesmo slot
-        if (CanEquipItem(ItemInstanceAtInventory,TagetInventorySlot,SlotPosition) == EZfItemMechanicResult::Success)
+        // Slot do inventário ocupado
+        if (ItemInstanceAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First() == SlotTag)
         {
-            // Remove o item atual do equipamento
-            // Equipa o item que veio do inventário
-            InternalUnequipItem(ItemInstanceInEquipment, SlotPosition);
-            InternalEquipItem(ItemInstanceAtInventory, SlotPosition);
-
-            // Remove o item novo do inventário (ele agora está equipado)
-            // Coloca o item antigo no slot que ficou livre no inventário
-            InventoryComponent->TryRemoveItemFromInventory(TagetInventorySlot);
-            InventoryComponent->TryAddItemToSpecificSlot(ItemInstanceInEquipment, TagetInventorySlot);
-
-            EquipmentList.MarkArrayDirty();
-            OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
-
-            return EZfItemMechanicResult::Success;
-        }
-        // CASO 2: Slot do inventário ocupado MAS o item NÃO pode ser equipado
-        // Apenas desequipa e coloca no primeiro slot livre do inventário
-        else
-        {
-            if (InventoryComponent->GetAvailableSlots() >= 1)
+            // Posso Equipar o Item do Inventário
+            if (CanEquipItem(ItemInstanceAtInventory,TagetInventorySlot,SlotPosition) == EZfItemMechanicResult::Success)
             {
+                // Remove o item atual do equipamento
+                // Equipa o item que veio do inventário
                 InternalUnequipItem(ItemInstanceInEquipment, SlotPosition);
+                InternalEquipItem(ItemInstanceAtInventory, SlotPosition);
+
+                // Remove o item novo do inventário (ele agora está equipado)
+                // Coloca o item antigo no slot que ficou livre no inventário
+                InventoryComponent->TryRemoveItemFromInventory(TagetInventorySlot);
+                InventoryComponent->TryAddItemToSpecificSlot(ItemInstanceInEquipment, TagetInventorySlot);
+
                 EquipmentList.MarkArrayDirty();
                 OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
 
-                // Adiciona no primeiro slot vazio disponível
-                InventoryComponent->TryAddItemToInventory(ItemInstanceInEquipment);
-
                 return EZfItemMechanicResult::Success;
             }
-            else
-            {
-                // Inventário cheio — não pode desequipar
-                return EZfItemMechanicResult::Failed_InventoryFull;
-            }
         }
+        // Não posso equipar o item do inventário
+        if (InventoryComponent->GetAvailableSlots() >= 1)
+        {
+            InternalUnequipItem(ItemInstanceInEquipment, SlotPosition);
+            EquipmentList.MarkArrayDirty();
+            OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+
+            // Adiciona no primeiro slot vazio disponível
+            InventoryComponent->TryAddItemToInventory(ItemInstanceInEquipment);
+
+            return EZfItemMechanicResult::Success;
+        }
+        else
+        {
+            // Inventário cheio — não pode desequipar
+            return EZfItemMechanicResult::Failed_InventoryFull;
+        }
+        
     }
-    // CASO 3: Slot do inventário vazio → simplesmente desequipa e coloca lá
+    // Slot do inventário vazio → simplesmente desequipa e coloca lá
     else
     {
         InternalUnequipItem(ItemInstanceInEquipment, SlotPosition);
@@ -985,15 +990,13 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
         // CASO 2: Inventário irá diminuir, Tenho que mover os itens de posição
         else
         {
+            int32 NewCapacity = InventoryComponent->GetDefaultSlotCount() + NewExtraSlots;
+            int32 ItensToMove = InventoryComponent->GetItemCountFromInitialSlot(NewCapacity);
             int32 AvaliableSlots = InventoryComponent->GetAvailableSlotsWithExpansion(BackpackAtInventory);
-            int32 ItensToMove = InventoryComponent->GetItemCountFromInitialSlot(AvaliableSlots);
-            int32 NewCapacity = OldExtraSlots - NewExtraSlots;
 
             // CASO 2.1: Tenho espaço suficiente para mover os itens
-            if (AvaliableSlots - ItensToMove >= 0)
+            if (AvaliableSlots >= ItensToMove)
             {
-                InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
-
                 // Remove o item atual do equipamento
                 // Equipa o item que veio do inventário
                 InternalUnequipItem(EquipedBackpack, SlotPosition);
@@ -1003,11 +1006,12 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
                 // Coloca o item antigo no slot que ficou livre no inventário
                 InventoryComponent->TryRemoveItemFromInventory(FromInventorySlot);
                 InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, FromInventorySlot);
+
+                InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
                 InventoryComponent->UpdateSlotCountFromEquippedBackpack();
                 
                 EquipmentList.MarkArrayDirty();
                 OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
-
                 
                 return EZfItemMechanicResult::Success;
             }
@@ -1078,13 +1082,11 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
         {
             int32 AvaliableSlots = InventoryComponent->GetAvailableSlotsWithExpansion(BackpackAtInventory);
             int32 ItensToMove = InventoryComponent->GetItemCountFromInitialSlot(AvaliableSlots);
-            int32 NewCapacity = OldExtraSlots - NewExtraSlots;
+            int32 NewCapacity = InventoryComponent->GetDefaultSlotCount() + NewExtraSlots;
 
             // CASO 2.1: Tenho espaço suficiente para mover os itens
             if (AvaliableSlots - ItensToMove >= 0)
             {
-                InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
-
                 // Remove o item atual do equipamento
                 // Equipa o item que veio do inventário
                 InternalUnequipItem(EquipedBackpack, SlotPosition);
@@ -1094,11 +1096,12 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
                 // Coloca o item antigo no slot que ficou livre no inventário
                 InventoryComponent->TryRemoveItemFromInventory(TargetInventorySlot);
                 InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, TargetInventorySlot);
+
+                InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
                 InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
                 OnItemUnequipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
                 EquipmentList.MarkArrayDirty();
-                
                 
                 return EZfItemMechanicResult::Success;
             }
@@ -1109,7 +1112,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
             }
         }
     }
-    // CASO 3: Slot do Equipamento vazio → simplesmente Equipa
+    // CASO 3: Slot do Equipamento vazio → simplesmente Desequipa
     else
     {
         int32 AvaliableSlots = InventoryComponent->GetAvailableSlotsWithExpansion(BackpackAtInventory);
@@ -1122,9 +1125,8 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
             EquipmentList.MarkArrayDirty();
             
             InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, TargetInventorySlot);   
-
-            int32 NewCapacity = OldExtraSlots - InventoryComponent->GetAvailableDefaultSlots();
-            InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
+            
+            InventoryComponent->RelocateItemsAboveCapacity(InventoryComponent->GetAvailableDefaultSlots());
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
             OnItemUnequipped.Broadcast(EquipedBackpack,EquipedBackpack->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);

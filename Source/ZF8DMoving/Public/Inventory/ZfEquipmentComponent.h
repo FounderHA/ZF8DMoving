@@ -483,8 +483,9 @@ public:
     // @param ItemInstance — item a equipar
     // @param FromInventorySlot — slot de origem no inventário
     // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
+    // @param FGameplayTag — SlotTag vindo da widget do equipamento
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition);
+    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag);
 
     // Tenta deequipar um item em seu slot correspondente.
     // Valida: slot disponível, two-handed, tags de requisito,
@@ -507,7 +508,7 @@ public:
     // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 TagetInventorySlot, int32 SlotPosition);
+    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 TagetInventorySlot, int32 SlotPosition, FGameplayTag SlotTag);
 
     // Tenta equipar mochila
     // Se já houver item no slot alvo, devolve ao InventoryComponent.

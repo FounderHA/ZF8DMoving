@@ -734,28 +734,19 @@ int32 UZfInventoryComponent::GetItemCountFromInitialSlot(int32 InitialSlotIndex)
 
 void UZfInventoryComponent::RelocateItemsAboveCapacity(int32 NewCapacity)
 {
-    TSet<int32> OccupiedSlots;
-    for (const FZfInventorySlot& Slot : InventoryList.Slots)
-    {
-        OccupiedSlots.Add(Slot.SlotIndex);
-    }
-
+    TArray<UZfItemInstance*> ItemsToMove;
     for (const FZfInventorySlot& Slot : InventoryList.Slots)
     {
         if (Slot.SlotIndex >= NewCapacity && Slot.ItemInstance)
         {
-            // Acha o primeiro slot livre abaixo da nova capacidade
-            for (int32 i = 0; i < NewCapacity; i++)
-            {
-                if (!OccupiedSlots.Contains(i))
-                {
-                    InternalRemoveItem(Slot.SlotIndex);
-                    InternalAddItem(Slot.ItemInstance, i);
-                    OccupiedSlots.Add(i);
-                    break;
-                }
-            }
+            ItemsToMove.Add(Slot.ItemInstance);
         }
+    }
+
+    for (UZfItemInstance* Item : ItemsToMove)
+    {
+        InternalRemoveItem(GetSlotIndexOfItem(Item));
+        InternalAddItem(Item, GetFirstEmptySlot());
     }
 
     InventoryList.MarkArrayDirty();
