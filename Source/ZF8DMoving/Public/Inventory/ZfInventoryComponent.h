@@ -357,7 +357,7 @@ protected:
     // Número inicial de slots do inventário.
     // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
-    int32 DefaultSlotCount = 20;
+    int32 DefaultSlotCount = 5;
 
     // Número máximo absoluto de slots — nunca ultrapassa esse valor
     // mesmo com múltiplas mochilas equipadas.
@@ -491,6 +491,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     int32 GetAvailableDefaultSlots() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetDefaultSlotCount() const { return DefaultSlotCount; }
+    
     // Retorna quantos slots estão disponíveis considerando a capacidade padrão
     // mais os slots extras da mochila sendo equipada.
     // @param BackpackInstance — instância da mochila sendo equipada
