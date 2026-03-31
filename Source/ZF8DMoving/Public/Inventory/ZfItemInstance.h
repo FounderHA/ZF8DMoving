@@ -316,6 +316,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")
     void SetIsRepairable(bool bRepairable);
     
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void SetRarity(EZfItemRarity NewRarity);
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void SetTier(int32 NewTier);
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void SetItemDefinition(UZfItemDefinition* InItemDefinition);
+    
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void SetAppliedModifiers(const TArray<FZfAppliedModifier>& NewModifiers);
     
     // ----------------------------------------------------------
     // FUNÇÕES DE MODIFIER
