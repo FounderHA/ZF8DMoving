@@ -8,6 +8,49 @@
 #include "Inventory/ZfItemDefinition.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 
+
+// ------------------------------------------------------------
+// FORMAT MODIFIER TEXT
+// ------------------------------------------------------------
+
+FText UZfItemGeneratorLibrary::FormatModifierTooltip(
+    const FZfAppliedModifier& AppliedModifier,
+    UDataTable* ModifierDataTable)
+{
+    if (!ModifierDataTable)
+        return FText::GetEmpty();
+
+    const FZfModifierDataTypes* ModifierData =
+        ModifierDataTable->FindRow<FZfModifierDataTypes>(
+            AppliedModifier.ModifierRowName, TEXT("FormatModifierTooltip"));
+
+    if (!ModifierData)
+        return FText::GetEmpty();
+
+    const FZfModifierRankData* RankData =
+        ModifierData->GetRankData(AppliedModifier.CurrentRank);
+
+    float Min = 0.f;
+    float Max = 0.f;
+
+    if (RankData)
+    {
+        Min = RankData->RankRange.MinValue;
+        Max = RankData->RankRange.MaxValue * RankData->CurrentMaxPercentage;
+    }
+
+    FFormatNamedArguments Args;
+    Args.Add(TEXT("value"),      FText::FromString(FString::Printf(TEXT("%.1f"), AppliedModifier.CurrentValue)));
+    Args.Add(TEXT("min"),        FText::FromString(FString::Printf(TEXT("%.1f"), Min)));
+    Args.Add(TEXT("max"),        FText::FromString(FString::Printf(TEXT("%.1f"), Max)));
+    Args.Add(TEXT("rank"),       FText::AsNumber(AppliedModifier.CurrentRank));
+    Args.Add(TEXT("maxrank"),    FText::AsNumber(ModifierData->GetMaxRankCount()));
+    Args.Add(TEXT("percentage"), FText::FromString(FString::Printf(TEXT("%.0f%%"), AppliedModifier.CurrentRollPercentage * 100.f)));
+    Args.Add(TEXT("awakening"),  FText::AsNumber(AppliedModifier.AwakeningCount));
+
+    return FText::Format(ModifierData->TooltipFormat, Args);
+}
+
 // ------------------------------------------------------------
 // HELPER INTERNO
 // ------------------------------------------------------------
@@ -376,4 +419,14 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     ApplyGenerationToInstance(NewInstance, Rarity, Tier, Modifiers);
 
     return NewInstance;
+}
+
+bool UZfItemGeneratorLibrary::GetModifierRangeByRarity(EZfItemRarity Rarity, FZfModifierRange& OutRange)
+{
+    if (const FZfModifierRange* Found = ZfModifierRangeByRarity.Find(Rarity))
+    {
+        OutRange = *Found;
+        return true;
+    }
+    return false;
 }

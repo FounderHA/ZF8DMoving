@@ -28,6 +28,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Modifiers")
 	FZfItemModifierConfig ModifierConfig;
 
+	// Retorna o DataTable de modifiers carregado e pronto para uso.
+	// Carrega sincronamente se ainda não estiver em memória.
+	// @return DataTable carregado ou nullptr se não configurado
+	UFUNCTION(BlueprintCallable, Category = "Zf|Fragment|Modifiers")
+	UDataTable* GetLoadedModifierDataTable() const;
+	
 #if WITH_EDITOR
 	// Validação no editor — garante consistência dos dados configurados.
 	// Chamado ao salvar o asset no editor.

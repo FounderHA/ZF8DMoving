@@ -6,6 +6,11 @@
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "Misc/DataValidation.h"
 
+UDataTable* UZfFragment_Modifiers::GetLoadedModifierDataTable() const
+{
+	return ModifierConfig.ModifierDataTable.LoadSynchronous();
+}
+
 EDataValidationResult UZfFragment_Modifiers::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
