@@ -125,6 +125,15 @@ struct FZfModifierRange
 {
     GENERATED_BODY()
 
+    // Construtor padrão
+    FZfModifierRange() = default;
+
+    // Construtor para inicialização direta
+    // @param InMin — valor mínimo de modifiers
+    // @param InMax — valor máximo de modifiers
+    FZfModifierRange(int32 InMin, int32 InMax)
+        : Min(InMin), Max(InMax) {}
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     int32 Min = 0;
 
@@ -132,8 +141,59 @@ struct FZfModifierRange
     int32 Max = 0;
 };
 
+// -----------------------------------------------------------
+// FZfRarityWeight
+// Peso de probabilidade de uma raridade aparecer no roll.
+// Deixe o array vazio para usar os pesos padrão do sistema.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfRarityWeight
+{
+    GENERATED_BODY()
+
+    FZfRarityWeight() = default;
+    FZfRarityWeight(EZfItemRarity InRarity, float InWeight)
+        : Rarity(InRarity), Weight(InWeight) {}
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Rarity")
+    EZfItemRarity Rarity = EZfItemRarity::Common;
+
+    // Peso relativo — não precisa somar 100, é proporcional
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Rarity",
+        meta = (ClampMin = "0.0"))
+    float Weight = 1.0f;
+};
+
+// -----------------------------------------------------------
+// FZfTierWeight
+// Peso de probabilidade de um tier aparecer no roll.
+// Deixe o array vazio para usar os pesos padrão do sistema.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfTierWeight
+{
+    GENERATED_BODY()
+
+    FZfTierWeight() = default;
+    FZfTierWeight(int32 InTier, float InWeight)
+        : Tier(InTier), Weight(InWeight) {}
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Tier")
+    int32 Tier = 0;
+
+    // Peso relativo — não precisa somar 100, é proporcional
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Tier",
+        meta = (ClampMin = "0.0"))
+    float Weight = 1.0f;
+};
+
 extern const TMap<EZfItemRarity, FZfModifierRange> ZfModifierRangeByRarity;
 
+// Pesos padrão de raridade — usados quando nenhum peso customizado é fornecido
+extern const TArray<FZfRarityWeight> GDefaultRarityWeights;
+
+// Pesos padrão de tier — usados quando nenhum peso customizado é fornecido
+extern const TArray<FZfTierWeight> GDefaultTierWeights;
 
 // -----------------------------------------------------------
 // FZfModifierCountByRarity
@@ -152,12 +212,12 @@ struct ZF8DMOVING_API FZfModifierCountByRarity
 
     // Quantidade mínima de modifiers para esta raridade
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Count",
-        meta = (ClampMin = "0", ClampMax = "20"))
+        meta = (ClampMin = "0", ClampMax = "5"))
     int32 MinModifiers = 0;
 
     // Quantidade máxima de modifiers para esta raridade
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Count",
-        meta = (ClampMin = "0", ClampMax = "20"))
+        meta = (ClampMin = "0", ClampMax = "5"))
     int32 MaxModifiers = 1;
 };
 
@@ -368,7 +428,7 @@ struct ZF8DMOVING_API FZfAppliedModifier
 
     // Valor atual do modifier (interpolado entre Min e Max do rank * MaxRollPercentage)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
-    float CurrentValue = 0.0f;
+    float CurrentValue = 0.0;
 
     // Percentual atual dentro do range (0.0 = mínimo, 1.0 = máximo base)
     // Modifier UP aumenta este valor em 10% por uso

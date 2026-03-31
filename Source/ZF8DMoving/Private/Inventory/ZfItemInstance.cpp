@@ -719,6 +719,26 @@ void UZfItemInstance::SetIsRepairable(bool bRepairable)
 }
 
 
+void UZfItemInstance::SetRarity(EZfItemRarity NewRarity)
+{
+    ItemRarity = NewRarity;
+}
+
+void UZfItemInstance::SetTier(int32 NewTier)
+{
+    ItemTier = NewTier;
+}
+
+void UZfItemInstance::SetItemDefinition(UZfItemDefinition* InItemDefinition)
+{
+    ItemDefinition = InItemDefinition;
+}
+
+void UZfItemInstance::SetAppliedModifiers(const TArray<FZfAppliedModifier>& NewModifiers)
+{
+    AppliedModifiers = NewModifiers;
+}
+
 // ============================================================
 // NOTIFICAÇÃO AOS FRAGMENTS
 // ============================================================
