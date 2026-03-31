@@ -18,6 +18,16 @@ UZfItemDefinition::UZfItemDefinition()
     // Os valores padrão são definidos nas UPROPERTY acima.
 }
 
+UZfItemFragment* UZfItemDefinition::FindFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const
+{
+    for (UZfItemFragment* Fragment : Fragments)
+    {
+        if (Fragment && Fragment->IsA(FragmentClass))
+            return Fragment;
+    }
+    return nullptr;
+}
+
 // Define o tipo primário — deve bater exatamente com o configurado
 // em Project Settings → Asset Manager → Primary Asset Types to Scan
 const FPrimaryAssetType UZfItemDefinition::PrimaryAssetType("ZfItemDefinition");

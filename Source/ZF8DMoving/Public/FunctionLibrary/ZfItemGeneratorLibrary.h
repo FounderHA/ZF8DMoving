@@ -23,6 +23,22 @@ class ZF8DMOVING_API UZfItemGeneratorLibrary : public UBlueprintFunctionLibrary
 
 public:
     
+	// Formata o texto do modifier com todos os dados disponíveis como placeholders.
+	// O designer escolhe quais usar no TooltipFormat do DataTable.
+	// Placeholders disponíveis:
+	// {value}      — valor atual do modifier
+	// {min}        — valor mínimo do rank atual
+	// {max}        — valor máximo do rank atual
+	// {rank}       — rank atual
+	// {maxrank}    — rank máximo disponível
+	// {percentage} — percentual dentro do range (0-100%)
+	// @param AppliedModifier — modifier já aplicado no item
+	// @param ModifierData    — dados do DataTable do modifier
+	// @return texto formatado pronto para exibir na UI
+	UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
+	static FText FormatModifierTooltip(const FZfAppliedModifier& AppliedModifier, UDataTable* ModifierDataTable);
+	
+	
     // Sorteia uma raridade baseada em pesos de probabilidade.
     // Deixe RarityWeights vazio para usar os pesos padrão do sistema.
     // @param RarityWeights — pesos de cada raridade (vazio = defaults)
@@ -90,4 +106,8 @@ public:
         UZfItemDefinition* InItemDefinition,
         const TArray<FZfRarityWeight>& RarityWeights,
         const TArray<FZfTierWeight>& TierWeights);
+	
+	/** Retorna o range de modifiers (Min/Max) para uma raridade específica. */
+	UFUNCTION(BlueprintPure, Category = "Zf|Inventory|Modifiers", meta = (DisplayName = "Get Modifier Range By Rarity"))
+	static bool GetModifierRangeByRarity(EZfItemRarity Rarity, FZfModifierRange& OutRange);
 };

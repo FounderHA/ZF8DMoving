@@ -236,6 +236,12 @@ public:
         return GetFragment<T>() != nullptr;
     }
 
+    // Retorna um fragment do item pelo tipo passado.
+    // @param FragmentClass — classe do fragment a buscar
+    // @return fragment encontrado ou nullptr
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Fragments")
+    UZfItemFragment* GetFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const;
+    
     // ----------------------------------------------------------
     // FUNÇÕES DE ACESSO AOS DADOS
     // ----------------------------------------------------------

@@ -108,9 +108,14 @@ public:
     // aqui no editor sem precisar de assets separados.
     // ----------------------------------------------------------
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Fragments",
-        Instanced)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Fragments", Instanced)
     TArray<TObjectPtr<UZfItemFragment>> Fragments;
+    
+    // Retorna um fragment pelo tipo — acessível por Blueprint via GetFragmentByClass.
+    // @param FragmentClass — classe do fragment a buscar
+    // @return fragment encontrado ou nullptr
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemDefinition")
+    UZfItemFragment* FindFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const;
 
     // ----------------------------------------------------------
     // MARKET VALUE
@@ -156,7 +161,7 @@ public:
     }
 
     // Verifica se este item possui uma tag específica.
-    // Uso: if (Def->HasItemTag(ZfInventoryTags::WeaponTypes::Weapon)) { ... }
+    // Uso: if (Def->HasItemTag(ZfInventoryeeeee::WeaponTypes::Weapon)) { ... }
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemDefinition")
     bool HasItemTag(const FGameplayTag& Tag) const
     {

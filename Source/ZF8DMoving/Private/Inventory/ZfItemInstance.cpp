@@ -130,6 +130,14 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
 // FUNÇÕES DE ACESSO AOS DADOS
 // ============================================================
 
+UZfItemFragment* UZfItemInstance::GetFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const
+{
+    if (!ItemDefinition || !FragmentClass)
+        return nullptr;
+
+    return ItemDefinition->FindFragmentByClass(FragmentClass);
+}
+
 FText UZfItemInstance::GetItemName() const
 {
     if (!ItemDefinition)

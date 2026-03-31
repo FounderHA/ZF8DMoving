@@ -45,6 +45,12 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Ex: "Aumenta a velocidade de movimento do personagem"
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
     FText Description;
+    
+    // Texto exibido na UI com suporte a valores dinâmicos.
+    // Placeholders disponíveis: {value}, {min}, {max}
+    // Exemplo: "Aumenta velocidade em {value} ({min} - {max})"
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
+    FText TooltipFormat;
 
     // ----------------------------------------------------------
     // COMPATIBILIDADE — usa o sistema de Tags (substitui EZfItemType)
