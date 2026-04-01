@@ -16,6 +16,8 @@ UZfItemDefinition::UZfItemDefinition()
 {
     // Nenhuma inicialização especial necessária.
     // Os valores padrão são definidos nas UPROPERTY acima.
+    
+    ItemIcon.LoadSynchronous();
 }
 
 UZfItemFragment* UZfItemDefinition::FindFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const

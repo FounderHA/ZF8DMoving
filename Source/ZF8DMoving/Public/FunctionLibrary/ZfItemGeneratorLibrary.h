@@ -107,6 +107,7 @@ public:
     static TArray<FZfAppliedModifier> RollModifiers(UDataTable* ModifierDataTable,
     	const FGameplayTagContainer& ItemTags, int32 ItemTier, int32 ModifierCount,
     	const FZfItemModifierConfig& ModifierConfig);
+	
     // Aplica a raridade, tier e modifiers gerados em um ItemInstance existente.
     // Deve ser chamado após todos os rolls estarem concluídos.
     // @param ItemInstance    — instância do item a ser preenchida

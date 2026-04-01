@@ -3,42 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/Attributes/ZfAttributeSet.h"
-#include "ZfResistenceAttributeSet.generated.h"
+#include "ZfAttributeSet.h"
+#include "ZfResistanceAttributeSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfResistenceAttributeSet : public UZfAttributeSet
+class ZF8DMOVING_API UZfResistanceAttributeSet : public UZfAttributeSet
 {
 	GENERATED_BODY()
 	
 public:
-	UZfResistenceAttributeSet(const FObjectInitializer& ObjectInitializer);
+	UZfResistanceAttributeSet(const FObjectInitializer& ObjectInitializer);
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; 
 	
-public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalResistance, Category = "CharacterAttributes")
 	FGameplayAttributeData PhysicalResistance;
-	ATTRIBUTE_ACCESSORS(UZfResistenceAttributeSet, PhysicalResistance)
+	ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, PhysicalResistance)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MagicResistance, Category = "CharacterAttributes")
 	FGameplayAttributeData MagicResistance;
-	ATTRIBUTE_ACCESSORS(UZfResistenceAttributeSet, MagicResistance)
+	ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, MagicResistance)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StunResistance, Category = "CharacterAttributes")
 	FGameplayAttributeData StunResistance;
-	ATTRIBUTE_ACCESSORS(UZfResistenceAttributeSet, StunResistance)
+	ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, StunResistance)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_SlowResistance, Category = "CharacterAttributes")
 	FGameplayAttributeData SlowResistance;
-	ATTRIBUTE_ACCESSORS(UZfResistenceAttributeSet, SlowResistance)
+	ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, SlowResistance)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_CriticalResistance, Category = "CharacterAttributes")
 	FGameplayAttributeData CriticalResistance;
-	ATTRIBUTE_ACCESSORS(UZfResistenceAttributeSet, CriticalResistance)
+	ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, CriticalResistance)
 	
 protected:
 	

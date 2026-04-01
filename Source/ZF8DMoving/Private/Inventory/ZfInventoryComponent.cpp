@@ -171,37 +171,6 @@ void UZfInventoryComponent::Internal_FindEquipmentComponent()
     }
 }
 
-// ============================================================
-// DEBUG
-// ============================================================
-
-void UZfInventoryComponent::DebugLogInventory() const
-{
-    UE_LOG(LogZfInventory, Log,
-        TEXT("=== INVENTORY DEBUG [%s] ==="), GetOwner() ? *GetOwner()->GetName() : TEXT("Unknown"));
-
-    UE_LOG(LogZfInventory, Log,
-        TEXT("Slots: %d/%d | Disponíveis: %d"), GetTotalSlots(), MaxAbsoluteSlotCount, GetAvailableSlots());
-
-    for (const FZfInventorySlot& Slot : InventoryList.Slots)
-    {
-        if (Slot.ItemInstance)
-        {
-            UE_LOG(LogZfInventory, Log,
-                TEXT("  [%d] %s"), Slot.SlotIndex, *Slot.ItemInstance->GetDebugString());
-        }
-        else
-        {
-            UE_LOG(LogZfInventory, Verbose,
-                TEXT("  [%d] --- vazio ---"), Slot.SlotIndex);
-        }
-    }
-}
-
-
-
-
-
 
 
 
@@ -259,11 +228,11 @@ void UZfInventoryComponent::BeginPlay()
     {
         // Seta o owner e o tamanho inicial diretamente
         InventoryList.OwnerComponent = this;
-        if (EquipmentComponent->GetItemAtEquipmentSlot(EZfEquipmentSlot::Backpack))
+        if (EquipmentComponent->GetItemAtEquipmentSlot(ZfEquipmentTags::EquipmentSlots::Slot_Backpack))
         {
-            if (EquipmentComponent->GetItemAtEquipmentSlot(EZfEquipmentSlot::Backpack)->GetFragment<UZfFragment_InventoryExpansion>())
+            if (EquipmentComponent->GetItemAtEquipmentSlot(ZfEquipmentTags::EquipmentSlots::Slot_Backpack)->GetFragment<UZfFragment_InventoryExpansion>())
             {
-                const UZfFragment_InventoryExpansion* Backpack = EquipmentComponent->GetItemAtEquipmentSlot(EZfEquipmentSlot::Backpack)->
+                const UZfFragment_InventoryExpansion* Backpack = EquipmentComponent->GetItemAtEquipmentSlot(ZfEquipmentTags::EquipmentSlots::Slot_Backpack)->
                     GetFragment<UZfFragment_InventoryExpansion>();
                 CurrentSlotCount = DefaultSlotCount + Backpack->ExtraSlotCount;
             }

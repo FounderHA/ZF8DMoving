@@ -36,7 +36,6 @@
 #include "ZfInventoryTags.h"
 #include "ZfModifierDataTypes.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
-#include "Inventory/Fragments/ZfFragment_Quality.h"
 #include "ZfItemDefinition.generated.h"
 
 // ============================================================

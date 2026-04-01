@@ -77,33 +77,6 @@ enum class EZfItemType: uint8
 };
 
 // -----------------------------------------------------------
-// EZfEquipmentSlot
-// Define os slots disponíveis no ZfEquipmentComponent.
-// Cada slot pode ter múltiplas instâncias (ex: Ring_1, Ring_2)
-// configurado pelo sistema de slots flexíveis.
-// -----------------------------------------------------------
-UENUM(BlueprintType)
-enum class EZfEquipmentSlot : uint8
-{
-    None        UMETA(DisplayName = "None"),
-    MainHand    UMETA(DisplayName = "Main Hand"),
-    OffHand     UMETA(DisplayName = "Off Hand"),
-    Head        UMETA(DisplayName = "Head"),
-    Chest       UMETA(DisplayName = "Chest"),
-    Legs        UMETA(DisplayName = "Legs"),
-    Feet        UMETA(DisplayName = "Feet"),
-    Hands       UMETA(DisplayName = "Hands"),
-    Cape        UMETA(DisplayName = "Cape"),
-    Backpack    UMETA(DisplayName = "Backpack"),
-    Ring        UMETA(DisplayName = "Ring"),
-    Necklace    UMETA(DisplayName = "Necklace"),
-    Pickaxe     UMETA(DisplayName = "Pickaxe"),
-    Axe         UMETA(DisplayName = "Axe"),
-    Shovel      UMETA(DisplayName = "Shovel"),
-    FishingRod  UMETA(DisplayName = "Fishing Rod"),
-};
-
-// -----------------------------------------------------------
 // EZfItemRarity
 // Define a raridade do item, que influencia:
 // - Cor na UI
@@ -131,8 +104,7 @@ struct FZfModifierRange
     // Construtor para inicialização direta
     // @param InMin — valor mínimo de modifiers
     // @param InMax — valor máximo de modifiers
-    FZfModifierRange(int32 InMin, int32 InMax)
-        : Min(InMin), Max(InMax) {}
+    FZfModifierRange(int32 InMin, int32 InMax) : Min(InMin), Max(InMax) {}
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     int32 Min = 0;
@@ -160,7 +132,7 @@ struct ZF8DMOVING_API FZfRarityWeight
 
     // Peso relativo — não precisa somar 100, é proporcional
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Rarity",
-        meta = (ClampMin = "0.0"))
+        meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"))
     float Weight = 1.0f;
 };
 
@@ -406,10 +378,6 @@ struct ZF8DMOVING_API FZfModifierRankData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Rank")
     float CurrentMaxPercentage = 1.0f;
     
-    // Quantas vezes este rank foi despertado (Awakening)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Rank")
-    int32 AwakeningCount = 0;
-    
     // Percentual adicional por stack de Awakening
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Rank")
     float AwakeningBonusPerStack = 0.1f;
@@ -476,6 +444,39 @@ struct ZF8DMOVING_API  FZfModifierClassLimit
 // ============================================================
 // STRUCTS DE ITEM INSTANCE
 // ============================================================
+
+// -----------------------------------------------------------
+// FZfItemAttributeValue
+// Armazena os valores calculados de um atributo do item.
+// Recalculado quando qualidade, modifiers ou set bonus mudam.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfItemAttributeValue
+{
+    GENERATED_BODY()
+
+    // Nome legível para exibir na UI
+    UPROPERTY(BlueprintReadOnly, Category = "Item|Attribute")
+    FText DisplayName;
+    
+    // Tag que identifica este atributo
+    // Ex: Attribute.Combat.PhysicalDamage
+    UPROPERTY(BlueprintReadOnly, Category = "Item|Attribute")
+    FGameplayTag AttributeTag;
+
+    // Valor base vindo do Fragment pela qualidade atual
+    UPROPERTY(BlueprintReadOnly, Category = "Item|Attribute")
+    float BaseValue = 0.f;
+
+    // Bônus total dos modifiers que afetam esta tag
+    UPROPERTY(BlueprintReadOnly, Category = "Item|Attribute")
+    float ModifierBonus = 0.f;
+
+    // Valor final — BaseValue + ModifierBonus
+    UPROPERTY(BlueprintReadOnly, Category = "Item|Attribute")
+    float FinalValue = 0.f;
+};
+
 
 // -----------------------------------------------------------
 // FZfAppliedModifier

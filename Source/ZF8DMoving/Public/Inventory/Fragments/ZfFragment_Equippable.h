@@ -36,9 +36,6 @@ public:
 
     // Slot de equipamento onde este item será colocado.
     // Ex: Helmet → Head, Boots → Feet, Sword → MainHand
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Equippable")
-    EZfEquipmentSlot EquipmentSlot = EZfEquipmentSlot::None;
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragment|Equippable", meta =(GameplayTagFilter = "EquipmentSlot"))
     FGameplayTagContainer EquipmentTags;
     
@@ -100,26 +97,4 @@ public:
 // DEBUG
 // ----------------------------------------------------------
     
-    // Override do debug para mostrar o slot configurado
-    virtual FString GetDebugString() const override
-    {
-        const UEnum* SlotEnum = StaticEnum<EZfEquipmentSlot>();
-        const UEnum* HandEnum = StaticEnum<EZfHandedness>();
-
-        const FString SlotName = SlotEnum
-            ? SlotEnum->GetNameStringByValue(static_cast<int64>(EquipmentSlot))
-            : TEXT("Unknown");
-
-        const FString HandName = HandEnum
-            ? HandEnum->GetNameStringByValue(static_cast<int64>(Handedness))
-            : TEXT("Unknown");
-
-        return FString::Printf(
-            TEXT("[Fragment_Equippable] Slot: %s | Handedness: %s | "
-                 "SlotIndex: %d | AutoFind: %s"),
-            *SlotName,
-            *HandName,
-            PreferredSlotIndex,
-            bAutoFindFreeSlot ? TEXT("Yes") : TEXT("No"));
-    }
 };

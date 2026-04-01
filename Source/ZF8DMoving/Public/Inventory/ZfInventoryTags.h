@@ -75,6 +75,7 @@ namespace ZfInventoryTags
 	namespace CapeTypes
 	{
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cape)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Wings)
 	}
 	
 	namespace JewelryTypes

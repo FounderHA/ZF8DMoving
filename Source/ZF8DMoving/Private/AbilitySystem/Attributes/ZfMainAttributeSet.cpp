@@ -1,11 +1,10 @@
-#include "AbilitySystem/Attributes/ZFMainAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-UZfMainAttributeSet::UZfMainAttributeSet(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+UZfMainAttributeSet::UZfMainAttributeSet(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
 

@@ -142,38 +142,16 @@ public:
     // ----------------------------------------------------------
     // STATS BASE
     // Valores escalados por ItemTier + CurrentQuality.
-    // Atualizados via DataTable de qualidade ao fazer upgrade.
     // Apenas os stats relevantes ao tipo de item terão
     // valores diferentes de 0.
-    // ----------------------------------------------------------
-
-    // --- Stats de Arma ---
-
-    // Dano físico base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Weapon")
-    float PhysicalDamage = 0.0f;
-
-    // Dano mágico base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Weapon")
-    float MagicalDamage = 0.0f;
-
-    // Velocidade de ataque base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Weapon")
-    float AttackSpeed = 0.0f;
-
-    // Chance de crítico base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Weapon")
-    float CriticalHitChance = 0.0f;
-
-    // --- Stats de Armadura ---
-
-    // Resistência física base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Armor")
-    float PhysicalResistance = 0.0f;
-
-    // Resistência mágica base — escalado por tier e quality
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stats|Armor")
-    float MagicalResistance = 0.0f;
+    // Recalculado quando qualidade, modifiers ou set bonus mudam.
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Attributes")
+    TArray<FZfItemAttributeValue> ItemAttributes;
+    
+    // Recalcula todos os atributos do item baseado na qualidade atual e modifiers.
+    // Deve ser chamado quando qualidade ou modifiers mudarem.
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void RecalculateItemAttributes();
 
     // ----------------------------------------------------------
     // MODIFIERS
@@ -309,12 +287,7 @@ public:
     // @param RepairAmount — quantidade de durabilidade a restaurar
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")
     void RepairItemByAmount(float RepairAmount);
-
-    // Aplica upgrade de qualidade usando o QualityDataTable.
-    // Busca os valores do próximo nível e atualiza os stats base.
-    // Retorna false se já está no nível máximo ou DataTable inválido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")
-    bool ApplyQualityUpgrade();
+    
 
     // Recalcula e atualiza o valor de mercado do item.
     // Chamado automaticamente ao mudar modifiers, tier ou quality.
@@ -431,43 +404,26 @@ public:
     // dentro do FFastArraySerializer do InventoryComponent.
     virtual bool IsSupportedForNetworking() const override { return true; }
 
-    // ----------------------------------------------------------
-    // DEBUG
-    // ----------------------------------------------------------
-
-    // Retorna string completa com todos os dados do item para debug.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Debug") FString GetDebugString() const;
-
-    // Desenha informações do item no mundo via DrawDebugString.
-    // @param WorldContextObject — contexto de mundo
-    // @param Location — posição no mundo onde desenhar
-    // @param Duration — duração em segundos (0 = permanente)
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Debug")
-    void DrawDebugInfo(const UObject* WorldContextObject, const FVector& Location, float Duration = 5.0f) const;
-
 private:
 
     // ----------------------------------------------------------
     // FUNÇÕES INTERNAS
     // ----------------------------------------------------------
 
-    // Inicializa a durabilidade com base no UZfFragment_Durability.
-    // Chamado por InitializeItemInstance.
-    void Internal_InitializeDurability();
-
-    // Inicializa os stats base com base no tier e quality iniciais.
-    // Chamado por InitializeItemInstance.
-    void Internal_InitializeBaseStats();
-
     // Inicializa os modifiers para itens Unique (modifiers fixos do PDA).
     // Para itens normais, os modifiers são rolados pelo InventoryComponent.
     void Internal_InitializeUniqueModifiers();
 
-    // Aplica os valores do QualityDataTable aos stats base.
-    // @param QualityRow — linha do DataTable para o nível atual
-    void Internal_ApplyQualityRowToStats(const struct FZfQualityLevelRow& QualityRow);
-
     // Verifica se este código está rodando no servidor.
     // Loga um warning se uma operação de servidor for chamada no cliente.
     bool Internal_CheckIsServer(const FString& FunctionName) const;
+
+
+public:
+    
+    // ----------------------------------------------------------
+    // DEBUG
+    // ----------------------------------------------------------
+
+    
 };

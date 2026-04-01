@@ -11,18 +11,3 @@ UDataTable* UZfFragment_Modifiers::GetLoadedModifierDataTable() const
 	return ModifierConfig.ModifierDataTable.LoadSynchronous();
 }
 
-EDataValidationResult UZfFragment_Modifiers::IsDataValid(FDataValidationContext& Context) const
-{
-	EDataValidationResult Result = Super::IsDataValid(Context);
-	
-	// Valida ModifierConfig — DataTable obrigatório se MaxTotalModifiers > 0
-	if (ModifierConfig.MaxTotalModifiers > 0 &&
-		ModifierConfig.ModifierDataTable.IsNull())
-	{
-		Context.AddError(FText::FromString(
-			TEXT("ZfItemDefinition: ModifierConfig tem MaxTotalModifiers > 0 "
-				 "mas ModifierDataTable não está configurado.")));
-		Result = EDataValidationResult::Invalid;
-	}
-	return Result;
-}
