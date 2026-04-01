@@ -47,3 +47,38 @@ UZfEquipmentComponent* UZfHelperLibrary::FindEquipmentComponent(AActor* Actor)
 
     return Actor->FindComponentByClass<UZfEquipmentComponent>();
 }
+
+FString UZfHelperLibrary::ToRomanNumeral(int32 Number)
+{
+    if (Number <= 0 || Number > 3999)
+        return FString::FromInt(Number);
+
+    static const TArray<TPair<int32, FString>> RomanValues =
+    {
+        { 1000, TEXT("M")  },
+        {  900, TEXT("CM") },
+        {  500, TEXT("D")  },
+        {  400, TEXT("CD") },
+        {  100, TEXT("C")  },
+        {   90, TEXT("XC") },
+        {   50, TEXT("L")  },
+        {   40, TEXT("XL") },
+        {   10, TEXT("X")  },
+        {    9, TEXT("IX") },
+        {    5, TEXT("V")  },
+        {    4, TEXT("IV") },
+        {    1, TEXT("I")  },
+    };
+
+    FString Result;
+    for (const TPair<int32, FString>& Pair : RomanValues)
+    {
+        while (Number >= Pair.Key)
+        {
+            Result += Pair.Value;
+            Number -= Pair.Key;
+        }
+    }
+
+    return Result;
+}

@@ -25,6 +25,7 @@ public:
     
 	// Formata o texto do modifier com todos os dados disponíveis como placeholders.
 	// O designer escolhe quais usar no TooltipFormat do DataTable.
+	// Busca o Fragment_Modifiers e o DataTable automaticamente pelo ItemInstance.
 	// Placeholders disponíveis:
 	// {value}      — valor atual do modifier
 	// {min}        — valor mínimo do rank atual
@@ -36,8 +37,29 @@ public:
 	// @param ModifierData    — dados do DataTable do modifier
 	// @return texto formatado pronto para exibir na UI
 	UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
-	static FText FormatModifierTooltip(const FZfAppliedModifier& AppliedModifier, UDataTable* ModifierDataTable);
+	static FText FormatModifierTooltip(const FZfAppliedModifier& AppliedModifier, UZfItemInstance* ItemInstance, bool bDetailMode = false);
 	
+	// Retorna o valor atual de um atributo do item baseado na qualidade.
+	// @param ItemInstance — instância do item
+	// @param AttributeIndex — índice do atributo no Fragment_DisplayAttributes
+	// @param OutDisplayName — nome legível do atributo para exibir na UI
+	// @param OutValue — valor atual do atributo baseado na qualidade
+	// @return true se encontrou o atributo, false se não encontrou
+	UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
+	static bool GetItemAttributeValue(UZfItemInstance* ItemInstance, int32 AttributeIndex, FText& OutDisplayName, float& OutValue);
+
+	// Sorteia a qualidade do item baseado em pesos, nível do player e tags ativas.
+	// @param QualityWeights  — pesos base de qualidade (vazio = defaults)
+	// @param PlayerLevel     — nível atual do player (0 = ignorar)
+	// @param LevelBonuses    — bônus por nível do player (vazio = ignorar)
+	// @param ActiveTags      — tags ativas de zona e história
+	// @param TagBonuses      — bônus por tag (vazio = ignorar)
+	// @return qualidade sorteada (0 a 9)
+	UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
+	static int32 RollQuality(const TArray<FZfQualityWeight>& QualityWeights, int32 PlayerLevel,
+		const TArray<FZfQualityBonusByLevel>& LevelBonuses, const FGameplayTagContainer& ActiveTags,
+		const TArray<FZfQualityBonusByTag>& TagBonuses);
+
 	
     // Sorteia uma raridade baseada em pesos de probabilidade.
     // Deixe RarityWeights vazio para usar os pesos padrão do sistema.
@@ -94,18 +116,28 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
     static void ApplyGenerationToInstance(UZfItemInstance* ItemInstance, EZfItemRarity Rarity, int32 Tier, const TArray<FZfAppliedModifier>& Modifiers);
     
-    // Gera um ItemInstance completo com raridade, tier e modifiers sorteados.
-    // @param Outer            — dono do ItemInstance (geralmente o próprio ator)
-    // @param InItemDefinition — definição do item a ser gerado
-    // @param RarityWeights    — pesos de raridade (vazio = defaults)
-    // @param TierWeights      — pesos de tier (vazio = defaults)
-    // @return ItemInstance gerado e pronto para uso
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
-    static UZfItemInstance* GenerateItem(
-        UObject* Outer,
-        UZfItemDefinition* InItemDefinition,
-        const TArray<FZfRarityWeight>& RarityWeights,
-        const TArray<FZfTierWeight>& TierWeights);
+	// Gera um ItemInstance completo com raridade, tier, qualidade e modifiers sorteados.
+	// @param Outer            — dono do ItemInstance
+	// @param InItemDefinition — definição do item a ser gerado
+	// @param RarityWeights    — pesos de raridade (vazio = defaults)
+	// @param TierWeights      — pesos de tier (vazio = defaults)
+	// @param QualityWeights   — pesos de qualidade (vazio = defaults)
+	// @param PlayerLevel      — nível do player para bônus de qualidade (0 = ignorar)
+	// @param LevelBonuses     — bônus de qualidade por nível (vazio = ignorar)
+	// @param ActiveTags       — tags ativas de zona e história
+	// @param TagBonuses       — bônus de qualidade por tag (vazio = ignorar)
+	// @return ItemInstance gerado e pronto para uso
+	UFUNCTION(BlueprintCallable, Category = "Zf|ItemGenerator")
+	static UZfItemInstance* GenerateItem(
+		UObject* Outer,
+		UZfItemDefinition* InItemDefinition,
+		const TArray<FZfRarityWeight>& RarityWeights,
+		const TArray<FZfTierWeight>& TierWeights,
+		const TArray<FZfQualityWeight>& QualityWeights,
+		int32 PlayerLevel,
+		const TArray<FZfQualityBonusByLevel>& LevelBonuses,
+		const FGameplayTagContainer& ActiveTags,
+		const TArray<FZfQualityBonusByTag>& TagBonuses);
 	
 	/** Retorna o range de modifiers (Min/Max) para uma raridade específica. */
 	UFUNCTION(BlueprintPure, Category = "Zf|Inventory|Modifiers", meta = (DisplayName = "Get Modifier Range By Rarity"))
