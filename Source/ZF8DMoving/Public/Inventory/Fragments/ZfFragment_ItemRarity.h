@@ -15,4 +15,11 @@ UCLASS(DisplayName = "Fragment: ItemRarity")
 class ZF8DMOVING_API UZfFragment_ItemRarity : public UZfItemFragment
 {
 	GENERATED_BODY()
+	
+public:
+	
+	// Array para adicionar todas Raridades que o item pode ter
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Rarity")
+	TArray<FZfRarityWeight> RarityProbability;
+	
 };

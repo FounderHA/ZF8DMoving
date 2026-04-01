@@ -118,10 +118,6 @@ struct ZF8DMOVING_API FZfEquipmentSlotEntry : public FFastArraySerializerItem
 {
     GENERATED_BODY()
 
-    // Tipo do slot de equipamento
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
-    EZfEquipmentSlot SlotType = EZfEquipmentSlot::None;
-
     // Tag identificadora do slot de equipamento
     // Ex: EquipmentSlot.MainHand, EquipmentSlot.Ring
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot", meta = (Categories = "EquipmentSlot"))
@@ -252,7 +248,7 @@ public:
     // @param EquipSlotIndex — índice do slot de equipamento
     // @return resultado da operação
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    EZfItemMechanicResult QuickSwapItem(int32 InventorySlotIndex, EZfEquipmentSlot EquipSlotType, int32 EquipSlotIndex = 0);
+    EZfItemMechanicResult QuickSwapItem(int32 InventorySlotIndex, FGameplayTag EquipmentSlotTag, int32 EquipSlotIndex = 0);
 
     // ----------------------------------------------------------
     // FUNÇÕES DE DURABILIDADE
@@ -280,7 +276,7 @@ public:
     // Retorna o item equipado em um slot específico.
     // Retorna nullptr se o slot estiver vazio.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    UZfItemInstance* GetItemAtEquipmentSlot(EZfEquipmentSlot SlotType, int32 SlotIndex = 0) const;
+    UZfItemInstance* GetItemAtEquipmentSlot(FGameplayTag EquipmentSlotTag, int32 SlotIndex = 0) const;
 
     // Verifica se um item está equipado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
@@ -288,11 +284,11 @@ public:
 
     // Verifica se um slot específico está ocupado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    bool IsEquipmentSlotOccupied(EZfEquipmentSlot SlotType, int32 SlotIndex = 0) const;
+    bool IsEquipmentSlotOccupied(FGameplayTag EquipmentSlotTag, int32 SlotIndex = 0) const;
 
     // Verifica se um slot está bloqueado por arma de duas mãos.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    bool IsEquipmentSlotBlocked(EZfEquipmentSlot SlotType, int32 SlotIndex = 0) const;
+    bool IsEquipmentSlotBlocked(FGameplayTagContainer EquipmentTags, int32 SlotIndex = 0) const;
 
     // Retorna todos os itens equipados.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
@@ -305,7 +301,7 @@ public:
     // Retorna o slot de um item equipado.
     // Retorna EZfEquipmentSlot::None se não encontrado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    EZfEquipmentSlot GetEquipmentSlotOfItem(UZfItemInstance* ItemInstance) const;
+    FGameplayTag GetEquipmentSlotOfItem(UZfItemInstance* ItemInstance) const;
 
     // Verifica se um item pode ser equipado neste componente.
     // Faz todas as validações sem efetivamente equipar.
@@ -353,7 +349,7 @@ public:
     // Requisição do cliente para troca rápida
     UFUNCTION(Server, Reliable, WithValidation,
         BlueprintCallable, Category = "Zf|Equipment|RPC")
-    void ServerRequestQuickSwap(int32 InventorySlotIndex, EZfEquipmentSlot EquipSlotType, int32 EquipSlotIndex);
+    void ServerRequestQuickSwap(int32 InventorySlotIndex, FGameplayTag EquipmentSlotTag, int32 EquipSlotIndex);
 
     // ----------------------------------------------------------
     // REPLICAÇÃO
@@ -444,7 +440,7 @@ private:
 
     
     // Versão const de Internal_FindSlotEntry
-    const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(EZfEquipmentSlot SlotType, int32 SlotIndex) const;
+    const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(FGameplayTag EquipmentSlotTag, int32 SlotIndex) const;
 
     // Gera uma ReplicationKey única para novos slots
     int32 Internal_GenerateReplicationKey() const;

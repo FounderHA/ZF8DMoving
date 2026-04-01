@@ -38,18 +38,18 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
 
     // Nome legível exibido na UI do inventário
     // Ex: "Aumento de Velocidade de Movimento"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
     FText DisplayName = FText::FromString(TEXT("None"));
 
     // Descrição exibida no tooltip do modifier na UI
     // Ex: "Aumenta a velocidade de movimento do personagem"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
     FText Description;
     
     // Texto exibido na UI com suporte a valores dinâmicos.
     // Placeholders disponíveis: {value}, {min}, {max}
     // Exemplo: "Aumenta velocidade em {value} ({min} - {max})"
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Identity")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
     FText TooltipFormat;
 
     // ----------------------------------------------------------
@@ -60,7 +60,7 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Ex: MoveSpeed → adiciona apenas "Inventory.Item.Feet"
     // Ex: MaxHealth → adiciona "Inventory.Item.Chest", "Inventory.Item.Helmet", etc.
     // Um modifier só será rolado se o item tiver ao menos uma dessas tags.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Compatibility")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Compatibility", meta =(GameplayTagFilter = "ItemType"))
     FGameplayTagContainer CompatibleItemTags;
 
     // ----------------------------------------------------------
@@ -69,67 +69,23 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
 
     // Classe do modifier — usada para limitar por tipo no item
     // Ex: Offensive, Defensive, Utility, Attribute, Resource
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Classification")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification")
     EZfModifierClass ModifierClass = EZfModifierClass::None;
 
     // Tag do atributo GAS que este modifier afeta.
     // Ex: "Attribute.Movement.Speed", "Attribute.Combat.PhysicalDamage"
     // O GameplayEffect base usará esta tag para saber qual atributo modificar
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Classification")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "GameplayEffect.type.AttributeSet"))
     FGameplayTag AffectedAttributeTag;
 
     // Como o valor é aplicado no atributo via GAS
     // Additive = flat, MultiplyBase = percentual, Override = substitui
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Classification")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification")
     EZfModifierOperationType OperationType = EZfModifierOperationType::Additive;
-
-    // ----------------------------------------------------------
-    // CORRUPÇÃO
-    // ----------------------------------------------------------
-
-    // Se verdadeiro, este modifier é um debuff e só pode aparecer
-    // em itens corrompidos via mecânica de Corruption
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Corruption")
-    bool bIsDebuffModifier = false;
-
-    // Se verdadeiro, este modifier só pode ser extraído e inserido
-    // em itens que já estejam corrompidos (mecânica de Extraction)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Corruption")
-    bool bRequiresCorruption = false;
-
-    // ----------------------------------------------------------
-    // RANKS — valores por nível de rank (1 a 6 por padrão)
-    // ----------------------------------------------------------
-
-    // Array de ranks deste modifier em ordem crescente de poder.
-    // Índice 0 = Rank 1, Índice 1 = Rank 2, etc.
-    // Facilmente expansível adicionando mais entradas no editor.
-    //
-    // Exemplo para MoveSpeed:
-    // Rank 1: Min=3,  Max=7
-    // Rank 2: Min=7,  Max=12
-    // Rank 3: Min=11, Max=17
-    // Rank 4: Min=15, Max=22
-    // Rank 5: Min=19, Max=28
-    // Rank 6: Min=25, Max=35
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Tiers")
-    TArray<FZfTierData> Tiers;
-
-    // ----------------------------------------------------------
-    // MARKET VALUE
-    // ----------------------------------------------------------
-
-    // Peso deste modifier no cálculo do valor de mercado do item.
-    // Modifiers mais poderosos devem ter peso maior.
-    // Ex: MoveSpeed = 1.0, MaxHealth = 1.5, PhysicalDamage = 2.0
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Ranks")
-    TArray<FZfModifierRankData> Ranks;
 
     // ----------------------------------------------------------
     // TIERS — probabilidade de cada rank por tier do item
     // ----------------------------------------------------------
-
     // Array de tiers definindo quais ranks podem aparecer
     // e com qual probabilidade em cada tier do item.
     // Índice 0 = Tier 0, Índice 1 = Tier 1, etc.
@@ -141,8 +97,47 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Tier 3: Rank 2 = 30%, Rank 3 = 50%, Rank 4 = 20%
     // Tier 4: Rank 3 = 40%, Rank 4 = 40%, Rank 5 = 20%
     // Tier 5: Rank 4 = 30%, Rank 5 = 40%, Rank 6 = 30%
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiers")
+    TArray<FZfTierData> ArrayTiers;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Market")
+    // ----------------------------------------------------------
+    // RANKS — valores por nível de rank (1 a 6 por padrão)
+    // ----------------------------------------------------------
+    // Array de ranks deste modifier em ordem crescente de poder.
+    // Índice 0 = Rank 1, Índice 1 = Rank 2, etc.
+    // Facilmente expansível adicionando mais entradas no editor.
+    //
+    // Exemplo para MoveSpeed:
+    // Rank 1: Min=3,  Max=7
+    // Rank 2: Min=7,  Max=12
+    // Rank 3: Min=11, Max=17
+    // Rank 4: Min=15, Max=22
+    // Rank 5: Min=19, Max=28
+    // Rank 6: Min=25, Max=35
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranks")
+    TArray<FZfModifierRankData> ArrayRanks;
+    
+    // ----------------------------------------------------------
+    // CORRUPÇÃO
+    // ----------------------------------------------------------
+
+    // Se verdadeiro, este modifier é um debuff e só pode aparecer
+    // em itens corrompidos via mecânica de Corruption
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Corruption")
+    bool bIsDebuffModifier = false;
+
+    // Se verdadeiro, este modifier só pode ser extraído e inserido
+    // em itens que já estejam corrompidos (mecânica de Extraction)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Corruption")
+    bool bRequiresCorruption = false;
+    
+    // ----------------------------------------------------------
+    // MARKET VALUE
+    // ----------------------------------------------------------
+    // Peso deste modifier no cálculo do valor de mercado do item.
+    // Modifiers mais poderosos devem ter peso maior.
+    // Ex: MoveSpeed = 1.0, MaxHealth = 1.5, PhysicalDamage = 2.0
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Market")
     float MarketValueWeight = 1.0f;
 
     // ----------------------------------------------------------
@@ -169,9 +164,9 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     {
         // Ranks são 1-based, array é 0-based
         const int32 RankIndex = RankLevel - 1;
-        if (Ranks.IsValidIndex(RankIndex))
+        if (ArrayRanks.IsValidIndex(RankIndex))
         {
-            return &Ranks[RankIndex];
+            return &ArrayRanks[RankIndex];
         }
         UE_LOG(LogZfInventory, Warning,
             TEXT("FZfModifierDataTableRow::GetRankData — Rank %d não existe neste modifier."),
@@ -183,7 +178,7 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Retorna nullptr se o tier não existir.
     const FZfTierData* GetTierData(int32 TierLevel) const
     {
-        for (const FZfTierData& TierData : Tiers)
+        for (const FZfTierData& TierData : ArrayTiers)
         {
             if (TierData.TierLevel == TierLevel)
             {
@@ -199,13 +194,13 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Retorna o número máximo de ranks disponíveis neste modifier
     int32 GetMaxRankCount() const
     {
-        return Ranks.Num();
+        return ArrayRanks.Num();
     }
 
     // Retorna o número máximo de tiers configurados neste modifier
     int32 GetMaxTierCount() const
     {
-        return Tiers.Num();
+        return ArrayTiers.Num();
     }
 };
 
@@ -260,17 +255,7 @@ USTRUCT(BlueprintType)
 struct ZF8DMOVING_API FZfItemModifierConfig
 {
     GENERATED_BODY()
-
-    // Quantidade total Minima de modifiers que este item pode ter.
-    // Ex: um capacete épico pode ter no minimo 2 modifiers.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0", ClampMax = "5",  UIMax = "5"))
-    int32 MinInitialModifiers = 0;
     
-    // Quantidade total máxima de modifiers que este item pode ter.
-    // Ex: um capacete épico pode ter até 4 modifiers no total.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0", ClampMax = "5",  UIMax = "5"))
-    int32 MaxTotalModifiers = 0;
-
     // Limites por classe de modifier para este item específico.
     // Ex: [{Offensive, 2}, {Utility, 1}] = máx 2 ofensivos e 1 utilitário.
     // Se uma classe não está na lista, considera-se limite = MaxTotalModifiers.
@@ -294,7 +279,7 @@ struct ZF8DMOVING_API FZfItemModifierConfig
                 return Limit.MaxCount;
             }
         }
-        // Classe não configurada = usa o limite total como fallback
-        return MaxTotalModifiers;
+        // Classe não existente = roleta novamente!
+        return -1;
     }
 };

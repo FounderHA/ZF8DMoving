@@ -7,7 +7,6 @@
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "Inventory/Fragments/ZfFragment_Durability.h"
 #include "Inventory/Fragments/ZfFragment_Stackable.h"
-#include "Inventory/Fragments/ZfFragment_Quality.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfEquipmentComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -15,6 +14,7 @@
 #include "DrawDebugHelpers.h"
 #include "Inventory/Fragments/ZfFragment_ItemUnique.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
+#include "Inventory/Fragments/ZfFragment_QualityAttributes.h"
 
 // ============================================================
 // Constructor
@@ -53,12 +53,7 @@ void UZfItemInstance::GetLifetimeReplicatedProps(
     DOREPLIFETIME(UZfItemInstance, bIsBroken);
 
     // Stats base — replicado para todos
-    DOREPLIFETIME(UZfItemInstance, PhysicalDamage);
-    DOREPLIFETIME(UZfItemInstance, MagicalDamage);
-    DOREPLIFETIME(UZfItemInstance, AttackSpeed);
-    DOREPLIFETIME(UZfItemInstance, CriticalHitChance);
-    DOREPLIFETIME(UZfItemInstance, PhysicalResistance);
-    DOREPLIFETIME(UZfItemInstance, MagicalResistance);
+    DOREPLIFETIME(UZfItemInstance, ItemAttributes);
 
     // Modifiers — replicado para todos
     DOREPLIFETIME(UZfItemInstance, AppliedModifiers);
@@ -102,12 +97,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
 
     // Inicializa qualidade em 0
     CurrentQuality = 0;
-
-    // Inicializa durabilidade com base no fragment
-    Internal_InitializeDurability();
-
-    // Inicializa stats base com base no tier e quality iniciais
-    Internal_InitializeBaseStats();
+    
 
     // Se for item Único, aplica modifiers fixos do PDA
     if (InItemDefinition->FindFragment<UZfFragment_ItemUnique>())
@@ -123,6 +113,94 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
         *ItemGuid.ToString(),
         ItemTier,
         *UEnum::GetValueAsString(ItemRarity));
+}
+
+// ============================================================
+// ATUALIZAÇÃO DOS ATRIBUTOS
+// ============================================================
+
+void UZfItemInstance::RecalculateItemAttributes()
+{
+    ItemAttributes.Empty();
+
+    // Busca o fragment que define os atributos por qualidade
+    const UZfFragment_QualityAttributes* QualityFragment =
+        GetFragment<UZfFragment_QualityAttributes>();
+
+    if (!QualityFragment)
+        return;
+
+    // Busca o DataTable de modifiers internamente
+    UDataTable* ModifierDataTable = nullptr;
+    const UZfFragment_Modifiers* ModifierFragment =
+        GetFragment<UZfFragment_Modifiers>();
+
+    if (ModifierFragment)
+        ModifierDataTable = ModifierFragment->ModifierConfig.ModifierDataTable.LoadSynchronous();
+
+    // Calcula os valores para cada atributo configurado no fragment
+    for (const FZfQualityAttributesEntry& Entry : QualityFragment->Entries)
+    {
+        FZfItemAttributeValue AttributeValue;
+        AttributeValue.AttributeTag  = Entry.AttributeTag;
+        AttributeValue.DisplayName   = Entry.DisplayName;
+        AttributeValue.BaseValue     = Entry.GetValueForQuality(CurrentQuality);
+        AttributeValue.ModifierBonus = 0.f;
+        AttributeValue.FinalValue    = AttributeValue.BaseValue;
+
+        // Calcula o bônus dos modifiers que afetam esta tag
+        if (ModifierDataTable)
+        {
+            for (const FZfAppliedModifier& Mod : AppliedModifiers)
+            {
+                // Busca os dados do modifier no DataTable
+                const FZfModifierDataTypes* ModData =
+                    ModifierDataTable->FindRow<FZfModifierDataTypes>(
+                        Mod.ModifierRowName, TEXT("RecalculateItemAttributes"));
+
+                if (!ModData) continue;
+
+                // Ignora modifiers que não afetam este atributo
+                if (ModData->AffectedAttributeTag != Entry.AttributeTag) continue;
+
+                switch (ModData->OperationType)
+                {
+                // Soma flat ao bonus
+                case EZfModifierOperationType::Additive:
+                    AttributeValue.ModifierBonus += Mod.CurrentValue;
+                    break;
+
+                // Soma percentual do BaseValue ao bonus
+                case EZfModifierOperationType::MultiplyBase:
+                    AttributeValue.ModifierBonus +=
+                        AttributeValue.BaseValue * (Mod.CurrentValue / 100.f);
+                    break;
+
+                // Substitui o FinalValue completamente e para o cálculo
+                case EZfModifierOperationType::Override:
+                    AttributeValue.ModifierBonus = 0.f;
+                    AttributeValue.FinalValue    = Mod.CurrentValue;
+                    ItemAttributes.Add(AttributeValue);
+                    goto NextEntry;
+                }
+            }
+
+            // Calcula o FinalValue com o bonus acumulado
+            AttributeValue.FinalValue =
+                AttributeValue.BaseValue + AttributeValue.ModifierBonus;
+        }
+
+        ItemAttributes.Add(AttributeValue);
+
+        UE_LOG(LogZfInventory, Log,
+            TEXT("RecalculateItemAttributes: %s | Base=%.1f | ModBonus=%.1f | Final=%.1f"),
+            *Entry.AttributeTag.ToString(),
+            AttributeValue.BaseValue,
+            AttributeValue.ModifierBonus,
+            AttributeValue.FinalValue);
+
+        NextEntry:;
+    }
 }
 
 
@@ -188,10 +266,7 @@ void UZfItemInstance::SetCurrentStack(int32 NewStack)
         *ItemGuid.ToString(), CurrentStack, MaxStack);
 }
 
-void UZfItemInstance::SetQuality(int32 NewQuality)
-{
-    CurrentQuality = NewQuality;
-}
+
 
 int32 UZfItemInstance::AddToStack(int32 AmountToAdd)
 {
@@ -383,66 +458,10 @@ void UZfItemInstance::RepairItemByAmount(float RepairAmount)
 // QUALIDADE
 // ============================================================
 
-bool UZfItemInstance::ApplyQualityUpgrade()
-{
-    if (!Internal_CheckIsServer(TEXT("ApplyQualityUpgrade")))
-    {
-        return false;
-    }
 
-    // Verifica se o item tem o fragment de qualidade
-    const UZfFragment_Quality* QualityFragment =
-        GetFragment<UZfFragment_Quality>();
 
-    if (!QualityFragment)
-    {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfItemInstance::ApplyQualityUpgrade — "
-                 "Item GUID: %s não tem UZfFragment_Quality."),
-            *ItemGuid.ToString());
-        return false;
-    }
 
-    // Verifica se pode ainda fazer upgrade
-    if (!UZfFragment_Quality::CanUpgradeQuality(CurrentQuality))
-    {
-        UE_LOG(LogZfInventory, Warning,
-            TEXT("UZfItemInstance::ApplyQualityUpgrade — "
-                 "Item GUID: %s já está na qualidade máxima (%d)."),
-            *ItemGuid.ToString(), MAX_ITEM_QUALITY);
-        return false;
-    }
 
-    // Busca a linha do próximo nível no DataTable
-    const int32 NextQualityLevel = CurrentQuality + 1;
-    const FZfQualityLevelRow* QualityRow =
-        QualityFragment->GetQualityRowForLevel(NextQualityLevel);
-
-    if (!QualityRow)
-    {
-        UE_LOG(LogZfInventory, Error,
-            TEXT("UZfItemInstance::ApplyQualityUpgrade — "
-                 "Linha Quality_%d não encontrada no DataTable. GUID: %s"),
-            NextQualityLevel, *ItemGuid.ToString());
-        return false;
-    }
-
-    // Aplica os valores do DataTable aos stats base (override)
-    Internal_ApplyQualityRowToStats(*QualityRow);
-
-    // Atualiza o nível de qualidade
-    CurrentQuality = NextQualityLevel;
-
-    // Recalcula o valor de mercado
-    RecalculateMarketValue();
-
-    UE_LOG(LogZfInventory, Log,
-        TEXT("UZfItemInstance::ApplyQualityUpgrade — "
-             "Item '%s' (GUID: %s) upou para Quality %d."),
-        *GetItemName().ToString(), *ItemGuid.ToString(), CurrentQuality);
-
-    return true;
-}
 
 // ============================================================
 // MARKET VALUE
@@ -531,7 +550,7 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
     }
 
     const UZfFragment_Modifiers* Modifiers = GetFragment<UZfFragment_Modifiers>();
-    const int32 MaxTotal = Modifiers->ModifierConfig.MaxTotalModifiers;
+    const int32 MaxTotal = ZfModifierRangeByRarity.Find(ItemRarity)->Max;
     
     if (AppliedModifiers.Num() >= MaxTotal)
     {
@@ -540,11 +559,7 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
         return false;
     }
         
-            
-        
     
-    
-
     // Adiciona o modifier
     AppliedModifiers.Add(NewModifier);
 
@@ -652,7 +667,7 @@ bool UZfItemInstance::CanAddModifierOfClass(EZfModifierClass ModifierClass) cons
     // Verifica limite total
 
     const UZfFragment_Modifiers* Modifiers = GetFragment<UZfFragment_Modifiers>();
-    const int32 MaxTotal = Modifiers->ModifierConfig.MaxTotalModifiers;
+    const int32 MaxTotal = ZfModifierRangeByRarity.Find(ItemRarity)->Max;
     if (AppliedModifiers.Num() >= MaxTotal)
     {
         return false;
@@ -750,6 +765,13 @@ void UZfItemInstance::SetItemDefinition(UZfItemDefinition* InItemDefinition)
 void UZfItemInstance::SetAppliedModifiers(const TArray<FZfAppliedModifier>& NewModifiers)
 {
     AppliedModifiers = NewModifiers;
+    RecalculateItemAttributes();
+}
+
+void UZfItemInstance::SetQuality(int32 NewQuality)
+{
+    CurrentQuality = NewQuality;
+    RecalculateItemAttributes();
 }
 
 // ============================================================
@@ -856,50 +878,6 @@ void UZfItemInstance::NotifyFragments_ItemRepaired()
 // FUNÇÕES INTERNAS
 // ============================================================
 
-void UZfItemInstance::Internal_InitializeDurability()
-{
-    const UZfFragment_Durability* DurabilityFragment =
-        GetFragment<UZfFragment_Durability>();
-
-    if (DurabilityFragment)
-    {
-        // Começa com durabilidade máxima
-        CurrentDurability = DurabilityFragment->MaxDurability;
-        bIsBroken = false;
-        bIsRepairable = true;
-
-        UE_LOG(LogZfInventory, Verbose,
-            TEXT("UZfItemInstance::Internal_InitializeDurability — " "GUID: %s | MaxDurability: %.1f"),
-            *ItemGuid.ToString(), CurrentDurability);
-    }
-}
-
-void UZfItemInstance::Internal_InitializeBaseStats()
-{
-    // Stats base iniciais com quality 0 — sem bônus ainda
-    // Serão atualizados pelo ApplyQualityUpgrade conforme o player upgreda
-    // Por ora inicializa tudo em zero — o ItemDefinition pode
-    // ter stats base configurados via DataTable de qualidade (Quality_0)
-    const UZfFragment_Quality* QualityFragment =
-        GetFragment<UZfFragment_Quality>();
-
-    if (QualityFragment)
-    {
-        // Carrega os valores da Quality_0 como base inicial
-        const FZfQualityLevelRow* BaseRow =
-            QualityFragment->GetQualityRowForLevel(0);
-
-        if (BaseRow)
-        {
-            Internal_ApplyQualityRowToStats(*BaseRow);
-
-            UE_LOG(LogZfInventory, Verbose,
-                TEXT("UZfItemInstance::Internal_InitializeBaseStats — "
-                     "GUID: %s | Stats base inicializados via Quality_0."),
-                *ItemGuid.ToString());
-        }
-    }
-}
 
 void UZfItemInstance::Internal_InitializeUniqueModifiers()
 {
@@ -944,10 +922,10 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
         NewModifier.bIsDebuffModifier = ModifierRow->bIsDebuffModifier;
 
         // Itens únicos sempre usam o rank máximo disponível
-        const int32 MaxRankIndex = ModifierRow->Ranks.Num() - 1;
-        if (ModifierRow->Ranks.IsValidIndex(MaxRankIndex))
+        const int32 MaxRankIndex = ModifierRow->ArrayRanks.Num() - 1;
+        if (ModifierRow->ArrayRanks.IsValidIndex(MaxRankIndex))
         {
-            const FZfModifierRankData& RankData = ModifierRow->Ranks[MaxRankIndex];
+            const FZfModifierRankData& RankData = ModifierRow->ArrayRanks[MaxRankIndex];
 
             NewModifier.CurrentRank           = RankData.RankLevel;
             NewModifier.CurrentValue          = RankData.RankRange.MaxValue;
@@ -969,28 +947,6 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
             *Handle.RowName.ToString(), NewModifier.CurrentRank, NewModifier.CurrentValue, *ItemGuid.ToString());
     }
     
-}
-
-void UZfItemInstance::Internal_ApplyQualityRowToStats(const FZfQualityLevelRow& QualityRow)
-{
-    // Override dos stats base pelos valores da linha do DataTable
-    // Apenas substitui — não é cumulativo
-    PhysicalDamage      = QualityRow.PhysicalDamage;
-    MagicalDamage       = QualityRow.MagicalDamage;
-    AttackSpeed         = QualityRow.AttackSpeed;
-    CriticalHitChance   = QualityRow.CriticalHitChance;
-    PhysicalResistance  = QualityRow.PhysicalResistance;
-    MagicalResistance   = QualityRow.MagicalResistance;
-
-    UE_LOG(LogZfInventory, Verbose,
-        TEXT("UZfItemInstance::Internal_ApplyQualityRowToStats — "
-             "GUID: %s | Quality: %d | "
-             "PhysDmg: %.1f | MagDmg: %.1f | "
-             "PhysRes: %.1f | MagRes: %.1f"),
-        *ItemGuid.ToString(),
-        QualityRow.QualityLevel,
-        PhysicalDamage, MagicalDamage,
-        PhysicalResistance, MagicalResistance);
 }
 
 bool UZfItemInstance::Internal_CheckIsServer(const FString& FunctionName) const
@@ -1016,62 +972,3 @@ bool UZfItemInstance::Internal_CheckIsServer(const FString& FunctionName) const
 // ============================================================
 // DEBUG
 // ============================================================
-
-FString UZfItemInstance::GetDebugString() const
-{
-    return FString::Printf(
-        TEXT("=== ZfItemInstance Debug ===\n")
-        TEXT("GUID: %s\n")
-        TEXT("Item: %s\n")
-        TEXT("Tier: %d | Rarity: %s | Quality: %d/%d\n")
-        TEXT("Stack: %d\n")
-        TEXT("Durability: %.1f | Broken: %s | Repairable: %s\n")
-        TEXT("Corruption: %s\n")
-        TEXT("Stats — PhysDmg: %.1f | MagDmg: %.1f | "
-             "AtkSpd: %.2f | Crit: %.2f%%\n")
-        TEXT("Stats — PhysRes: %.1f | MagRes: %.1f\n")
-        TEXT("Modifiers (%d):\n")
-        TEXT("MarketValue: %.2f"),
-        *ItemGuid.ToString(),
-        ItemDefinition ? *ItemDefinition->ItemName.ToString() : TEXT("NULL"),
-        ItemTier,
-        *UEnum::GetValueAsString(ItemRarity),
-        CurrentQuality, MAX_ITEM_QUALITY,
-        CurrentStack,
-        CurrentDurability,
-        bIsBroken ? TEXT("Yes") : TEXT("No"),
-        bIsRepairable ? TEXT("Yes") : TEXT("No"),
-        *UEnum::GetValueAsString(CorruptionState),
-        PhysicalDamage, MagicalDamage, AttackSpeed, CriticalHitChance,
-        PhysicalResistance, MagicalResistance,
-        AppliedModifiers.Num(),
-        CalculatedMarketValue);
-}
-
-void UZfItemInstance::DrawDebugInfo(
-    const UObject* WorldContextObject,
-    const FVector& Location,
-    float Duration) const
-{
-    if (!WorldContextObject)
-    {
-        return;
-    }
-
-    UWorld* World = WorldContextObject->GetWorld();
-    if (!World)
-    {
-        return;
-    }
-
-    // Desenha o debug string no mundo acima do item
-    DrawDebugString(
-        World,
-        Location + FVector(0.0f, 0.0f, 50.0f),
-        GetDebugString(),
-        nullptr,        // Actor para seguir (nullptr = posição fixa)
-        FColor::Yellow,
-        Duration,
-        false,          // Sombra no texto
-        1.0f);          // Tamanho da fonte
-}

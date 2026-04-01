@@ -14,6 +14,8 @@
 class UZfMainAttributeSet;
 class UZfResourceAttributeSet;
 class UZfProgressionAttributeSet;
+class UZfDamageAttributeSet;
+class UZfResistanceAttributeSet;
 
 UENUM(BlueprintType)
 enum class EZfAttributeType : uint8
@@ -22,7 +24,7 @@ enum class EZfAttributeType : uint8
 	Dexterity    UMETA(DisplayName = "Dexterity"),
 	Intelligence UMETA(DisplayName = "Intelligence"),
 	Constitution UMETA(DisplayName = "Constitution"),
-	Conviction UMETA(DisplayName = "Conviction")
+	Conviction   UMETA(DisplayName = "Conviction")
 	
 };
 
@@ -40,6 +42,8 @@ public:
 	UZfResourceAttributeSet* GetResourceAttributeSet() const;
 	UZfMainAttributeSet* GetMainAttributeSet() const;
 	UZfProgressionAttributeSet* GetProgressionAttributeSet() const;
+	UZfDamageAttributeSet* GetDamageAttributeSet() const;
+	UZfResistanceAttributeSet* GetResistanceAttributeSet() const;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Class")
 	TObjectPtr<UZfPrimaryDataAssetClass> CharacterClassData;
@@ -108,11 +112,17 @@ protected:
 	TObjectPtr<UZfResourceAttributeSet> ResourceAttributeSet;
 	
 	UPROPERTY()
-	TObjectPtr<UZfMainAttributeSet> MainAttributeSet;
+	TObjectPtr<UZfMainAttributeSet> MainAttributeSet; 
 
 	UPROPERTY()
 	TObjectPtr<UZfProgressionAttributeSet> ProgressionAttributeSet;
-
+	
+	UPROPERTY()
+	TObjectPtr<UZfDamageAttributeSet> DamageAttributeSet;
+	
+	UPROPERTY()
+	TObjectPtr<UZfResistanceAttributeSet> ResistanceAttributeSet;
+	
 	
 	
 	//RPC

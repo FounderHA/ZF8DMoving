@@ -278,15 +278,7 @@ public:
     void ClientNotifyOperationFailed(EZfItemMechanicResult FailureResult);
     
 
-    
 
-    // ----------------------------------------------------------
-    // DEBUG
-    // ----------------------------------------------------------
-
-    // Loga o estado completo do inventário
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Debug")
-    void DebugLogInventory() const;
 
 protected:
 

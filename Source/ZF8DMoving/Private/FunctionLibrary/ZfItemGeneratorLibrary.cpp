@@ -4,7 +4,7 @@
 #include <cmath>
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
-#include "Inventory/Fragments/ZfFragment_DisplayAttributes.h"
+#include "Inventory/Fragments/ZfFragment_QualityAttributes.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 
 
@@ -29,9 +29,8 @@ FText UZfItemGeneratorLibrary::FormatModifierTooltip(const FZfAppliedModifier& A
     if (!ModifierDataTable)
         return FText::GetEmpty();
 
-    const FZfModifierDataTypes* ModifierData =
-        ModifierDataTable->FindRow<FZfModifierDataTypes>(
-            AppliedModifier.ModifierRowName, TEXT("FormatModifierTooltip"));
+    const FZfModifierDataTypes* ModifierData = ModifierDataTable->FindRow<FZfModifierDataTypes>(
+    AppliedModifier.ModifierRowName, TEXT("FormatModifierTooltip"));
 
     if (!ModifierData)
         return FText::GetEmpty();
@@ -72,20 +71,17 @@ bool UZfItemGeneratorLibrary::GetItemAttributeValue(
     OutDisplayName = FText::GetEmpty();
     OutValue       = 0.f;
 
-    if (!ItemInstance)
-        return false;
-
-    const UZfFragment_DisplayAttributes* Fragment =
-        ItemInstance->GetFragment<UZfFragment_DisplayAttributes>();
+    const UZfFragment_QualityAttributes* Fragment =
+    ItemInstance->GetFragment<UZfFragment_QualityAttributes>();
 
     if (!Fragment)
         return false;
 
-    if (!Fragment->AttributesToDisplay.IsValidIndex(AttributeIndex))
+    if (!Fragment->Entries.IsValidIndex(AttributeIndex))
         return false;
 
-    const FZfDisplayAttributeEntry& Entry =
-        Fragment->AttributesToDisplay[AttributeIndex];
+    const FZfQualityAttributesEntry& Entry =
+        Fragment->Entries[AttributeIndex];
 
     OutDisplayName = Entry.DisplayName;
     OutValue       = Entry.GetValueForQuality(ItemInstance->CurrentQuality);
@@ -368,9 +364,6 @@ FZfAppliedModifier UZfItemGeneratorLibrary::RollSingleModifier(const FZfModifier
 
     const float MinVal = RankData->RankRange.MinValue;
     const float MaxVal = RankData->RankRange.MaxValue * RankData->CurrentMaxPercentage;
-
-    // Sorteia o valor dentro do range do rank
-    Applied.CurrentValue = FMath::FRandRange(MinVal, MaxVal);
     
     // Arredonda para 1 casa decimal sem erro de precisão de float
     Applied.CurrentValue = std::round(FMath::FRandRange(MinVal, MaxVal) * 10.0) / 10.0;
@@ -525,6 +518,7 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     const UZfFragment_Modifiers* ModifierFragment =
         InItemDefinition->FindFragment<UZfFragment_Modifiers>();
 
+
     if (ModifierFragment)
     {
         UDataTable* ModifierTable =
@@ -546,9 +540,12 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     NewInstance->SetItemDefinition(InItemDefinition);
     ApplyGenerationToInstance(NewInstance, Rarity, Tier, Modifiers);
     NewInstance->SetQuality(Quality);
-
+    NewInstance->RecalculateItemAttributes();
+    
+    
+    
     UE_LOG(LogZfInventory, Log,
-        TEXT("GenerateItem: Item gerado. Raridade=%s | Tier=%d | Quality=%d | Modifiers=%d"),
+        TEXT("w: Item gerado. Raridade=%s | Tier=%d | Quality=%d | Modifiers=%d"),
         *UEnum::GetValueAsString(Rarity), Tier, Quality, Modifiers.Num());
 
     return NewInstance;

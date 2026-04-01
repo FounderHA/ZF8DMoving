@@ -9,6 +9,8 @@
 #include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfDamageAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfResistanceAttributeSet.h"
 
 AZfPlayerState::AZfPlayerState()
 {
@@ -27,6 +29,8 @@ AZfPlayerState::AZfPlayerState()
 	ResourceAttributeSet = CreateDefaultSubobject<UZfResourceAttributeSet>(TEXT("ResourceAttributeSet"));
 	MainAttributeSet = CreateDefaultSubobject<UZfMainAttributeSet>(TEXT("MainAttributeSet"));
 	ProgressionAttributeSet = CreateDefaultSubobject<UZfProgressionAttributeSet>(TEXT("ProgressionAttributeSet"));
+	DamageAttributeSet = CreateDefaultSubobject<UZfDamageAttributeSet>(TEXT("DamageAttributeSet"));
+	ResistanceAttributeSet = CreateDefaultSubobject<UZfResistanceAttributeSet>(TEXT("ResistanceAttributeSet"));
 }
 
 UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
@@ -60,6 +64,17 @@ UZfMainAttributeSet* AZfPlayerState::GetMainAttributeSet() const
 UZfProgressionAttributeSet* AZfPlayerState::GetProgressionAttributeSet() const
 {
 	return ProgressionAttributeSet;
+}
+
+UZfDamageAttributeSet* AZfPlayerState::GetDamageAttributeSet() const
+{
+	return DamageAttributeSet;
+}
+
+
+UZfResistanceAttributeSet* AZfPlayerState::GetResistanceAttributeSet() const
+{
+	return ResistanceAttributeSet;
 }
 
 // Notify

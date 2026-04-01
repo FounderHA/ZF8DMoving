@@ -34,10 +34,4 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zf|Fragment|Modifiers")
 	UDataTable* GetLoadedModifierDataTable() const;
 	
-#if WITH_EDITOR
-	// Validação no editor — garante consistência dos dados configurados.
-	// Chamado ao salvar o asset no editor.
-	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-
-#endif
 };

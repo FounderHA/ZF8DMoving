@@ -11,8 +11,8 @@ const TMap<EZfItemRarity, FZfModifierRange> ZfModifierRangeByRarity =
 	{ EZfItemRarity::Common,    FZfModifierRange(0, 0) },
 	{ EZfItemRarity::Uncommon,  FZfModifierRange(1, 2) },
 	{ EZfItemRarity::Rare,      FZfModifierRange(1, 3) },
-	{ EZfItemRarity::Epic,      FZfModifierRange(1, 4) },
-	{ EZfItemRarity::Legendary, FZfModifierRange(1, 5) },
+	{ EZfItemRarity::Epic,      FZfModifierRange(2, 4) },
+	{ EZfItemRarity::Legendary, FZfModifierRange(3, 5) },
 };
 
 const TArray<FZfRarityWeight> GDefaultRarityWeights =

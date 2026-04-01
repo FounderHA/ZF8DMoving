@@ -58,6 +58,7 @@ namespace ZfInventoryTags
 	namespace CapeTypes
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Cape, "ItemType.Cape")
+		UE_DEFINE_GAMEPLAY_TAG(Wings, "ItemType.Wings")
 	}
 	
 	namespace JewelryTypes

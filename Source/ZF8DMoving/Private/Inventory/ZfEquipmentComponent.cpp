@@ -75,16 +75,16 @@ void UZfEquipmentComponent::UnequipAllItems()
 
     // Coleta todos os itens equipados antes de iterar
     // para evitar modificar o array durante o loop
-    TArray<TPair<EZfEquipmentSlot, int32>> SlotsToUnequip;
+    TArray<TPair<FGameplayTag, int32>> SlotsToUnequip;
     for (const FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
     {
         if (Entry.ItemInstance)
         {
-            SlotsToUnequip.Add({ Entry.SlotType, Entry.SlotPosition });
+            SlotsToUnequip.Add({ Entry.SlotTag, Entry.SlotPosition });
         }
     }
 
-    for (const TPair<EZfEquipmentSlot, int32>& SlotPair : SlotsToUnequip)
+    for (const TPair<FGameplayTag, int32>& SlotPair : SlotsToUnequip)
     {
         //UnequipItemAtSlot(SlotPair.Key, SlotPair.Value);
     }
@@ -100,7 +100,7 @@ void UZfEquipmentComponent::UnequipAllItems()
 
 EZfItemMechanicResult UZfEquipmentComponent::QuickSwapItem(
     int32 InventorySlotIndex,
-    EZfEquipmentSlot EquipSlotType,
+    FGameplayTag EquipSlotTag,
     int32 EquipSlotIndex)
 {
     if (!InternalCheckIsServer(TEXT("QuickSwapItem")))
@@ -189,12 +189,10 @@ void UZfEquipmentComponent::NotifyEquippedItemRepaired(UZfItemInstance* ItemInst
 // CONSULTA
 // ============================================================
 
-UZfItemInstance* UZfEquipmentComponent::GetItemAtEquipmentSlot(
-    EZfEquipmentSlot SlotType,
-    int32 SlotIndex) const
+UZfItemInstance* UZfEquipmentComponent::GetItemAtEquipmentSlot(FGameplayTag EquipSlotTag, int32 SlotIndex) const
 {
     const FZfEquipmentSlotEntry* SlotEntry =
-        Internal_FindSlotEntryConst(SlotType, SlotIndex);
+        Internal_FindSlotEntryConst(EquipSlotTag, SlotIndex);
 
     return SlotEntry ? SlotEntry->ItemInstance.Get() : nullptr;
 }
@@ -217,22 +215,18 @@ bool UZfEquipmentComponent::IsItemEquipped(
     return false;
 }
 
-bool UZfEquipmentComponent::IsEquipmentSlotOccupied(
-    EZfEquipmentSlot SlotType,
-    int32 SlotIndex) const
+bool UZfEquipmentComponent::IsEquipmentSlotOccupied(FGameplayTag EquipSlotTag, int32 SlotIndex) const
 {
     const FZfEquipmentSlotEntry* SlotEntry =
-        Internal_FindSlotEntryConst(SlotType, SlotIndex);
+        Internal_FindSlotEntryConst(EquipSlotTag, SlotIndex);
 
     return SlotEntry && SlotEntry->ItemInstance != nullptr;
 }
 
-bool UZfEquipmentComponent::IsEquipmentSlotBlocked(
-    EZfEquipmentSlot SlotType,
-    int32 SlotIndex) const
+bool UZfEquipmentComponent::IsEquipmentSlotBlocked(FGameplayTagContainer EquipmentTags,int32 SlotIndex) const
 {
     // Apenas o OffHand pode ser bloqueado por arma de duas mãos
-    if (SlotType == EZfEquipmentSlot::OffHand)
+    if (EquipmentTags.HasTagExact(ZfEquipmentTags::EquipmentSlots::Slot_OffHand))
     {
         return bOffHandSlotBlocked;
     }
@@ -266,22 +260,21 @@ TArray<UZfItemInstance*> UZfEquipmentComponent::GetEquippedItemsByTag(
     return Result;
 }
 
-EZfEquipmentSlot UZfEquipmentComponent::GetEquipmentSlotOfItem(
-    UZfItemInstance* ItemInstance) const
+FGameplayTag UZfEquipmentComponent::GetEquipmentSlotOfItem(UZfItemInstance* ItemInstance) const
 {
     if (!ItemInstance)
     {
-        return EZfEquipmentSlot::None;
+        return ZfEquipmentTags::EquipmentSlots::Slot_None;
     }
 
     for (const FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
     {
         if (Entry.ItemInstance == ItemInstance)
         {
-            return Entry.SlotType;
+            return Entry.SlotTag;
         }
     }
-    return EZfEquipmentSlot::None;
+    return ZfEquipmentTags::EquipmentSlots::Slot_None;
 }
 
 bool UZfEquipmentComponent::CanEquipItemOld(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const
@@ -309,7 +302,7 @@ bool UZfEquipmentComponent::CanEquipItemOld(UZfItemInstance* ItemInstance, EZfIt
     }
 
     // Verifica se o slot alvo está bloqueado
-    if (IsEquipmentSlotBlocked(EquippableFragment->EquipmentSlot))
+    if (IsEquipmentSlotBlocked(EquippableFragment->EquipmentTags))
     {
         OutReason = EZfItemMechanicResult::Failed_SlotBlocked;
         return false;
@@ -393,22 +386,16 @@ void UZfEquipmentComponent::OnBackpackUnequipped(int32 ExtraSlots)
 // RPCs
 // ============================================================
 
-bool UZfEquipmentComponent::ServerRequestQuickSwap_Validate(
-    int32 InventorySlotIndex,
-    EZfEquipmentSlot EquipSlotType,
-    int32 EquipSlotIndex)
+bool UZfEquipmentComponent::ServerRequestQuickSwap_Validate(int32 InventorySlotIndex, FGameplayTag EquipSlotTag, int32 EquipSlotIndex)
 {
     return InventorySlotIndex >= 0 &&
-           EquipSlotType != EZfEquipmentSlot::None &&
+           EquipSlotTag != ZfEquipmentTags::EquipmentSlots::Slot_None &&
            EquipSlotIndex >= 0;
 }
 
-void UZfEquipmentComponent::ServerRequestQuickSwap_Implementation(
-    int32 InventorySlotIndex,
-    EZfEquipmentSlot EquipSlotType,
-    int32 EquipSlotIndex)
+void UZfEquipmentComponent::ServerRequestQuickSwap_Implementation(int32 InventorySlotIndex, FGameplayTag EquipSlotTag, int32 EquipSlotIndex)
 {
-    QuickSwapItem(InventorySlotIndex, EquipSlotType, EquipSlotIndex);
+    QuickSwapItem(InventorySlotIndex, EquipSlotTag, EquipSlotIndex);
 }
 
 // ============================================================
@@ -424,7 +411,7 @@ void UZfEquipmentComponent::Internal_InitializeEquipmentSlots()
     for (FZfEquipmentSlotEntry& DefaultSlot : DefaultEquipmentSlots)
     {
         FZfEquipmentSlotEntry NewEntry;
-        NewEntry.SlotType = DefaultSlot.SlotType;
+        NewEntry.SlotTag = DefaultSlot.SlotTag;
         NewEntry.SlotPosition = DefaultSlot.SlotPosition;
         NewEntry.ItemInstance = nullptr;
         NewEntry.ReplicationKey = Internal_GenerateReplicationKey();
@@ -694,11 +681,11 @@ void UZfEquipmentComponent::Internal_UnblockOffHandSlot()
              "Slot OffHand liberado."));
 }
 
-const FZfEquipmentSlotEntry* UZfEquipmentComponent::Internal_FindSlotEntryConst(EZfEquipmentSlot SlotType, int32 SlotIndex) const
+const FZfEquipmentSlotEntry* UZfEquipmentComponent::Internal_FindSlotEntryConst(FGameplayTag EquipSlotTag, int32 SlotIndex) const
 {
     for (const FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
     {
-        if (Entry.SlotType == SlotType && Entry.SlotPosition == SlotIndex)
+        if (Entry.SlotTag == EquipSlotTag && Entry.SlotPosition == SlotIndex)
         {
             return &Entry;
         }
