@@ -26,4 +26,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Equipment")
 	static UZfEquipmentComponent* FindEquipmentComponent(AActor* Actor);
+
+	// Converte um número inteiro para algarismos romanos.
+	// @param Number — número a converter (1 a 3999)
+	// @return número em algarismos romanos como FString
+	UFUNCTION(BlueprintPure, Category = "Zf|Utility")
+	static FString ToRomanNumeral(int32 Number);
 };

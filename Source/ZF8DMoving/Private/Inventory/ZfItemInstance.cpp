@@ -188,6 +188,11 @@ void UZfItemInstance::SetCurrentStack(int32 NewStack)
         *ItemGuid.ToString(), CurrentStack, MaxStack);
 }
 
+void UZfItemInstance::SetQuality(int32 NewQuality)
+{
+    CurrentQuality = NewQuality;
+}
+
 int32 UZfItemInstance::AddToStack(int32 AmountToAdd)
 {
     if (!Internal_CheckIsServer(TEXT("AddToStack")))

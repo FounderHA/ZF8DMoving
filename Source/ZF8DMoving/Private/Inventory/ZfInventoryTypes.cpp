@@ -32,3 +32,18 @@ const TArray<FZfTierWeight> GDefaultTierWeights =
 	{ 4,  4.f },
 	{ 5,  1.f },
 };
+
+// Pesos padrão de qualidade — chances decrescentes para qualidades maiores
+const TArray<FZfQualityWeight> GDefaultQualityWeights =
+{
+	{ 0, 30.f },
+	{ 1, 25.f },
+	{ 2, 18.f },
+	{ 3, 12.f },
+	{ 4,  7.f },
+	{ 5,  4.f },
+	{ 6,  2.f },
+	{ 7,  1.f },
+	{ 8,  0.5f },
+	{ 9,  0.5f },
+};

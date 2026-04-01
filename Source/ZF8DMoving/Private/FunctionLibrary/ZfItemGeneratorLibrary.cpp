@@ -1,11 +1,10 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 
 #include "FunctionLibrary/ZfItemGeneratorLibrary.h"
-
 #include <cmath>
-
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
+#include "Inventory/Fragments/ZfFragment_DisplayAttributes.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 
 
@@ -13,10 +12,20 @@
 // FORMAT MODIFIER TEXT
 // ------------------------------------------------------------
 
-FText UZfItemGeneratorLibrary::FormatModifierTooltip(
-    const FZfAppliedModifier& AppliedModifier,
-    UDataTable* ModifierDataTable)
+FText UZfItemGeneratorLibrary::FormatModifierTooltip(const FZfAppliedModifier& AppliedModifier, UZfItemInstance* ItemInstance, bool bDetailMode)
 {
+    if (!ItemInstance)
+        return FText::GetEmpty();
+
+    const UZfFragment_Modifiers* ModifierFragment =
+        ItemInstance->GetFragment<UZfFragment_Modifiers>();
+
+    if (!ModifierFragment)
+        return FText::GetEmpty();
+
+    UDataTable* ModifierDataTable =
+        ModifierFragment->ModifierConfig.ModifierDataTable.LoadSynchronous();
+
     if (!ModifierDataTable)
         return FText::GetEmpty();
 
@@ -39,16 +48,49 @@ FText UZfItemGeneratorLibrary::FormatModifierTooltip(
         Max = RankData->RankRange.MaxValue * RankData->CurrentMaxPercentage;
     }
 
+    const FString MinStr = bDetailMode ? FString::Printf(TEXT("(%.1f - "), Min) : TEXT("");
+    const FString MaxStr = bDetailMode ? FString::Printf(TEXT("%.1f)"), Max)     : TEXT("");
+
     FFormatNamedArguments Args;
     Args.Add(TEXT("value"),      FText::FromString(FString::Printf(TEXT("%.1f"), AppliedModifier.CurrentValue)));
-    Args.Add(TEXT("min"),        FText::FromString(FString::Printf(TEXT("%.1f"), Min)));
-    Args.Add(TEXT("max"),        FText::FromString(FString::Printf(TEXT("%.1f"), Max)));
+    Args.Add(TEXT("min"),        FText::FromString(MinStr));
+    Args.Add(TEXT("max"),        FText::FromString(MaxStr));
     Args.Add(TEXT("rank"),       FText::AsNumber(AppliedModifier.CurrentRank));
     Args.Add(TEXT("maxrank"),    FText::AsNumber(ModifierData->GetMaxRankCount()));
     Args.Add(TEXT("percentage"), FText::FromString(FString::Printf(TEXT("%.0f%%"), AppliedModifier.CurrentRollPercentage * 100.f)));
     Args.Add(TEXT("awakening"),  FText::AsNumber(AppliedModifier.AwakeningCount));
 
     return FText::Format(ModifierData->TooltipFormat, Args);
+}
+
+bool UZfItemGeneratorLibrary::GetItemAttributeValue(
+    UZfItemInstance* ItemInstance,
+    int32 AttributeIndex,
+    FText& OutDisplayName,
+    float& OutValue)
+{
+    OutDisplayName = FText::GetEmpty();
+    OutValue       = 0.f;
+
+    if (!ItemInstance)
+        return false;
+
+    const UZfFragment_DisplayAttributes* Fragment =
+        ItemInstance->GetFragment<UZfFragment_DisplayAttributes>();
+
+    if (!Fragment)
+        return false;
+
+    if (!Fragment->AttributesToDisplay.IsValidIndex(AttributeIndex))
+        return false;
+
+    const FZfDisplayAttributeEntry& Entry =
+        Fragment->AttributesToDisplay[AttributeIndex];
+
+    OutDisplayName = Entry.DisplayName;
+    OutValue       = Entry.GetValueForQuality(ItemInstance->CurrentQuality);
+
+    return true;
 }
 
 // ------------------------------------------------------------
@@ -72,6 +114,85 @@ static int32 RollIndexByWeights(const TArray<float>& Weights)
     }
 
     return Weights.Num() - 1;
+}
+
+// ------------------------------------------------------------
+// QUALIDADE
+// ------------------------------------------------------------
+
+int32 UZfItemGeneratorLibrary::RollQuality(
+    const TArray<FZfQualityWeight>& QualityWeights,
+    int32 PlayerLevel,
+    const TArray<FZfQualityBonusByLevel>& LevelBonuses,
+    const FGameplayTagContainer& ActiveTags,
+    const TArray<FZfQualityBonusByTag>& TagBonuses)
+{
+    // Usa defaults se não passou pesos customizados
+    TArray<FZfQualityWeight> Table =
+        QualityWeights.IsEmpty() ? GDefaultQualityWeights : QualityWeights;
+
+    // Determina qualidade mínima e bônus de peso pelo nível do player
+    int32 MinQuality = 0;
+    float LevelBonus = 0.f;
+
+    for (const FZfQualityBonusByLevel& Bonus : LevelBonuses)
+    {
+        if (PlayerLevel >= Bonus.MinPlayerLevel)
+        {
+            MinQuality = FMath::Max(MinQuality, Bonus.MinQualityGuaranteed);
+            LevelBonus = FMath::Max(LevelBonus, Bonus.BonusWeightForHigherQualities);
+        }
+    }
+
+    // Determina qualidade mínima e bônus de peso pelas tags ativas
+    float TagBonus = 0.f;
+    for (const FZfQualityBonusByTag& Bonus : TagBonuses)
+    {
+        if (ActiveTags.HasTag(Bonus.Tag))
+        {
+            MinQuality = FMath::Max(MinQuality, Bonus.MinQualityGuaranteed);
+            TagBonus   = FMath::Max(TagBonus, Bonus.BonusWeightForHigherQualities);
+        }
+    }
+
+    // Aplica bônus de peso nas qualidades acima da mínima
+    const float TotalBonus = LevelBonus + TagBonus;
+    for (FZfQualityWeight& Entry : Table)
+    {
+        // Zera qualidades abaixo da mínima garantida
+        if (Entry.Quality < MinQuality)
+        {
+            Entry.Weight = 0.f;
+            continue;
+        }
+
+        // Adiciona bônus nas qualidades acima da mínima
+        if (Entry.Quality > MinQuality)
+            Entry.Weight += TotalBonus;
+    }
+
+    // Soma todos os pesos para definir o range do roll
+    float TotalWeight = 0.f;
+    for (const FZfQualityWeight& Entry : Table)
+        TotalWeight += Entry.Weight;
+
+    // Sorteia um valor dentro do range total
+    float Roll = FMath::FRandRange(0.f, TotalWeight);
+    float Accumulated = 0.f;
+
+    for (const FZfQualityWeight& Entry : Table)
+    {
+        Accumulated += Entry.Weight;
+        if (Roll <= Accumulated)
+        {
+            UE_LOG(LogZfInventory, Log,
+                TEXT("RollQuality: Qualidade %d sorteada | PlayerLevel=%d | MinQuality=%d | Bonus=%.2f"),
+                Entry.Quality, PlayerLevel, MinQuality, TotalBonus);
+            return Entry.Quality;
+        }
+    }
+
+    return MinQuality;
 }
 
 // ------------------------------------------------------------
@@ -376,7 +497,12 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     UObject* Outer,
     UZfItemDefinition* InItemDefinition,
     const TArray<FZfRarityWeight>& RarityWeights,
-    const TArray<FZfTierWeight>& TierWeights)
+    const TArray<FZfTierWeight>& TierWeights,
+    const TArray<FZfQualityWeight>& QualityWeights,
+    int32 PlayerLevel,
+    const TArray<FZfQualityBonusByLevel>& LevelBonuses,
+    const FGameplayTagContainer& ActiveTags,
+    const TArray<FZfQualityBonusByTag>& TagBonuses)
 {
     if (!Outer || !InItemDefinition)
     {
@@ -385,31 +511,33 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
         return nullptr;
     }
 
-    // 1 — Sorteia raridade e tier
-    const EZfItemRarity Rarity = RollRarity(RarityWeights);
-    const int32 Tier           = RollTier(TierWeights);
+    // 1 — Sorteia raridade, tier e qualidade
+    const EZfItemRarity Rarity  = RollRarity(RarityWeights);
+    const int32 Tier            = RollTier(TierWeights);
+    const int32 Quality         = RollQuality(
+        QualityWeights, PlayerLevel, LevelBonuses, ActiveTags, TagBonuses);
 
     // 2 — Sorteia quantidade de modifiers baseado na raridade
     const int32 ModifierCount = RollModifierCount(Rarity);
 
-    // 3 — Busca o DataTable de modifiers no Fragment_Modifiers do ItemDefinition
+    // 3 — Busca o DataTable de modifiers
     TArray<FZfAppliedModifier> Modifiers;
     const UZfFragment_Modifiers* ModifierFragment =
         InItemDefinition->FindFragment<UZfFragment_Modifiers>();
 
     if (ModifierFragment)
     {
-        UDataTable* ModifierTable = ModifierFragment->ModifierConfig.ModifierDataTable.LoadSynchronous();
+        UDataTable* ModifierTable =
+            ModifierFragment->ModifierConfig.ModifierDataTable.LoadSynchronous();
 
         if (ModifierTable)
         {
-            Modifiers = RollModifiers(ModifierTable, InItemDefinition->ItemTags, Tier,
-                ModifierCount, ModifierFragment->ModifierConfig);
-        }
-        else
-        {
-            UE_LOG(LogZfInventory, Warning,
-                TEXT("GenerateItem: ModifierDataTable nula ou não carregada."));
+            Modifiers = RollModifiers(
+                ModifierTable,
+                InItemDefinition->ItemTags,
+                Tier,
+                ModifierCount,
+                ModifierFragment->ModifierConfig);
         }
     }
 
@@ -417,6 +545,11 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     UZfItemInstance* NewInstance = NewObject<UZfItemInstance>(Outer);
     NewInstance->SetItemDefinition(InItemDefinition);
     ApplyGenerationToInstance(NewInstance, Rarity, Tier, Modifiers);
+    NewInstance->SetQuality(Quality);
+
+    UE_LOG(LogZfInventory, Log,
+        TEXT("GenerateItem: Item gerado. Raridade=%s | Tier=%d | Quality=%d | Modifiers=%d"),
+        *UEnum::GetValueAsString(Rarity), Tier, Quality, Modifiers.Num());
 
     return NewInstance;
 }

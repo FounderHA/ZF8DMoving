@@ -279,6 +279,10 @@ public:
         meta = (ToolTip = "Chamar apenas no servidor."))
     void SetCurrentStack(int32 NewStack);
 
+    // ZfItemInstance.h
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void SetQuality(int32 NewQuality);
+    
     // Adiciona quantidade ao stack atual.
     // Retorna a quantidade que não coube (overflow).
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")

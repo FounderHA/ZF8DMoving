@@ -196,6 +196,81 @@ extern const TArray<FZfRarityWeight> GDefaultRarityWeights;
 extern const TArray<FZfTierWeight> GDefaultTierWeights;
 
 // -----------------------------------------------------------
+// FZfQualityWeight
+// Peso de probabilidade de uma qualidade aparecer no roll.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfQualityWeight
+{
+    GENERATED_BODY()
+
+    FZfQualityWeight() = default;
+    FZfQualityWeight(int32 InQuality, float InWeight)
+        : Quality(InQuality), Weight(InWeight) {}
+
+    // Nível de qualidade (0 a 9)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality")
+    int32 Quality = 0;
+
+    // Peso relativo — não precisa somar 100, é proporcional
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality",
+        meta = (ClampMin = "0.0"))
+    float Weight = 1.0f;
+};
+
+// -----------------------------------------------------------
+// FZfQualityBonusByLevel
+// Bônus de peso aplicado por nível do player.
+// Aumenta a chance de qualidades mais altas conforme o player progride.
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfQualityBonusByLevel
+{
+    GENERATED_BODY()
+
+    // A partir de qual nível este bônus se aplica
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality")
+    int32 MinPlayerLevel = 1;
+
+    // Qualidade mínima garantida neste nível
+    // Ex: Level 20 → qualidade mínima 2
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality")
+    int32 MinQualityGuaranteed = 0;
+
+    // Bônus de peso adicionado às qualidades acima da mínima
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality",
+        meta = (ClampMin = "0.0"))
+    float BonusWeightForHigherQualities = 0.f;
+};
+
+// -----------------------------------------------------------
+// FZfQualityBonusByTag
+// Bônus de qualidade baseado em uma GameplayTag
+// (zona do mapa ou progressão da história).
+// -----------------------------------------------------------
+USTRUCT(BlueprintType)
+struct ZF8DMOVING_API FZfQualityBonusByTag
+{
+    GENERATED_BODY()
+
+    // Tag que ativa este bônus
+    // Ex: Zone.Dungeon.Hard, Story.Act2
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality")
+    FGameplayTag Tag;
+
+    // Qualidade mínima garantida quando esta tag estiver ativa
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality")
+    int32 MinQualityGuaranteed = 0;
+
+    // Bônus de peso adicionado às qualidades acima da mínima
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation|Quality",
+        meta = (ClampMin = "0.0"))
+    float BonusWeightForHigherQualities = 0.f;
+};
+
+extern const TArray<FZfQualityWeight> GDefaultQualityWeights;
+
+// -----------------------------------------------------------
 // FZfModifierCountByRarity
 // Define o range de quantidade de modifiers por raridade.
 // Configurado globalmente — igual para todos os itens do jogo.
