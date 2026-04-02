@@ -9,18 +9,16 @@
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Itens/WBP_ItemContextDescription.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/Itens/WBP_ItemContextDescription.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ContextSlotItemMenu.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ContextSlotItemMenu.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentPanel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentSlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_EquipmentSlot.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventoryPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventoryPanel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventorySort.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_InventorySort.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemAttributes.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_ItemSlot.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_SplitAmount.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_SplitAmount.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterDamageAttributesValue.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterDamageAttributesValue.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterMainAttributesValues.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterMainAttributesValues.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterResistanceAttributesValue.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterResistanceAttributesValue.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_CharacterResoucer.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TABMainPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TABMainPanel.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TrashPanel.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/WBP_TrashPanel.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_GameplayHud.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_GameplayHud.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfProgressionAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfProgressionAttributeSet.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfQualityAttributesTags.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfProgressionAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfProgressionAttributeSet.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfQualityAttributesTags.h" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,11 +32,12 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://4" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Editor/UMGEditor/Private/WidgetBlueprintCompiler.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfEquipmentComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfInventoryComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfDamageAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfGA_ReceiveXP.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfMainAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfResourceAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/FunctionLibrary/ZfItemGeneratorLibrary.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -54,8 +53,9 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemDefinition.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Items/ZfItemDropper.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfQualityAttributesTags.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfProgressionTags.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfDamageAttributeSet.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfGA_ReceiveXP.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfMainAttributeSet.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfResourceAttributeSet.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/FunctionLibrary/ZfItemGeneratorLibrary.h" root0="FORCE_HIGHLIGHTING" />
@@ -71,7 +71,8 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemDefinition.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemPickup.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Items/ZfItemDropper.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfQualityAttributesTags.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfGameplayTags.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfProgressionTags.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -88,24 +89,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Uproject.ZF8DMoving.executor": "Debug",
-    "git-widget-placeholder": "founder/widgetitem4",
-    "ignore.virus.scanning.warn.message": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "CppUnrealEngineOptionsId",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Uproject.ZF8DMoving.executor&quot;: &quot;Debug&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;founder/widget&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;CppUnrealEngineOptionsId&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="ZF8DMoving" type="Uproject" factoryName="rider.uproject">
       <configuration_1 setup="1">
@@ -277,6 +278,8 @@
       <workItem from="1775059798076" duration="21883000" />
       <workItem from="1775091298657" duration="4253000" />
       <workItem from="1775126270756" duration="5944000" />
+      <workItem from="1775138388068" duration="3829000" />
+      <workItem from="1775152408175" duration="7521000" />
     </task>
     <servers />
   </component>
