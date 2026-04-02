@@ -92,9 +92,23 @@ public:
     {
         return Handedness != EZfHandedness::NotApplicable;
     }
+
+
+    // ----------------------------------------------------------
+    // INTERAÇÕES
+    // ----------------------------------------------------------
+
+    virtual void OnItemEquipped(UZfItemInstance* OwningInstance, UZfEquipmentComponent* EquipmentComponent, AActor* EquippingActor) override;
+
+    virtual void OnItemUnequipped(UZfItemInstance* OwningInstance, UZfEquipmentComponent* EquipmentComponent, AActor* UnequippingActor) override;
+
+    // GE que aplica os atributos do item no ASC via MMC
+    // Configure no editor com o GE que usa o MMC de atributos
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|GAS")
+    TSoftClassPtr<UGameplayEffect> AttributeGameplayEffect;
     
-// ----------------------------------------------------------
-// DEBUG
-// ----------------------------------------------------------
+    // ----------------------------------------------------------
+    // DEBUG
+    // ----------------------------------------------------------
     
 };

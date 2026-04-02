@@ -10,7 +10,7 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "GameplayTagContainer.h"   // Para uso do sistema de Tags do Unreal (TAGs para identificar tipos, slots, classes de modifier, etc.)
 #include "Engine/DataTable.h"       // Para herança de FTableRowBase nas structs de DataTable
-#include "Net/Serialization/FastArraySerializer.h"
+#include "GameplayEffect.h"
 #include "ZfInventoryTypes.generated.h"
 
 // ============================================================
@@ -497,6 +497,15 @@ struct ZF8DMOVING_API FZfAppliedModifier
     // Preenchida ao rolar o modifier e usada para validar limites por classe
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     EZfModifierClass ModifierClass = EZfModifierClass::None;
+
+    // Tag do atributo GAS que este modifier afeta — cacheada do DataTable na geração
+    // Ex: AttributeSet.Damage.PhysicalDamage
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    FGameplayTag AffectedAttributeTag;
+
+    // GE cacheado do DataTable na geração — evita lookup posterior
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    TSoftClassPtr<UGameplayEffect> GameplayEffect;
     
     // Rank atual deste modifier (1 a 6)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")

@@ -728,6 +728,13 @@ bool UZfEquipmentComponent::Internal_CheckInventoryComponent(const FString& Func
 
 
 
+
+
+
+
+
+
+
 // ============================================================
 // FAST Array
 // ============================================================
@@ -1214,6 +1221,9 @@ void UZfEquipmentComponent::InternalEquipItem(UZfItemInstance* InItemInstance, i
     EquipmentList.EquippedItems.Add(NewSlot);
     
     AddReplicatedSubObject(InItemInstance);
+    
+    // Notifica os fragments — cada um faz sua responsabilidade
+    InItemInstance->NotifyFragments_ItemEquipped(this, GetOwner());
 }
 
 void UZfEquipmentComponent::InternalUnequipItem(UZfItemInstance* InItemInstance, int32 SlotPosition)
@@ -1227,6 +1237,9 @@ void UZfEquipmentComponent::InternalUnequipItem(UZfItemInstance* InItemInstance,
         });
 
     RemoveReplicatedSubObject(InItemInstance);
+
+    // Notifica os fragments ANTES de remover — item ainda está no EquipmentList
+    InItemInstance->NotifyFragments_ItemUnequipped(this, GetOwner());
 }
 
 FZfEquipmentSlotEntry* UZfEquipmentComponent::InternalFindSlotEntry(FGameplayTag SlotTag, int32 SlotPosition )
