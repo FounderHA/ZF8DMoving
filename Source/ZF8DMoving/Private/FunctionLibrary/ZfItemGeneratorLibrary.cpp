@@ -375,6 +375,8 @@ FZfAppliedModifier UZfItemGeneratorLibrary::RollSingleModifier(const FZfModifier
         : 1.f;
 
     Applied.MaxRollPercentage = RankData->CurrentMaxPercentage;
+    Applied.AffectedAttributeTag = ModifierData.AffectedAttributeTag;
+    Applied.GameplayEffect = ModifierData.GameplayEffect;
     Applied.AwakeningCount    = 0;
 
     return Applied;

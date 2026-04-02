@@ -9,51 +9,53 @@
 
 float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
-	
 	float Result = 0.f;
 
-// pegar avatar actor 
-	
 	AActor* AvatarActor = Spec.GetContext().GetOriginalInstigatorAbilitySystemComponent()->GetAvatarActor();
-	
-	/*UAbilitySystemComponent* MyASC = Spec.GetContext().GetOriginalInstigatorAbilitySystemComponent();
-	const FActiveGameplayEffectsContainer& ActiveGameplayEffectsContainer = MyASC->GetActiveGameplayEffects();
-	for (auto ActiveEffectIt = ActiveGameplayEffectsContainer.CreateConstIterator(); ActiveEffectIt; ++ActiveEffectIt)
-	{
-		const FActiveGameplayEffect ActiveEffect = *ActiveEffectIt;
-		const FGameplayTagContainer TagContainer = ActiveEffect.Spec.GetDynamicAssetTags();
-		if (TagContainer.HasTagExact(FGameplayTag::RequestGameplayTag("GameplayEffect.Type.Burning")))
-		{
-			
-		}
-	}*/
 
-	if (!AvatarActor)
-		return Result;
+	if (!AvatarActor) return Result;
 
 	APawn* Pawn = Cast<APawn>(AvatarActor);
-
-	if (!Pawn)
-		return Result;
+	if (!Pawn) return Result;
 
 	AZfPlayerState* PS = Pawn->GetPlayerState<AZfPlayerState>();
-	
-	if (!PS)
-		return Result;
+	if (!PS) return Result;
 
-		// pegar valores
+	// --- Base ---
 	float BaseStrength = 0.f;
-	float AllocatedStrength = PS->StrengthPoints;
-	
 	if (PS->CharacterClassData)
+		BaseStrength = PS->CharacterClassData->Strength;
+
+	// --- Alocado ---
+	float AllocatedStrength = PS->StrengthPoints;
+
+	// --- Itens equipados ---
+	float ItemStrength = 0.f;
+
+	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
+
+	if (EquipmentComponent)
 	{
-			BaseStrength = PS->CharacterClassData->Strength;
+		const FGameplayTag StrengthTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Strength"));
+
+		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
+		{
+			if (!Item) continue;
+
+			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
+			{
+				if (Modifier.AffectedAttributeTag == StrengthTag)
+					ItemStrength += Modifier.CurrentValue;
+			}
+		}
 	}
 
-	
+	// --- Resultado ---
+	Result = BaseStrength + AllocatedStrength + ItemStrength;
 
-	// lógica final
-	Result = BaseStrength + AllocatedStrength;
+	UE_LOG(LogTemp, Log,
+		TEXT("ZfStrengthMMC: Base=%.1f | Alocado=%.1f | Itens=%.1f | Total=%.1f"),
+		BaseStrength, AllocatedStrength, ItemStrength, Result);
 
 	return Result;
 }

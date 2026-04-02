@@ -60,7 +60,7 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Ex: MoveSpeed → adiciona apenas "Inventory.Item.Feet"
     // Ex: MaxHealth → adiciona "Inventory.Item.Chest", "Inventory.Item.Helmet", etc.
     // Um modifier só será rolado se o item tiver ao menos uma dessas tags.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Compatibility", meta =(GameplayTagFilter = "ItemType"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "ItemType"))
     FGameplayTagContainer CompatibleItemTags;
 
     // ----------------------------------------------------------
@@ -77,6 +77,11 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // O GameplayEffect base usará esta tag para saber qual atributo modificar
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "GameplayEffect.type.AttributeSet"))
     FGameplayTag AffectedAttributeTag;
+
+    // GE que aplica este modifier no ASC via MMC
+    // Pode ser Blueprint ou C++
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification")
+    TSoftClassPtr<UGameplayEffect> GameplayEffect;
 
     // Como o valor é aplicado no atributo via GAS
     // Additive = flat, MultiplyBase = percentual, Override = substitui
