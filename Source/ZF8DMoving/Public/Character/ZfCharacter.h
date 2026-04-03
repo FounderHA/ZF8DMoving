@@ -42,7 +42,6 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	
 
 	virtual void Tick(float DeltaSeconds) override;
 	

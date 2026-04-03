@@ -41,7 +41,7 @@ void UZfLR_AttributePoints::GiveReward_Implementation(UAbilitySystemComponent* A
 
 	// A magnitude é a quantidade de pontos configurada no PointsPerLevel.
 	Spec.Data->SetSetByCallerMagnitude(
-		ZfProgressionTags::Data_Progression_AttributePoints,
+		ZfProgressionTags::LevelProgression_Data_Progression_AttributePoints,
 		static_cast<float>(PointsPerLevel)
 	);
 

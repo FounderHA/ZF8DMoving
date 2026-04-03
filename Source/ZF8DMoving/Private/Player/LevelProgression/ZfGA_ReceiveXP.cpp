@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "AbilitySystem/Attributes/ZfGA_ReceiveXP.h"
+#include "Player/LevelProgression/ZfGA_ReceiveXP.h"
 #include "AbilitySystemComponent.h"
 #include "Tags/ZfGameplayTags.h"
 
@@ -19,13 +19,15 @@ UZfGA_ReceiveXP::UZfGA_ReceiveXP()
 
 	// ── Trigger: ativada por GameplayEvent, nunca por input ───────────────
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag    = ZfProgressionTags::Event_XP_Gained;
+	TriggerData.TriggerTag    = ZfProgressionTags::LevelProgression_Event_XP_Gained;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 
 	// ── Tags de identificação ─────────────────────────────────────────────
 	// Permite localizar e cancelar esta ability via ASC se necessário.
-	AbilityTags.AddTag(ZfProgressionTags::Ability_Progression_ReceiveXP);
+	FGameplayTagContainer AssetTagContainer;
+	AssetTagContainer.AddTag(ZfProgressionTags::LevelProgression_Ability_Progression_ReceiveXP);
+	SetAssetTags(AssetTagContainer);
 
 	// ── GiveXPEffectClass ─────────────────────────────────────────────────
 	// Deixado nulo intencionalmente — deve ser atribuído no CDO do Blueprint
@@ -74,7 +76,7 @@ void UZfGA_ReceiveXP::ActivateAbility(
 	}
 
 	// Define a magnitude via SetByCaller — lida em GE_GiveXP → IncomingXP.
-	SpecHandle.Data->SetSetByCallerMagnitude(ZfProgressionTags::Data_XP_Amount, XPAmount);
+	SpecHandle.Data->SetSetByCallerMagnitude(ZfProgressionTags::LevelProgression_Data_XP_Amount, XPAmount);
 
 	// Aplica ao próprio dono da ability (o jogador que ganhou o XP).
 	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);

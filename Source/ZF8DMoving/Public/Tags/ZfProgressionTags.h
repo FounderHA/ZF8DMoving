@@ -23,14 +23,14 @@ namespace ZfProgressionTags
 	 * Escutado por GA_ReceiveXP.
 	 * Payload: EventMagnitude = quantidade de XP a conceder.
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_XP_Gained)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Event_XP_Gained)
 
 	/**
 	 * Disparado por UZfProgressionAttributeSet::HandleIncomingXP ao subir de nível.
 	 * Escutado por GA_LevelUp.
 	 * Payload: EventMagnitude = novo nível alcançado.
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Event_Character_LevelUp)
 
 	// =========================================================================
 	// DATA — SetByCaller: chaves usadas em GameplayEffects com magnitude dinâmica
@@ -42,7 +42,7 @@ namespace ZfProgressionTags
 	 * Define a quantidade exata de XP a ser adicionada ao IncomingXP.
 	 * Uso: SpecHandle.Data->SetSetByCallerMagnitude(ZfProgressionTags::Data_XP_Amount, 150.f);
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_XP_Amount)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Data_XP_Amount)
 	
 	/**
 	* Chave SetByCaller do GE_GrantAttributePoints.
@@ -50,7 +50,7 @@ namespace ZfProgressionTags
 	* Usado por UZfLR_AttributePoints::GiveReward.
 	* Uso: Spec.Data->SetSetByCallerMagnitude(ZfProgressionTags::Data_Progression_AttributePoints, PointsPerLevel);
 	*/
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Progression_AttributePoints)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Data_Progression_AttributePoints)
 
 	// =========================================================================
 	// ABILITY — Tags de identificação das Gameplay Abilities
@@ -61,13 +61,13 @@ namespace ZfProgressionTags
 	 * Tag de identificação da GA_ReceiveXP.
 	 * Usada para localizar e cancelar a ability via ASC se necessário.
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Progression_ReceiveXP)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Ability_Progression_ReceiveXP)
 
 	/**
 	 * Tag de identificação da GA_LevelUp.
 	 * Usada para localizar a ability e como guard contra ativações duplas.
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Progression_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Ability_Progression_LevelUp)
 
 	// =========================================================================
 	// GAMEPLAYCUE — Efeitos visuais e sonoros replicados
@@ -81,5 +81,5 @@ namespace ZfProgressionTags
 	 * Implemente o visual/som no Blueprint — sem lógica de negócio aqui.
 	 * Payload sugerido: RawMagnitude = novo nível (para escalar efeito por nível).
 	 */
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Character_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_GameplayCue_Character_LevelUp)
 }
