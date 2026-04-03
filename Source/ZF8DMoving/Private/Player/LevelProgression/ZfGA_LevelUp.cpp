@@ -20,12 +20,14 @@ UZfGA_LevelUp::UZfGA_LevelUp()
 	// ── Trigger: ativada exclusivamente por GameplayEvent ─────────────────
 	// Nunca ativada por input — o AttributeSet é a única fonte válida.
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag    = ZfProgressionTags::Event_Character_LevelUp;
+	TriggerData.TriggerTag    = ZfProgressionTags::LevelProgression_Event_Character_LevelUp;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 
 	// ── Tags de identificação ─────────────────────────────────────────────
-	AbilityTags.AddTag(ZfProgressionTags::Ability_Progression_LevelUp);
+	FGameplayTagContainer AssetTagContainer;
+	AssetTagContainer.AddTag(ZfProgressionTags::LevelProgression_Ability_Progression_LevelUp);
+	SetAssetTags(AssetTagContainer);
 }
 
 // =============================================================================
@@ -105,5 +107,5 @@ void UZfGA_LevelUp::ExecuteLevelUpCue(UAbilitySystemComponent* ASC, int32 NewLev
 	CueParams.Instigator    = ASC->GetAvatarActor();
 	CueParams.EffectContext = ASC->MakeEffectContext();
 
-	ASC->ExecuteGameplayCue(ZfProgressionTags::GameplayCue_Character_LevelUp, CueParams);
+	ASC->ExecuteGameplayCue(ZfProgressionTags::LevelProgression_GameplayCue_Character_LevelUp, CueParams);
 }

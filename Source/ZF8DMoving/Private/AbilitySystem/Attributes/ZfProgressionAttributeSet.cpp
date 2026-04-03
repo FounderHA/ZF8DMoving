@@ -205,7 +205,7 @@ void UZfProgressionAttributeSet::HandleIncomingXP(const FGameplayEffectModCallba
 			Payload.Instigator     = ASC->GetAvatarActor();
 			Payload.Target         = ASC->GetAvatarActor();
 
-			ASC->HandleGameplayEvent(ZfProgressionTags::Event_Character_LevelUp, &Payload);
+			ASC->HandleGameplayEvent(ZfProgressionTags::LevelProgression_Event_Character_LevelUp, &Payload);
 		}
 	}
 
