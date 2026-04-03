@@ -43,6 +43,14 @@ namespace ZfProgressionTags
 	 * Uso: SpecHandle.Data->SetSetByCallerMagnitude(ZfProgressionTags::Data_XP_Amount, 150.f);
 	 */
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_XP_Amount)
+	
+	/**
+	* Chave SetByCaller do GE_GrantAttributePoints.
+	* Define quantos pontos distribuíveis conceder no level-up.
+	* Usado por UZfLR_AttributePoints::GiveReward.
+	* Uso: Spec.Data->SetSetByCallerMagnitude(ZfProgressionTags::Data_Progression_AttributePoints, PointsPerLevel);
+	*/
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Progression_AttributePoints)
 
 	// =========================================================================
 	// ABILITY — Tags de identificação das Gameplay Abilities

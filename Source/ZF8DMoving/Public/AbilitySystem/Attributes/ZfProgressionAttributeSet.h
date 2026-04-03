@@ -66,12 +66,12 @@ public:
 	// -----------------------------------------------------------------------
 
 	/** Nível atual do personagem. Mínimo: 1. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Level, Category = "CharacterProgression")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Level, Category = "CharacterProgression")
 	FGameplayAttributeData Level;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, Level)
 
 	/** XP relativo ao nível corrente. Reseta (com sobra) ao subir de nível. Use para barra de progresso na HUD. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_XP, Category = "CharacterProgression")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_XP, Category = "CharacterProgression")
 	FGameplayAttributeData XP;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, XP)
 
@@ -79,17 +79,17 @@ public:
 	 /** XP total acumulado desde a criação do personagem. Nunca reseta.
 	 * Use para leaderboard, ranking, analytics ou qualquer comparação entre jogadores.
 	 * Nunca é decrementado — nem por penalidades de morte nem por respec. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_TotalXP, Category = "CharacterProgression")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_TotalXP, Category = "CharacterProgression")
 	FGameplayAttributeData TotalXP;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, TotalXP)
 
 	/** Quantidade de XP necessária para sair do nível atual. Atualizado via CurveTable. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_XPToNextLevel, Category = "CharacterProgression")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_XPToNextLevel, Category = "CharacterProgression")
 	FGameplayAttributeData XPToNextLevel;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, XPToNextLevel)
 
 	/** Pontos distribuíveis nos atributos principais. Concedidos pela GA_LevelUp via LR_AttributePoints. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_AttributePoints, Category = "CharacterProgression")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_AttributePoints, Category = "CharacterProgression")
 	FGameplayAttributeData AttributePoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, AttributePoints)
 

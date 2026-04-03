@@ -114,7 +114,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UZfMainAttributeSet> MainAttributeSet; 
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|AttributeSets")
 	TObjectPtr<UZfProgressionAttributeSet> ProgressionAttributeSet;
 	
 	UPROPERTY()
@@ -122,7 +122,6 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UZfResistanceAttributeSet> ResistanceAttributeSet;
-	
 	
 	
 	//RPC

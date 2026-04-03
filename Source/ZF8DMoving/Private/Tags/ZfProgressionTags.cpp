@@ -20,6 +20,9 @@ namespace ZfProgressionTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_XP_Amount, "Data.XP.Amount",
 		"Chave SetByCaller do GE_GiveXP. Define a quantidade de XP a conceder.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_Progression_AttributePoints, "Data.Progression.AttributePoints",
+		"Chave SetByCaller do GE_GrantAttributePoints. Define pontos distribuiveis a conceder no level-up.")
 
 	// =========================================================================
 	// ABILITY

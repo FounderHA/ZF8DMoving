@@ -12,7 +12,5 @@ AZfEnemyCharacter::AZfEnemyCharacter()
 	AbilitySystemComponent = CreateDefaultSubobject<UZfAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	HealthSet = CreateDefaultSubobject<UZfResourceAttributeSet>(TEXT("HealthSet"));
 	
 }
