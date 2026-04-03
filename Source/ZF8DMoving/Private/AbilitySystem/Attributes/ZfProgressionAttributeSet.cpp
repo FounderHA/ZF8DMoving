@@ -147,7 +147,7 @@ void UZfProgressionAttributeSet::OnRep_AttributePoints(const FGameplayAttributeD
 // =============================================================================
 
 void UZfProgressionAttributeSet::HandleIncomingXP(const FGameplayEffectModCallbackData& Data)
-{
+	{
 	const float Earned = GetIncomingXP();
 
 	// Sem XP para processar — nada a fazer.
@@ -214,7 +214,7 @@ void UZfProgressionAttributeSet::HandleIncomingXP(const FGameplayEffectModCallba
 }
 
 float UZfProgressionAttributeSet::GetXPThresholdForLevel(int32 InLevel) const
-{
+	{
 	if (!LevelProgressionCurveTable)
 	{
 		// CurveTable não atribuída no CDO do Blueprint filho.

@@ -34,6 +34,11 @@ void AZfPlayerCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	
 	InitAbilityActorInfo();
+	
+	// Concede as StartupAbilities configuradas no Blueprint deste Character.
+	// GrantStartupAbilities usa FindAbilitySpecFromClass como guard —
+	// seguro contra dupla concessão em respawns.
+	GrantStartupAbilities();
 }
 
 void AZfPlayerCharacter::OnRep_PlayerState()
@@ -64,9 +69,7 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	}
 	
 	AbilitySystemComponent = ZfPlayerState->GetAbilitySystemComponent();
-	HealthSet = ZfPlayerState->GetResourceAttributeSet();
-	
-	AbilitySystemComponent->InitAbilityActorInfo(ZfPlayerState,this);
+	ZfPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(ZfPlayerState,this);
 }
 
 	
