@@ -13,7 +13,7 @@ UZfLR_AttributePoints::UZfLR_AttributePoints()
 	GrantEffectClass = nullptr; // Atribuir no editor — ver comentário no header.
 }
 
-void UZfLR_AttributePoints::GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 NewLevel)
+void UZfLR_AttributePoints::GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained)
 {
 	if (!ASC)
 	{
@@ -23,12 +23,23 @@ void UZfLR_AttributePoints::GiveReward_Implementation(UAbilitySystemComponent* A
 
 	if (!GrantEffectClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UZfLR_AttributePoints: GrantEffectClass não configurado. "
-			"Atribua GE_GrantAttributePoints no CDO desta recompensa."));
+		UE_LOG(LogTemp, Error,
+			TEXT("UZfLR_AttributePoints: GrantEffectClass não configurado. "
+			     "Atribua GE_GrantAttributePoints no CDO desta recompensa."));
 		return;
 	}
 
-	// Cria o spec usando Level 1 — a magnitude vem do SetByCaller, não do nível do GE.
+	// ── Diagnóstico ───────────────────────────────────────────────────────
+	const FGameplayTag& CallerTag = ZfProgressionTags::LevelProgression_Data_Progression_AttributePoints;
+	UE_LOG(LogTemp, Log,
+		TEXT("UZfLR_AttributePoints: GiveReward chamado. "
+		     "FinalLevel=%d LevelsGained=%d PointsPerLevel=%d "
+		     "GE=%s CallerTag=%s TagValid=%s"),
+		FinalLevel, LevelsGained, PointsPerLevel,
+		*GrantEffectClass->GetName(),
+		*CallerTag.ToString(),
+		CallerTag.IsValid() ? TEXT("SIM") : TEXT("NAO — TAG NÃO REGISTRADA"));
+
 	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 	Context.AddSourceObject(ASC->GetOwnerActor());
 
@@ -39,11 +50,15 @@ void UZfLR_AttributePoints::GiveReward_Implementation(UAbilitySystemComponent* A
 		return;
 	}
 
-	// A magnitude é a quantidade de pontos configurada no PointsPerLevel.
-	Spec.Data->SetSetByCallerMagnitude(
-		ZfProgressionTags::LevelProgression_Data_Progression_AttributePoints,
-		static_cast<float>(PointsPerLevel)
-	);
+	const float TotalPoints = static_cast<float>(PointsPerLevel * LevelsGained);
+
+	UE_LOG(LogTemp, Log,
+		TEXT("UZfLR_AttributePoints: Aplicando SetByCaller. Tag=%s TotalPoints=%.1f"),
+		*CallerTag.ToString(), TotalPoints);
+
+	Spec.Data->SetSetByCallerMagnitude(CallerTag, TotalPoints);
 
 	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+	UE_LOG(LogTemp, Log, TEXT("UZfLR_AttributePoints: GE aplicado com sucesso."));
 }

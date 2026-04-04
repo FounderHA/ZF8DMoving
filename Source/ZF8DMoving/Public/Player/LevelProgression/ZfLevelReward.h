@@ -35,13 +35,12 @@ public:
 	/**
 	 * Executa a recompensa para o personagem que subiu de nível.
 	 *
-	 * @param ASC      AbilitySystemComponent do jogador
-	 * @param NewLevel Nível recém-alcançado
-	 *
-	 * BlueprintNativeEvent: C++ implementa GiveReward_Implementation,
-	 * Blueprint pode fazer override para recompensas customizadas.
+	 * @param ASC         AbilitySystemComponent do jogador
+	 * @param FinalLevel  Nível final alcançado — use para escalar atributos
+	 * @param LevelsGained Quantos níveis foram ganhos nesta chamada —
+	 *                    use para multiplicar recompensas (ex: pontos × níveis)
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Progression|Rewards")
-	void GiveReward(UAbilitySystemComponent* ASC, int32 NewLevel);
-	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 NewLevel);
+	void GiveReward(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained);
+	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained);
 };

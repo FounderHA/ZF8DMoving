@@ -8,11 +8,20 @@ namespace ZfProgressionTags
 	// EVENT
 	// =========================================================================
 
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_XP_Gained, "LevelProgression.Event.XP.Gained",
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_Character_XP_Gained, "LevelProgression.Event.Character.XP.Gained",
 		"Disparado por fontes de XP (mob, quest, item). Escutado por GA_ReceiveXP. " "Payload: EventMagnitude = quantidade de XP.")
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_Character_LevelUp, "LevelProgression.Event.Character.LevelUp",
 		"Disparado por UZfProgressionAttributeSet ao subir de nivel. Escutado por GA_LevelUp." "Payload: EventMagnitude = novo nivel alcancado.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_Character_SpendAttributePoints, "LevelProgression.Event.Character.SpendAttributePoints",
+		"Disparado pela widget ao confirmar pontos. Payload: OptionalObject = UZfAttributeSpendRequest.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_Character_RefundAttributePoint, "LevelProgression.Event.Character.RefundAttributePoint", 
+		"Disparado pela widget para refund individual. Payload: OptionalObject = UZfAttributeRefundRequest.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Event_Character_ResetAttributePoints, "LevelProgression.Event.Character.ResetAttributePoints",
+		"Disparado pelo botao Reset All. Sem payload adicional.")
 
 	// =========================================================================
 	// DATA — SetByCaller
@@ -25,6 +34,28 @@ namespace ZfProgressionTags
 		"Chave SetByCaller do GE_GrantAttributePoints. Define pontos distribuiveis a conceder no level-up.")
 
 	// =========================================================================
+	// DATA — SetByCaller
+	// =========================================================================
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Total,         "LevelProgression.Data.Spend.Total",
+		"Total de pontos gastos. Negativo no GE para decrementar AttributePoints.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Strength,      "LevelProgression.Data.Spend.Strength",
+		"Pontos investidos em Strength.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Dexterity,     "LevelProgression.Data.Spend.Dexterity",
+		"Pontos investidos em Dexterity.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Intelligence,  "LevelProgression.Data.Spend.Intelligence",
+		"Pontos investidos em Intelligence.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Constitution,  "LevelProgression.Data.Spend.Constitution",
+		"Pontos investidos em Constitution.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Spend_Conviction,    "LevelProgression.Data.Spend.Conviction",
+		"Pontos investidos em Conviction.")
+	
+	// =========================================================================
 	// ABILITY
 	// =========================================================================
 
@@ -33,6 +64,15 @@ namespace ZfProgressionTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Ability_Progression_LevelUp, "LevelProgression.Ability.Progression.LevelUp",
 		"Tag de identificacao da GA_LevelUp.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Ability_Progression_SpendAttributePoints,"LevelProgression.Ability.Progression.SpendAttributePoints",
+		"Tag da GA_SpendAttributePoints.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Ability_Progression_RefundAttributePoint, "LevelProgression.Ability.Progression.RefundAttributePoint",
+		"Tag da GA_RefundAttributePoint.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Ability_Progression_ResetAttributePoints,"LevelProgression.Ability.Progression.ResetAttributePoints",
+		"Tag da GA_ResetAttributePoints.")
 
 	// =========================================================================
 	// GAMEPLAYCUE

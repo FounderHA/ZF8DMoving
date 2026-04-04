@@ -32,7 +32,7 @@ class ZF8DMOVING_API UZfLR_AttributePoints : public UZfLevelReward
 public:
 	UZfLR_AttributePoints();
 
-	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 NewLevel) override;
+	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) override;
 
 	/** Quantidade de pontos distribuíveis concedidos a cada level-up. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Progression|Rewards",

@@ -1,32 +1,41 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
+
 #include "AbilitySystemComponent.h"
 #include "Engine/CurveTable.h"
 #include "GameplayEffectExtension.h"
-#include "GameplayTagsModule.h"
 #include "Tags/ZfGameplayTags.h"
 #include "Net/UnrealNetwork.h"
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Nome da linha na CurveTable que define XP necessário por nível.
 // Formato da linha no CSV:  Progression.XPToNextLevel,300,500,750,...
 // ─────────────────────────────────────────────────────────────────────────────
+
 static const FName ProgressionXPRowName = FName(TEXT("Progression.XPToNextLevel"));
 
 // =============================================================================
+// Construtor
+// =============================================================================
+
 UZfProgressionAttributeSet::UZfProgressionAttributeSet(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, LevelProgressionCurveTable(nullptr)
+	, MaxLevel(60)
 {
 	// Valores iniciais — serão sobrescritos pelo GE de inicialização
 	// aplicado pelo PlayerState/PlayerController ao possuir o pawn.
 	InitLevel(1.f);
 	InitXP(0.f);
 	InitTotalXP(0.f);
-	InitXPToNextLevel(300.f); // fallback caso a CurveTable não esteja configurada
+	InitXPToNextLevel(300.f);
 	InitAttributePoints(0.f);
+	InitStrengthPoints(0.f);
+	InitDexterityPoints(0.f);
+	InitIntelligencePoints(0.f);
+	InitConstitutionPoints(0.f);
+	InitConvictionPoints(0.f);
 	InitIncomingXP(0.f);
 }
 
@@ -39,11 +48,16 @@ void UZfProgressionAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// IncomingXP é meta-atributo — propositalmente NÃO replicado.
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, Level,          COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, XP,             COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, XPToNextLevel,  COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, TotalXP,        COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, AttributePoints,COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, Level,				COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, XP,					COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, XPToNextLevel,		COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, TotalXP,				COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, AttributePoints,		COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, StrengthPoints,		COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, DexterityPoints,		COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, IntelligencePoints,	COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, ConstitutionPoints,	COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, ConvictionPoints,	COND_None, REPNOTIFY_Always);
 }
 
 // =============================================================================
@@ -82,22 +96,55 @@ void UZfProgressionAttributeSet::PreAttributeChange(const FGameplayAttribute& At
 	{
 		NewValue = FMath::Max(0.f, NewValue);
 	}
+	// XxxPoints nunca negativos
+	else if (Attribute == GetStrengthPointsAttribute()    ||
+			 Attribute == GetDexterityPointsAttribute()    ||
+			 Attribute == GetIntelligencePointsAttribute() ||
+			 Attribute == GetConstitutionPointsAttribute() ||
+			 Attribute == GetConvictionPointsAttribute())
+	{
+		NewValue = FMath::Max(0.f, NewValue);
+	}
 }
 
 // =============================================================================
-// Post-effect: ponto central de lógica de negócio (servidor only)
+// PostGameplayEffectExecute — lógica de negócio (servidor only)
 // =============================================================================
 
 void UZfProgressionAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	const FGameplayAttribute& Attr = Data.EvaluatedData.Attribute;
+	
 	// Único ponto de entrada de XP: meta-atributo IncomingXP.
 	// GE_GiveXP (Instant, SetByCaller) escreve aqui. Qualquer outra
 	// fonte de XP (quest, item) usa o mesmo GE — nunca modifica XP diretamente.
-	if (Data.EvaluatedData.Attribute == GetIncomingXPAttribute())
+	if (Attr == GetIncomingXPAttribute())
 	{
 		HandleIncomingXP(Data);
+		return;
+	}
+	
+	// ── Pontos de atributo mudaram → recalcular atributos tocados ─────────
+	// Monta o set de atributos que foram modificados nesta execução.
+	// Apenas os atributos cujos XxxPoints mudaram entram no recalculo.
+	TSet<FGameplayTag> ChangedAttributes;
+ 
+	if (Attr == GetStrengthPointsAttribute())
+		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Strength);
+	if (Attr == GetDexterityPointsAttribute())
+		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Dexterity);
+	if (Attr == GetIntelligencePointsAttribute())
+		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Intelligence);
+	if (Attr == GetConstitutionPointsAttribute())
+		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Constitution);
+	if (Attr == GetConvictionPointsAttribute())
+		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Conviction);
+ 
+	if (ChangedAttributes.Num() > 0)
+	{
+		ApplyRecalculateEffects(ChangedAttributes);
 	}
 }
 
@@ -142,79 +189,145 @@ void UZfProgressionAttributeSet::OnRep_AttributePoints(const FGameplayAttributeD
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, AttributePoints, OldValue);
 }
 
+void UZfProgressionAttributeSet::OnRep_StrengthPoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, StrengthPoints, OldValue);
+}
+ 
+void UZfProgressionAttributeSet::OnRep_DexterityPoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, DexterityPoints, OldValue);
+}
+ 
+void UZfProgressionAttributeSet::OnRep_IntelligencePoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, IntelligencePoints, OldValue);
+}
+ 
+void UZfProgressionAttributeSet::OnRep_ConstitutionPoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, ConstitutionPoints, OldValue);
+}
+ 
+void UZfProgressionAttributeSet::OnRep_ConvictionPoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, ConvictionPoints, OldValue);
+}
+
 // =============================================================================
 // Lógica privada
 // =============================================================================
 
 void UZfProgressionAttributeSet::HandleIncomingXP(const FGameplayEffectModCallbackData& Data)
-	{
+{
 	const float Earned = GetIncomingXP();
 
-	// Sem XP para processar — nada a fazer.
-	if (Earned <= 0.f)
-	{
-		return;
-	}
+	if (Earned <= 0.f) return;
 
-	// Consome o meta-atributo imediatamente.
-	// Isso garante que o valor não vaze para uma segunda chamada acidental.
 	SetIncomingXP(0.f);
-
-	// Acumula no histórico total imediatamente — antes do loop de level-up.
-	// TotalXP nunca é decrementado, independentemente de penalidades ou respec.
 	SetTotalXP(GetTotalXP() + Earned);
 
 	float AccumulatedXP = GetXP() + Earned;
+	int32 LevelsGained  = 0;
 
-	// ─────────────────────────────────────────────────────────────────────
-	// Loop de level-up: suporta múltiplos níveis no mesmo frame.
-	// Exemplo: jogador no nível 3 ganha XP suficiente para ir direto ao 5.
-	// ─────────────────────────────────────────────────────────────────────
 	while (true)
 	{
-		const int32 CurrentLevel    = FMath::FloorToInt(GetLevel());
+		const int32 CurrentLevel     = FMath::FloorToInt(GetLevel());
 		const float CurrentThreshold = GetXPThresholdForLevel(CurrentLevel);
 
-		// CurveTable não configurada, nível máximo atingido (threshold == 0)
-		// ou XP insuficiente para o próximo nível.
-		if (CurrentThreshold <= 0.f || AccumulatedXP < CurrentThreshold)
+		// Sem threshold definido na CurveTable — nível máximo da tabela atingido.
+		if (CurrentThreshold <= 0.f)
 		{
 			break;
 		}
 
-		// ── Sobe de nível ──────────────────────────────────────────────
+		// Verifica teto de nível — MaxLevel == 0 significa infinito.
+		if (MaxLevel > 0 && CurrentLevel >= MaxLevel)
+		{
+			// XP trava no threshold do nível máximo.
+			// Não zera, não passa — fica exatamente no valor do threshold.
+			// TotalXP já foi acumulado antes do loop.
+			AccumulatedXP = CurrentThreshold;
+			break;
+		}
+
+		// XP insuficiente para o próximo nível.
+		if (AccumulatedXP < CurrentThreshold)
+		{
+			break;
+		}
+
+		// Sobe de nível.
 		AccumulatedXP -= CurrentThreshold;
 		const float NewLevel = GetLevel() + 1.f;
 		SetLevel(NewLevel);
 
-		// Atualiza XPToNextLevel inline para a próxima iteração do while.
-		// GA_LevelUp NÃO precisa atualizar este atributo — já está correto aqui.
 		const float NextThreshold = GetXPThresholdForLevel(FMath::FloorToInt(NewLevel));
 		SetXPToNextLevel(FMath::Max(1.f, NextThreshold));
 
-		// ── Notifica GA_LevelUp via GameplayEvent ──────────────────────
-		// GA_LevelUp (ServerOnly, ativada por evento) cuida de:
-		//   • Conceder AttributePoints via LR_AttributePoints
-		//   • Escalar atributos via LR_ScaleAttributes + CurveTable
-		//   • Disparar GameplayCue (efeitos visuais — tratados em Blueprint)
-		//   • Qualquer recompensa futura adicionada ao TArray de ULevelReward
-		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
-		{
-			FGameplayEventData Payload;
-			Payload.EventMagnitude = NewLevel;      // nível recém-alcançado
-			Payload.Instigator     = ASC->GetAvatarActor();
-			Payload.Target         = ASC->GetAvatarActor();
+		LevelsGained++;
 
-			ASC->HandleGameplayEvent(ZfProgressionTags::LevelProgression_Event_Character_LevelUp, &Payload);
+		// Acabou de atingir o MaxLevel — trava o XP no threshold deste nível.
+		if (MaxLevel > 0 && FMath::FloorToInt(NewLevel) >= MaxLevel)
+		{
+			AccumulatedXP = FMath::Max(1.f, NextThreshold);
+			break;
 		}
 	}
 
-	// Persiste o XP restante (possível sobra após o último level-up).
 	SetXP(AccumulatedXP);
+
+	// Dispara UM único evento com o resultado consolidado do loop.
+	// GA_LevelUp lida com todos os níveis ganhos de uma vez:
+	//   EventMagnitude → nível final alcançado
+	//   RawMagnitude   → quantos níveis foram ganhos (para calcular rewards)
+	if (LevelsGained > 0)
+	{
+		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+		{
+			FGameplayEventData Payload;
+			Payload.EventMagnitude = static_cast<float>(LevelsGained); // níveis ganhos
+			Payload.Instigator     = ASC->GetAvatarActor();
+			Payload.Target         = ASC->GetAvatarActor();
+
+			// FinalLevel não é passado no payload — GA_LevelUp lê diretamente
+			// do ProgressionAttributeSet via ASC, evitando o campo inexistente
+			// RawMagnitude em FGameplayEventData.
+			ASC->HandleGameplayEvent(ZfProgressionTags::LevelProgression_Event_Character_LevelUp, &Payload);
+		}
+	}
+}
+
+void UZfProgressionAttributeSet::ApplyRecalculateEffects(const TSet<FGameplayTag>& ChangedAttributes)
+{
+	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	if (!ASC) return;
+ 
+	for (const FGameplayTag& AttrTag : ChangedAttributes)
+	{
+		const TSubclassOf<UGameplayEffect>* EffectClass = RecalculateEffects.Find(AttrTag);
+		if (!EffectClass || !(*EffectClass))
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("UZfProgressionAttributeSet: Nenhum GE de recalculo configurado "
+					 "para a tag '%s'. Configure em RecalculateEffects no editor."),
+				*AttrTag.ToString());
+			continue;
+		}
+ 
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		Context.AddSourceObject(ASC->GetOwnerActor());
+ 
+		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(*EffectClass, 1.f, Context);
+		if (Spec.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
 }
 
 float UZfProgressionAttributeSet::GetXPThresholdForLevel(int32 InLevel) const
-	{
+{
 	if (!LevelProgressionCurveTable)
 	{
 		// CurveTable não atribuída no CDO do Blueprint filho.
