@@ -42,7 +42,7 @@ class ZF8DMOVING_API UZfLR_ScaleAttributes : public UZfLevelReward
 public:
 	UZfLR_ScaleAttributes();
 
-	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 NewLevel) override;
+	virtual void GiveReward_Implementation(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) override;
 
 	/**
 	 * GE que escala atributos usando CurveTable.

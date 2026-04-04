@@ -20,4 +20,5 @@
 
 // ── Sistemas ────────────────────────────────────────────────────────────────
 #include "ZfProgressionTags.h"
+#include "ZfMainAttributeTags.h"
 #include "Inventory/ZfInventoryTags.h"

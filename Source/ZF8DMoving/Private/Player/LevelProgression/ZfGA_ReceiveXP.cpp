@@ -19,7 +19,7 @@ UZfGA_ReceiveXP::UZfGA_ReceiveXP()
 
 	// ── Trigger: ativada por GameplayEvent, nunca por input ───────────────
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag    = ZfProgressionTags::LevelProgression_Event_XP_Gained;
+	TriggerData.TriggerTag    = ZfProgressionTags::LevelProgression_Event_Character_XP_Gained;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 

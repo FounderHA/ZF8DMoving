@@ -27,7 +27,7 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 		BaseStrength = PS->CharacterClassData->Strength;
 
 	// --- Alocado ---
-	float AllocatedStrength = PS->StrengthPoints;
+	//float AllocatedStrength = PS->StrengthPoints;
 
 	// --- Itens equipados ---
 	float ItemStrength = 0.f;
@@ -51,11 +51,11 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 	}
 
 	// --- Resultado ---
-	Result = BaseStrength + AllocatedStrength + ItemStrength;
+	Result = BaseStrength + /*AllocatedStrength +*/ ItemStrength;
 
 	UE_LOG(LogTemp, Log,
-		TEXT("ZfStrengthMMC: Base=%.1f | Alocado=%.1f | Itens=%.1f | Total=%.1f"),
-		BaseStrength, AllocatedStrength, ItemStrength, Result);
+		TEXT("ZfStrengthMMC: Base=%.1f | Itens=%.1f | Total=%.1f"),
+		BaseStrength, ItemStrength, Result);
 
 	return Result;
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ZfAttributeSet.h"
+#include "Player/ZfPlayerState.h"
 #include "ZfProgressionAttributeSet.generated.h"
 
 class UCurveTable;
@@ -48,21 +49,43 @@ public:
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
 	// -----------------------------------------------------------------------
-	// Configuração
+	// Configuração — Level
 	// -----------------------------------------------------------------------
 
-	/**
-	 * CurveTable que define o XP necessário para cada nível.
+	/** CurveTable que define o XP necessário para cada nível.
 	 * Linha esperada: "Progression.XPToNextLevel"
 	 * Colunas: 1, 2, 3 ... N  (cada coluna = um nível)
 	 *
-	 * Configure no CDO do Blueprint filho desta classe.
-	 */
+	 * Configure no CDO do Blueprint filho desta classe. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterProgression|Config")
 	TObjectPtr<UCurveTable> LevelProgressionCurveTable;
 
+	/** Nível máximo que o personagem pode atingir.
+	 * Ao atingir o MaxLevel o XP continua acumulando em TotalXP mas
+	 * Level e XP (relativo) não avançam mais.
+	 * Use 0 para sem limite. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterProgression|Config", meta = (ClampMin = "0", UIMin = "0"))
+	int32 MaxLevel;
+	
 	// -----------------------------------------------------------------------
-	// Atributos replicados
+	// Configuração — Recalculo de atributos
+	// -----------------------------------------------------------------------
+ 
+	/** Mapa de GEs de recalculo por tipo de atributo.
+	 * PostGameplayEffectExecute usa este mapa para saber qual GE aplicar
+	 * quando um XxxPoints muda — apenas os atributos tocados são recalculados.
+	 *
+	 * Configure no editor (BP_ZfProgressionAttributeSet → Class Defaults):
+	 *   Strength     → GE_RecalculateStrength
+	 *   Dexterity    → GE_RecalculateDexterity
+	 *   Intelligence → GE_RecalculateIntelligence
+	 *   Constitution → GE_RecalculateConstitution
+	 *   Conviction   → GE_RecalculateConviction */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterProgression|Config|Recalculate")
+	TMap<FGameplayTag, TSubclassOf<UGameplayEffect>> RecalculateEffects;
+	
+	// -----------------------------------------------------------------------
+	// Atributos replicados — Level / XP
 	// -----------------------------------------------------------------------
 
 	/** Nível atual do personagem. Mínimo: 1. */
@@ -75,8 +98,7 @@ public:
 	FGameplayAttributeData XP;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, XP)
 
-	
-	 /** XP total acumulado desde a criação do personagem. Nunca reseta.
+	/** XP total acumulado desde a criação do personagem. Nunca reseta.
 	 * Use para leaderboard, ranking, analytics ou qualquer comparação entre jogadores.
 	 * Nunca é decrementado — nem por penalidades de morte nem por respec. */
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_TotalXP, Category = "CharacterProgression")
@@ -87,21 +109,50 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_XPToNextLevel, Category = "CharacterProgression")
 	FGameplayAttributeData XPToNextLevel;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, XPToNextLevel)
+	
+	// -----------------------------------------------------------------------
+	// Atributos replicados — Pontos distribuíveis
+	// -----------------------------------------------------------------------
 
 	/** Pontos distribuíveis nos atributos principais. Concedidos pela GA_LevelUp via LR_AttributePoints. */
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_AttributePoints, Category = "CharacterProgression")
 	FGameplayAttributeData AttributePoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, AttributePoints)
+	
+	// -----------------------------------------------------------------------
+	// Atributos replicados — Pontos investidos por atributo
+	// Representam QUANTOS pontos o jogador colocou em cada atributo.
+	// Não são os valores finais dos atributos — são os contadores de investimento.
+	// O valor final (Strength, Dexterity etc.) é calculado pelo MMC no ZfMainAttributeSet.
+	// -----------------------------------------------------------------------
+ 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StrengthPoints, Category = "CharacterProgression|AllocatedPoints")
+	FGameplayAttributeData StrengthPoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, StrengthPoints)
+ 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_DexterityPoints, Category = "CharacterProgression|AllocatedPoints")
+	FGameplayAttributeData DexterityPoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, DexterityPoints)
+ 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_IntelligencePoints, Category = "CharacterProgression|AllocatedPoints")
+	FGameplayAttributeData IntelligencePoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, IntelligencePoints)
+ 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ConstitutionPoints, Category = "CharacterProgression|AllocatedPoints")
+	FGameplayAttributeData ConstitutionPoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, ConstitutionPoints)
+ 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ConvictionPoints, Category = "CharacterProgression|AllocatedPoints")
+	FGameplayAttributeData ConvictionPoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, ConvictionPoints)
 
 	// -----------------------------------------------------------------------
 	// Meta-atributo (servidor only — NÃO replicado)
 	// -----------------------------------------------------------------------
 
-	/**
-	 * Caixa de entrada de XP. Nunca leia este valor diretamente para UI.
+	/** Caixa de entrada de XP. Nunca leia este valor diretamente para UI.
 	 * Fontes de XP (mobs, quests, itens) modificam este atributo via GE_GiveXP.
-	 * PostGameplayEffectExecute consome e zera automaticamente.
-	 */
+	 * PostGameplayEffectExecute consome e zera automaticamente. */
 	UPROPERTY(BlueprintReadOnly, Category = "CharacterProgression|Meta")
 	FGameplayAttributeData IncomingXP;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, IncomingXP)
@@ -123,18 +174,37 @@ protected:
 	UFUNCTION()
 	virtual void OnRep_AttributePoints(const FGameplayAttributeData& OldValue) const;
 
+	UFUNCTION()
+	virtual void OnRep_StrengthPoints(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION()
+	virtual void OnRep_DexterityPoints(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION()
+	virtual void OnRep_IntelligencePoints(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION()
+	virtual void OnRep_ConstitutionPoints(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION()
+	virtual void OnRep_ConvictionPoints(const FGameplayAttributeData& OldValue) const;
+	
 private:
 
-	/**
-	 * Lógica central de XP e level-up.
+	/** Lógica central de XP e level-up.
 	 * Chamado por PostGameplayEffectExecute quando IncomingXP é modificado.
-	 * Suporta múltiplos level-ups consecutivos no mesmo frame.
-	 */
+	 * Suporta múltiplos level-ups consecutivos no mesmo frame. */
 	void HandleIncomingXP(const FGameplayEffectModCallbackData& Data);
 
-	/**
-	 * Consulta a CurveTable para obter o limiar de XP de um nível específico.
-	 * Retorna 0 se a CurveTable não estiver configurada (sem level-up possível).
-	 */
+	/** Consulta a CurveTable para obter o limiar de XP de um nível específico.
+	 * Retorna 0 se a CurveTable não estiver configurada (sem level-up possível). */
 	float GetXPThresholdForLevel(int32 InLevel) const;
+	
+	/** Aplica o GE de recalculo para os atributos cujos XxxPoints mudaram.
+	* Chamado por PostGameplayEffectExecute após GE_SpendAttributePoints.
+	* Usa o TMap RecalculateEffects para localizar o GE correto por tipo.
+	*
+	* @param ChangedAttributes Bitmask dos atributos que mudaram nesta execução.
+	*        Construído em PostGameplayEffectExecute comparando OldValue vs NewValue. */
+	void ApplyRecalculateEffects(const TSet<FGameplayTag>& ChangedAttributes);
 };

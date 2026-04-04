@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player/LevelProgression/ZfGA_LevelUp.h"
-
 #include "AbilitySystemComponent.h"
 #include "Player/LevelProgression/ZfLevelReward.h"
+#include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "Tags/ZfGameplayTags.h"
 
 UZfGA_LevelUp::UZfGA_LevelUp()
@@ -40,12 +40,9 @@ void UZfGA_LevelUp::ActivateAbility(
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// ── Validações ────────────────────────────────────────────────────────
-
 	if (!TriggerEventData)
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("UZfGA_LevelUp: TriggerEventData nulo — ability encerrada sem executar recompensas."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfGA_LevelUp: TriggerEventData nulo — ability encerrada sem executar recompensas."));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
@@ -58,16 +55,23 @@ void UZfGA_LevelUp::ActivateAbility(
 		return;
 	}
 
-	// EventMagnitude carrega o novo nível — definido em HandleIncomingXP do AttributeSet.
-	const int32 NewLevel = FMath::Max(1, FMath::FloorToInt(TriggerEventData->EventMagnitude));
+	// EventMagnitude → quantos níveis foram ganhos
+	// FinalLevel     → lido diretamente do ProgressionAttributeSet via ASC
+	const int32 LevelsGained = FMath::Max(1, FMath::FloorToInt(TriggerEventData->EventMagnitude));
 
-	// ── Executa recompensas ───────────────────────────────────────────────
-	ExecuteRewards(ASC, NewLevel);
+	int32 FinalLevel = 1;
+	if (const UZfProgressionAttributeSet* ProgSet =
+		ASC->GetSet<UZfProgressionAttributeSet>())
+	{
+		FinalLevel = FMath::Max(1, FMath::FloorToInt(ProgSet->GetLevel()));
+	}
 
-	// ── Dispara GameplayCue ───────────────────────────────────────────────
-	ExecuteLevelUpCue(ASC, NewLevel);
+	// Executa recompensas uma única vez com o contexto consolidado.
+	ExecuteRewards(ASC, FinalLevel, LevelsGained);
 
-	// Ability síncrona — encerra imediatamente após processar tudo.
+	// Dispara UM único GameplayCue — independente de quantos níveis foram ganhos.
+	ExecuteLevelUpCue(ASC, FinalLevel, LevelsGained);
+
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
@@ -75,12 +79,13 @@ void UZfGA_LevelUp::ActivateAbility(
 // Privados
 // =============================================================================
 
-void UZfGA_LevelUp::ExecuteRewards(UAbilitySystemComponent* ASC, int32 NewLevel) const
+void UZfGA_LevelUp::ExecuteRewards(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) const
 {
 	if (Rewards.IsEmpty())
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("UZfGA_LevelUp: Lista de Rewards vazia no nível %d. "
-			     "Adicione assets de recompensa no array do BP_ZfGA_LevelUp."), NewLevel);
+		UE_LOG(LogTemp, Verbose,
+			TEXT("UZfGA_LevelUp: Lista de Rewards vazia. "
+			     "Adicione assets no array do BP_ZfGA_LevelUp."));
 		return;
 	}
 
@@ -93,16 +98,24 @@ void UZfGA_LevelUp::ExecuteRewards(UAbilitySystemComponent* ASC, int32 NewLevel)
 			continue;
 		}
 
-		Reward->GiveReward(ASC, NewLevel);
+		// FinalLevel  → nível atual do personagem (usado por LR_ScaleAttributes)
+		// LevelsGained → quantos níveis foram ganhos (usado por LR_AttributePoints)
+		Reward->GiveReward(ASC, FinalLevel, LevelsGained);
 	}
 }
 
-void UZfGA_LevelUp::ExecuteLevelUpCue(UAbilitySystemComponent* ASC, int32 NewLevel) const
+void UZfGA_LevelUp::ExecuteLevelUpCue(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) const
 {
-	// ExecuteGameplayCue: disparo único, replicado para todos os clientes.
-	// Correto para eventos instantâneos como level-up (não use Add/Remove aqui).
 	FGameplayCueParameters CueParams;
-	CueParams.RawMagnitude  = static_cast<float>(NewLevel); // disponível no Blueprint do Cue
+
+	// RawMagnitude → LevelsGained: Blueprint usa para repetir a animação N vezes.
+	CueParams.RawMagnitude = static_cast<float>(LevelsGained);
+
+	// NormalizedMagnitude → FinalLevel: float livre de restrições de serialização.
+	// AbilityLevel foi evitado propositalmente — é serializado como uint8
+	// com limite MAX_LEVEL (~15), insuficiente para níveis altos do personagem.
+	CueParams.NormalizedMagnitude = static_cast<float>(FinalLevel);
+
 	CueParams.SourceObject  = ASC->GetOwnerActor();
 	CueParams.Instigator    = ASC->GetAvatarActor();
 	CueParams.EffectContext = ASC->MakeEffectContext();

@@ -7,6 +7,7 @@
 #include "ZfGA_LevelUp.generated.h"
 
 class UZfLevelReward;
+class UZfProgressionAttributeSet;
 
 /**
  * GameplayAbility executada a cada level-up do personagem.
@@ -71,8 +72,8 @@ public:
 private:
 
 	/** Executa todas as recompensas da lista em ordem. */
-	void ExecuteRewards(UAbilitySystemComponent* ASC, int32 NewLevel) const;
+	void ExecuteRewards(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) const;
 
 	/** Dispara o GameplayCue de level-up (visual/som — implementado em Blueprint). */
-	void ExecuteLevelUpCue(UAbilitySystemComponent* ASC, int32 NewLevel) const;
+	void ExecuteLevelUpCue(UAbilitySystemComponent* ASC, int32 FinalLevel, int32 LevelsGained) const;
 };
