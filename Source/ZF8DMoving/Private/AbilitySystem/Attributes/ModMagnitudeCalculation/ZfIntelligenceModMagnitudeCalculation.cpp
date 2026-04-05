@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfIntelligenceModMagnitudeCalculation.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfIntelligenceModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -26,27 +26,27 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 	if (!PS) return Result;
 	
 	// --- Base ---
-	float BaseStrength = 0.f;
+	float BaseIntelligence = 0.f;
 	if (PS->CharacterClassData)
-		BaseStrength = PS->CharacterClassData->Strength;
+		BaseIntelligence = PS->CharacterClassData->Intelligence;
 
 	// --- Alocado ---
 	
-	float AllocatedStrength = 0.f;
+	float AllocatedIntelligence = 0.f;
 
 	if (const UZfProgressionAttributeSet* ProgSet = ASC->GetSet<UZfProgressionAttributeSet>())
 	{
-		AllocatedStrength = ProgSet->GetStrengthPoints();
+		AllocatedIntelligence = ProgSet->GetIntelligencePoints();
 	}
 
 	// --- Itens equipados ---
-	float ItemStrength = 0.f;
+	float ItemIntelligence = 0.f;
 
 	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag StrengthTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Strength"));
+		const FGameplayTag IntelligenceTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Intelligence"));
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{
@@ -54,15 +54,15 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
-				if (Modifier.AffectedAttributeTag == StrengthTag)
-					ItemStrength += Modifier.CurrentValue;
+				if (Modifier.AffectedAttributeTag == IntelligenceTag)
+					ItemIntelligence += Modifier.CurrentValue;
 			}
 		}
 	}
 
 	// --- Resultado ---
-	Result = BaseStrength + AllocatedStrength + ItemStrength;
+	Result = BaseIntelligence + AllocatedIntelligence + ItemIntelligence;
 
-	UE_LOG(LogTemp, Log, TEXT("ZfStrengthMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseStrength, ItemStrength, Result);
+	UE_LOG(LogTemp, Log, TEXT("ZfIntelligenceMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseIntelligence, AllocatedIntelligence, Result);
 	return Result;
 }
