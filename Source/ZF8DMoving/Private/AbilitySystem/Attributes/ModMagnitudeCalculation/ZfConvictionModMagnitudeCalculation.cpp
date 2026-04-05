@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConvictionModMagnitudeCalculation.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfConvictionModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -26,27 +26,27 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 	if (!PS) return Result;
 	
 	// --- Base ---
-	float BaseStrength = 0.f;
+	float BaseConviction = 0.f;
 	if (PS->CharacterClassData)
-		BaseStrength = PS->CharacterClassData->Strength;
+		BaseConviction = PS->CharacterClassData->Conviction;
 
 	// --- Alocado ---
 	
-	float AllocatedStrength = 0.f;
+	float AllocatedConviction = 0.f;
 
 	if (const UZfProgressionAttributeSet* ProgSet = ASC->GetSet<UZfProgressionAttributeSet>())
 	{
-		AllocatedStrength = ProgSet->GetStrengthPoints();
+		AllocatedConviction = ProgSet->GetConvictionPoints();
 	}
 
 	// --- Itens equipados ---
-	float ItemStrength = 0.f;
+	float ItemConviction = 0.f;
 
 	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag StrengthTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Strength"));
+		const FGameplayTag ConvictionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Conviction"));
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{
@@ -54,15 +54,15 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
-				if (Modifier.AffectedAttributeTag == StrengthTag)
-					ItemStrength += Modifier.CurrentValue;
+				if (Modifier.AffectedAttributeTag == ConvictionTag)
+					ItemConviction += Modifier.CurrentValue;
 			}
 		}
 	}
 
 	// --- Resultado ---
-	Result = BaseStrength + AllocatedStrength + ItemStrength;
+	Result = BaseConviction + AllocatedConviction + ItemConviction;
 
-	UE_LOG(LogTemp, Log, TEXT("ZfStrengthMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseStrength, ItemStrength, Result);
+	UE_LOG(LogTemp, Log, TEXT("ZfConvictionMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseConviction, ItemConviction, Result);
 	return Result;
 }
