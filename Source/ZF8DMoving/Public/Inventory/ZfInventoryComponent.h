@@ -179,131 +179,39 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 
-public:
-
-    
-
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — ADICIONAR ITEM
-    // ----------------------------------------------------------
-
-    
-    
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — REMOVER ITEM
-    // ----------------------------------------------------------
-    
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — MOVER ITEM
-    // ----------------------------------------------------------
-    
-    // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — EQUIPAR
-    // ----------------------------------------------------------
-
-    // Tenta equipar um item do inventário no EquipmentComponent.
-    // Remove o item do inventário e passa para o EquipmentComponent.
-    // Faz todas as verificações necessárias (slot válido, two-handed, etc.)
-    // @param SlotIndex — slot do item a equipar
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult TryEquipItemFromSlot(int32 SlotIndex);
-
-    // Tenta equipar um ItemInstance diretamente.
-    // @param ItemInstance — item a equipar
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance);
-
-    // Recebe um item desequipado do EquipmentComponent.
-    // Tenta colocar no mesmo slot de origem ou no primeiro livre.
-    // @param ItemInstance — item que foi desequipado
-    // @param PreferredSlotIndex — slot preferido (INDEX_NONE = primeiro livre)
-    // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    EZfItemMechanicResult ReceiveUnequippedItem(UZfItemInstance* ItemInstance, int32 PreferredSlotIndex);
-
-    
-
-    // ----------------------------------------------------------
-    // FUNÇÕES DE CONSULTA
-    // ----------------------------------------------------------
-    
-    
-
-
-
-
-
-
-    
-   
-
-    
-
-    
-
-    // ----------------------------------------------------------
-    // EXPANSÃO DE SLOTS
-    // Chamado pelo EquipmentComponent quando uma mochila é
-    // equipada/desequipada via UZfFragment_InventoryExpansion.
-    // ----------------------------------------------------------
-
-
-    // ----------------------------------------------------------
-    // RPCs — CLIENT → SERVER
-    // Clientes não modificam o inventário diretamente.
-    // Enviam requisições ao servidor via RPC.
-    // ----------------------------------------------------------
-    
-    // Requisição do cliente para equipar item de um slot
-    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Zf|Inventory|RPC")
-    void ServerRequestEquipItem(int32 SlotIndex);
-
-    
-    
-
-    // ----------------------------------------------------------
-    // RPCs — SERVER → CLIENT
-    // Notificações do servidor para clientes específicos.
-    // ----------------------------------------------------------
-
-    // Notifica o cliente dono que o inventário foi atualizado
-    UFUNCTION(Client, Reliable)
-    void ClientNotifyInventoryUpdated();
-
-    // Notifica o cliente que uma operação falhou
-    // @param FailureResult — motivo da falha
-    UFUNCTION(Client, Reliable)
-    void ClientNotifyOperationFailed(EZfItemMechanicResult FailureResult);
-    
-
-
-
 protected:
 
+    // ============================================================
+    // CONFIGURAÇÃO
+    // ============================================================
+
+    // Número inicial de slots do inventário.
+    // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 DefaultSlotCount = 5;
+
+    // Número máximo absoluto de slots — nunca ultrapassa esse valor
+    // mesmo com múltiplas mochilas equipadas.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    int32 MaxAbsoluteSlotCount = 100;
+        
+    // ============================================================
+    // DADOS REPLICADOS
+    // ============================================================
+
+    // Lista de slots do inventário — replicada via FastArraySerializer
+    UPROPERTY(Replicated)
+    FZfInventoryList InventoryList;
+
+    // Tamanho atual do inventário (número de slots disponíveis)
+    // Replicado para que a UI do cliente possa exibir corretamente
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
+    int32 CurrentSlotCount = 0;
+    
     // Referência ao EquipmentComponent no mesmo ator.
     // Resolvida no BeginPlay — não replicada.
     UPROPERTY()
     TObjectPtr<UZfEquipmentComponent> EquipmentComponent;
-
-private:
-    
-    // Busca o EquipmentComponent no ator dono.
-    // Chamado no BeginPlay.
-    void Internal_FindEquipmentComponent();
-    
-    
-    //============================================================================================================================================================
-
-
-
-
-
-
-
-
-    
 
 public:
 
@@ -337,39 +245,6 @@ public:
     // Chamado após reorganização ou ordenação completa
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnInventoryRefreshed OnInventoryRefreshed;
-
-    
-
-protected:
-
-    // ============================================================
-    // CONFIGURAÇÃO
-    // ============================================================
-
-    // Número inicial de slots do inventário.
-    // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
-    int32 DefaultSlotCount = 5;
-
-    // Número máximo absoluto de slots — nunca ultrapassa esse valor
-    // mesmo com múltiplas mochilas equipadas.
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
-    int32 MaxAbsoluteSlotCount = 100;
-        
-    // ============================================================
-    // DADOS REPLICADOS
-    // ============================================================
-
-    // Lista de slots do inventário — replicada via FastArraySerializer
-    UPROPERTY(Replicated)
-    FZfInventoryList InventoryList;
-
-    // Tamanho atual do inventário (número de slots disponíveis)
-    // Replicado para que a UI do cliente possa exibir corretamente
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
-    int32 CurrentSlotCount = 0;
-    
-public:
 
     // ============================================================
     // FUNÇÕES SERVER - GERENCIAMENTO
