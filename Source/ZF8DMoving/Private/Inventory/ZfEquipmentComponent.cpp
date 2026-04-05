@@ -17,55 +17,6 @@
 #include "DrawDebugHelpers.h"
 #include "Player/ZfPlayerState.h"
 
-// ============================================================
-// Constructor
-// ============================================================
-
-UZfEquipmentComponent::UZfEquipmentComponent()
-{
-    PrimaryComponentTick.bCanEverTick = false;
-
-    // Replicado para todos — outros jogadores precisam ver
-    // os itens equipados para visuais e animações
-    SetIsReplicatedByDefault(true);
-    bReplicateUsingRegisteredSubObjectList = true;
-}
-
-// ============================================================
-// REPLICAÇÃO
-// ============================================================
-
-void UZfEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    // EquipmentList replicado para todos — visuais de outros jogadores
-    DOREPLIFETIME(UZfEquipmentComponent, EquipmentList);
-
-    // Estado do OffHand bloqueado replicado para todos
-    DOREPLIFETIME(UZfEquipmentComponent, bOffHandSlotBlocked);
-}
-
-// ============================================================
-// CICLO DE VIDA
-// ============================================================
-
-void UZfEquipmentComponent::BeginPlay()
-{
-    Super::BeginPlay();
-
-    if (GetOwner())
-    {
-        InventoryComponent = Cast<AZfPlayerState>(GetOwner())->FindComponentByClass<UZfInventoryComponent>();
-    }
-}
-
-// ============================================================
-// DESEQUIPAR
-// ============================================================
-
-
-
 void UZfEquipmentComponent::UnequipAllItems()
 {
     if (!InternalCheckIsServer(TEXT("UnequipAllItems")))
@@ -98,24 +49,20 @@ void UZfEquipmentComponent::UnequipAllItems()
 // TROCA RÁPIDA
 // ============================================================
 
-EZfItemMechanicResult UZfEquipmentComponent::QuickSwapItem(
-    int32 InventorySlotIndex,
-    FGameplayTag EquipSlotTag,
-    int32 EquipSlotIndex)
+EZfItemMechanicResult UZfEquipmentComponent::QuickSwapItem(int32 InventorySlotIndex, FGameplayTag EquipSlotTag, int32 EquipSlotIndex)
 {
     if (!InternalCheckIsServer(TEXT("QuickSwapItem")))
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
 
-    if (!Internal_CheckInventoryComponent(TEXT("QuickSwapItem")))
+    if (!InventoryComponent)
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
 
     // Obtém o item do inventário
-    UZfItemInstance* ItemFromInventory =
-        InventoryComponent->GetItemAtSlot(InventorySlotIndex);
+    UZfItemInstance* ItemFromInventory = InventoryComponent->GetItemAtSlot(InventorySlotIndex);
 
     if (!ItemFromInventory)
     {
@@ -197,8 +144,7 @@ UZfItemInstance* UZfEquipmentComponent::GetItemAtEquipmentSlot(FGameplayTag Equi
     return SlotEntry ? SlotEntry->ItemInstance.Get() : nullptr;
 }
 
-bool UZfEquipmentComponent::IsItemEquipped(
-    UZfItemInstance* ItemInstance) const
+bool UZfEquipmentComponent::IsItemEquipped(UZfItemInstance* ItemInstance) const
 {
     if (!ItemInstance)
     {
@@ -277,60 +223,6 @@ FGameplayTag UZfEquipmentComponent::GetEquipmentSlotOfItem(UZfItemInstance* Item
     return ZfEquipmentTags::EquipmentSlots::Slot_None;
 }
 
-bool UZfEquipmentComponent::CanEquipItemOld(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const
-{
-    if (!ItemInstance)
-    {
-        OutReason = EZfItemMechanicResult::Failed_ItemNotFound;
-        return false;
-    }
-
-    // Verifica se tem o fragment Equippable
-    const UZfFragment_Equippable* EquippableFragment = ItemInstance->GetFragment<UZfFragment_Equippable>();
-
-    if (!EquippableFragment)
-    {
-        OutReason = EZfItemMechanicResult::Failed_CannotEquip;
-        return false;
-    }
-
-    // Verifica se o item está quebrado
-    if (ItemInstance->bIsBroken)
-    {
-        OutReason = EZfItemMechanicResult::Failed_ItemBroken;
-        return false;
-    }
-
-    // Verifica se o slot alvo está bloqueado
-    if (IsEquipmentSlotBlocked(EquippableFragment->EquipmentTags))
-    {
-        OutReason = EZfItemMechanicResult::Failed_SlotBlocked;
-        return false;
-    }
-
-    // Verifica tags de requisito do ator
-    if (!EquippableFragment->RequiredActorTags.IsEmpty())
-    {
-        // Obtém as tags do ator via AbilitySystem
-        UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
-
-        if (ASC)
-        {
-            FGameplayTagContainer ActorTags;
-            ASC->GetOwnedGameplayTags(ActorTags);
-
-            if (!ActorTags.HasAll(EquippableFragment->RequiredActorTags))
-            {
-                OutReason = EZfItemMechanicResult::Failed_IncompatibleItem;
-                return false;
-            }
-        }
-    }
-
-    OutReason = EZfItemMechanicResult::Success;
-    return true;
-}
-
 // ============================================================
 // COMBO SETS
 // ============================================================
@@ -360,7 +252,7 @@ TArray<FZfActiveSetBonus> UZfEquipmentComponent::GetAllActiveSetBonuses() const
 
 void UZfEquipmentComponent::OnBackpackEquipped(int32 ExtraSlots)
 {
-    if (!Internal_CheckInventoryComponent(TEXT("OnBackpackEquipped")))
+    if (!InventoryComponent)
     {
         return;
     }
@@ -372,7 +264,7 @@ void UZfEquipmentComponent::OnBackpackEquipped(int32 ExtraSlots)
 
 void UZfEquipmentComponent::OnBackpackUnequipped(int32 ExtraSlots)
 {
-    if (!Internal_CheckInventoryComponent(TEXT("OnBackpackUnequipped")))
+    if (!InventoryComponent)
     {
         return;
     }
@@ -424,25 +316,7 @@ void UZfEquipmentComponent::Internal_InitializeEquipmentSlots()
         EquipmentList.EquippedItems.Num());
 }
 
-void UZfEquipmentComponent::Internal_FindInventoryComponent()
-{
-    if (GetOwner())
-    {
-        InventoryComponent =
-            GetOwner()->FindComponentByClass<UZfInventoryComponent>();
-
-        if (!InventoryComponent)
-        {
-            UE_LOG(LogZfInventory, Warning,
-                TEXT("UZfEquipmentComponent::Internal_FindInventoryComponent — "
-                     "UZfInventoryComponent não encontrado no ator '%s'."),
-                *GetOwner()->GetName());
-        }
-    }
-}
-
-UAbilitySystemComponent*
-UZfEquipmentComponent::Internal_GetAbilitySystemComponent() const
+UAbilitySystemComponent* UZfEquipmentComponent::Internal_GetAbilitySystemComponent() const
 {
     if (!GetOwner())
     {
@@ -693,46 +567,58 @@ const FZfEquipmentSlotEntry* UZfEquipmentComponent::Internal_FindSlotEntryConst(
     return nullptr;
 }
 
-int32 UZfEquipmentComponent::Internal_GenerateReplicationKey() const
+
+
+
+
+
+
+
+// ============================================================
+// Constructor
+// ============================================================
+
+UZfEquipmentComponent::UZfEquipmentComponent()
 {
-    // Gera uma chave única baseada no tamanho atual do array
-    // + um offset para evitar colisões
-    static int32 KeyCounter = 0;
-    return ++KeyCounter;
+    PrimaryComponentTick.bCanEverTick = false;
+
+    // Replicado para todos — outros jogadores precisam ver
+    // os itens equipados para visuais e animações
+    SetIsReplicatedByDefault(true);
+    bReplicateUsingRegisteredSubObjectList = true;
 }
 
-bool UZfEquipmentComponent::Internal_CheckInventoryComponent(const FString& FunctionName) const
+// ============================================================
+// REPLICAÇÃO
+// ============================================================
+
+void UZfEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    if (!InventoryComponent)
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    // EquipmentList replicado para todos — visuais de outros jogadores
+    DOREPLIFETIME(UZfEquipmentComponent, EquipmentList);
+
+    // Estado do OffHand bloqueado replicado para todos
+    DOREPLIFETIME(UZfEquipmentComponent, bOffHandSlotBlocked);
+}
+
+// ============================================================
+// CICLO DE VIDA - BEGINPLAY, TICK...
+// ============================================================
+
+void UZfEquipmentComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // Busca o InventoryComponent no ator dono
+    InventoryComponent = Cast<AZfPlayerState>(GetOwner())->FindComponentByClass<UZfInventoryComponent>();
+
+    if (GetOwner())
     {
-        UE_LOG(LogZfInventory, Error,
-            TEXT("UZfEquipmentComponent::%s — "
-                 "InventoryComponent não disponível."),
-            *FunctionName);
-        return false;
+        InventoryComponent = Cast<AZfPlayerState>(GetOwner())->FindComponentByClass<UZfInventoryComponent>();
     }
-    return true;
 }
-
-// ============================================================
-// DEBUG
-// ============================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // ============================================================
@@ -743,7 +629,7 @@ void FZfEquipmentSlotEntry::PreReplicatedRemove(const FZfEquipmentList& InArrayS
 {
     if (InArraySerializer.OwnerComponent && ItemInstance)
     {
-        InArraySerializer.OwnerComponent->OnItemUnequipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+        InArraySerializer.OwnerComponent->OnItemUnequipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
     }
 }
 
@@ -751,7 +637,7 @@ void FZfEquipmentSlotEntry::PostReplicatedAdd(const FZfEquipmentList& InArraySer
 {
     if (InArraySerializer.OwnerComponent && ItemInstance)
     {
-        InArraySerializer.OwnerComponent->OnItemEquipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+        InArraySerializer.OwnerComponent->OnItemEquipped.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
     }
 }
 
@@ -791,7 +677,7 @@ void UZfEquipmentComponent::ServerTryUnequipItem_Implementation(FGameplayTag Slo
 
 EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemFromInventory, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag)
 {
-    if (ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First() != SlotTag)
+    if (SlotTag != SlotTag.EmptyTag && ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag != SlotTag)
     {
         return EZfItemMechanicResult::Failed_CannotEquip;
     }
@@ -813,7 +699,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
     // Tenta Equipar Mochila
     if (ItemFromInventory->GetFragment<UZfFragment_InventoryExpansion>())
     {
-        if (TryEquipBackpack(EquippableFragment->EquipmentTags.First(), FromInventorySlot, SlotPosition) == EZfItemMechanicResult::Success)
+        if (TryEquipBackpack(EquippableFragment->EquipmentSlotTag, FromInventorySlot, SlotPosition) == EZfItemMechanicResult::Success)
         {
             return EZfItemMechanicResult::Success;
         }
@@ -824,7 +710,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
     }
 
     // Verifica se tenho item ja equipado
-    if (UZfItemInstance* EquipedItem = GetItemAtSlotTag(EquippableFragment->EquipmentTags.First(), SlotPosition))
+    if (UZfItemInstance* EquipedItem = GetItemAtSlotTag(EquippableFragment->EquipmentSlotTag, SlotPosition))
     {
         // Remove o item atual do equipamento
         // Equipa o item que veio do inventário
@@ -837,7 +723,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
         InventoryComponent->TryAddItemToSpecificSlot(EquipedItem, FromInventorySlot);
 
         EquipmentList.MarkArrayDirty();
-        OnItemEquipped.Broadcast(ItemFromInventory,ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+        OnItemEquipped.Broadcast(ItemFromInventory,ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
 
         return EZfItemMechanicResult::Success;
     }
@@ -846,7 +732,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
         // Adiciona o item ao EquipmentList e registra para replicação
         InternalEquipItem(ItemFromInventory, SlotPosition);
         EquipmentList.MarkArrayDirty();
-        OnItemEquipped.Broadcast(ItemFromInventory,EquippableFragment->EquipmentTags.First(), SlotPosition);
+        OnItemEquipped.Broadcast(ItemFromInventory,EquippableFragment->EquipmentSlotTag, SlotPosition);
 
         // Remove o item do inventário — ele agora pertence ao equipamento
         InventoryComponent->TryRemoveItemFromInventory(FromInventorySlot);
@@ -877,7 +763,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
     // Tenta Equipar Mochila
     if (ItemInstanceInEquipment->GetFragment<UZfFragment_InventoryExpansion>())
     {
-        if (TryUnequipBackpack(ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), TagetInventorySlot, SlotPosition) == EZfItemMechanicResult::Success)
+        if (TryUnequipBackpack(ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, TagetInventorySlot, SlotPosition) == EZfItemMechanicResult::Success)
         {
             return EZfItemMechanicResult::Success;
         }
@@ -892,7 +778,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
     if (UZfItemInstance* ItemInstanceAtInventory = InventoryComponent->GetItemAtSlot(TagetInventorySlot))
     {
         // Slot do inventário ocupado
-        if (ItemInstanceAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First() == SlotTag)
+        if (ItemInstanceAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag == SlotTag)
         {
             // Posso Equipar o Item do Inventário
             if (CanEquipItem(ItemInstanceAtInventory,TagetInventorySlot,SlotPosition) == EZfItemMechanicResult::Success)
@@ -908,7 +794,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
                 InventoryComponent->TryAddItemToSpecificSlot(ItemInstanceInEquipment, TagetInventorySlot);
 
                 EquipmentList.MarkArrayDirty();
-                OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+                OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
 
                 return EZfItemMechanicResult::Success;
             }
@@ -918,7 +804,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
         {
             InternalUnequipItem(ItemInstanceInEquipment, SlotPosition);
             EquipmentList.MarkArrayDirty();
-            OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+            OnItemUnequipped.Broadcast(ItemInstanceInEquipment,ItemInstanceInEquipment->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
 
             // Adiciona no primeiro slot vazio disponível
             InventoryComponent->TryAddItemToInventory(ItemInstanceInEquipment);
@@ -976,7 +862,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
             
             EquipmentList.MarkArrayDirty();
-            OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+            OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
 
 
             return EZfItemMechanicResult::Success;
@@ -1005,7 +891,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
                 InventoryComponent->UpdateSlotCountFromEquippedBackpack();
                 
                 EquipmentList.MarkArrayDirty();
-                OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+                OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
                 
                 return EZfItemMechanicResult::Success;
             }
@@ -1026,7 +912,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
         InventoryComponent->TryRemoveItemFromInventory(FromInventorySlot);
         InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
-        OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+        OnItemEquipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
         
         return EZfItemMechanicResult::Success;
     }
@@ -1066,7 +952,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
             InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, TargetInventorySlot);
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
             
-            OnItemUnequipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+            OnItemUnequipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
             EquipmentList.MarkArrayDirty();
 
             return EZfItemMechanicResult::Success;
@@ -1094,7 +980,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
                 InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
                 InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
-                OnItemUnequipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+                OnItemUnequipped.Broadcast(BackpackAtInventory,BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
                 EquipmentList.MarkArrayDirty();
                 
                 return EZfItemMechanicResult::Success;
@@ -1123,7 +1009,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
             InventoryComponent->RelocateItemsAboveCapacity(InventoryComponent->GetAvailableDefaultSlots());
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
-            OnItemUnequipped.Broadcast(EquipedBackpack,EquipedBackpack->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First(), SlotPosition);
+            OnItemUnequipped.Broadcast(EquipedBackpack,EquipedBackpack->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
 
             
             return EZfItemMechanicResult::Success;
@@ -1145,7 +1031,7 @@ EZfItemMechanicResult UZfEquipmentComponent::CanEquipItem(UZfItemInstance* InIte
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
     
-    if (InItemInstance == GetItemAtSlotTag(InItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentTags.First()))
+    if (InItemInstance == GetItemAtSlotTag(InItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag))
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
@@ -1215,7 +1101,7 @@ void UZfEquipmentComponent::InternalEquipItem(UZfItemInstance* InItemInstance, i
     const UZfFragment_Equippable* EquippableFragment = InItemInstance->GetFragment<UZfFragment_Equippable>();
     
     FZfEquipmentSlotEntry NewSlot;
-    NewSlot.SlotTag = EquippableFragment->EquipmentTags.First();
+    NewSlot.SlotTag = EquippableFragment->EquipmentSlotTag;
     NewSlot.ItemInstance = InItemInstance;
     NewSlot.SlotPosition = SlotPosition;
     EquipmentList.EquippedItems.Add(NewSlot);
@@ -1278,3 +1164,10 @@ bool UZfEquipmentComponent::InternalCheckIsServer(const FString& FunctionName) c
     return true;
 }
 
+int32 UZfEquipmentComponent::Internal_GenerateReplicationKey() const
+{
+    // Gera uma chave única baseada no tamanho atual do array
+    // + um offset para evitar colisões
+    static int32 KeyCounter = 0;
+    return ++KeyCounter;
+}

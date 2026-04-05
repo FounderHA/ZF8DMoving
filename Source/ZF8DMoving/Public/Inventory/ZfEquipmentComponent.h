@@ -303,13 +303,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     FGameplayTag GetEquipmentSlotOfItem(UZfItemInstance* ItemInstance) const;
 
-    // Verifica se um item pode ser equipado neste componente.
-    // Faz todas as validações sem efetivamente equipar.
-    // @param ItemInstance — item a verificar
-    // @param OutReason — motivo de falha se não puder equipar
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    bool CanEquipItemOld(UZfItemInstance* ItemInstance, EZfItemMechanicResult& OutReason) const;
-
     // ----------------------------------------------------------
     // FUNÇÕES DE COMBO SET
     // ----------------------------------------------------------
@@ -402,9 +395,6 @@ private:
     // Inicializa os slots de equipamento com base em DefaultEquipmentSlots
     void Internal_InitializeEquipmentSlots();
 
-    // Busca o InventoryComponent no ator dono
-    void Internal_FindInventoryComponent();
-
     // Busca o AbilitySystemComponent no ator dono
     UAbilitySystemComponent* Internal_GetAbilitySystemComponent() const;
 
@@ -444,11 +434,6 @@ private:
 
     // Gera uma ReplicationKey única para novos slots
     int32 Internal_GenerateReplicationKey() const;
-
-    
-    // Valida se o InventoryComponent está disponível
-    bool Internal_CheckInventoryComponent(const FString& FunctionName) const;
-
 
 
 
