@@ -69,6 +69,34 @@ protected:
 
 
 public:
+	
+	// ─────────────────────────────────────────────────────────────────────
+	// Server RPCs — ponte entre widget (cliente) e abilities (servidor)
+	// Passa valores primitivos int32 para evitar problemas de replicação
+	// de UObjects pela rede. O objeto Request é criado no servidor.
+	// ─────────────────────────────────────────────────────────────────────
+ 
+	/** Distribui pontos nos atributos. Valores >= 0. */
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Progression")
+	void Server_SpendAttributePoints(
+		int32 Strength,
+		int32 Dexterity,
+		int32 Intelligence,
+		int32 Constitution,
+		int32 Conviction);
+ 
+	/** Remove pontos individualmente. Valores >= 0 (quanto remover de cada). */
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Progression")
+	void Server_RefundAttributePoint(
+		int32 Strength,
+		int32 Dexterity,
+		int32 Intelligence,
+		int32 Constitution,
+		int32 Conviction);
+ 
+	/** Reseta todos os pontos distribuídos de volta ao pool. Sem parâmetros. */
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Progression")
+	void Server_ResetAttributePoints();
 
 	
 };
