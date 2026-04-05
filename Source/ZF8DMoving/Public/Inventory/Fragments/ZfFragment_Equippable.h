@@ -37,7 +37,7 @@ public:
     // Slot de equipamento onde este item será colocado.
     // Ex: Helmet → Head, Boots → Feet, Sword → MainHand
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragment|Equippable", meta =(GameplayTagFilter = "EquipmentSlot"))
-    FGameplayTagContainer EquipmentTags;
+    FGameplayTag EquipmentSlotTag;
     
     // Define se o item ocupa uma ou duas mãos.
     // Só é relevante para itens nos slots MainHand e OffHand.
