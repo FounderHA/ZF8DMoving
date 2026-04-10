@@ -55,7 +55,7 @@ float UZfConvictionModMagnitudeCalculation::CalculateBaseMagnitude_Implementatio
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
 				if (Modifier.AffectedAttributeTag == ConvictionTag)
-					ItemConviction += Modifier.CurrentValue;
+					ItemConviction += Modifier.FinalValue;
 			}
 		}
 	}

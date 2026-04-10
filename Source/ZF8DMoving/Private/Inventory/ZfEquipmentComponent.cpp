@@ -336,56 +336,245 @@ UAbilitySystemComponent* UZfEquipmentComponent::Internal_GetAbilitySystemCompone
 
 void UZfEquipmentComponent::Internal_ApplyItemGameplayEffects(UZfItemInstance* ItemInstance)
 {
-    if (!ItemInstance)
-    {
-        return;
-    }
+    if (!ItemInstance) return;
 
     UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
     if (!ASC)
     {
-        UE_LOG(LogZfInventory, Warning, TEXT("UZfEquipmentComponent::Internal_ApplyItemGameplayEffects — " "AbilitySystemComponent não encontrado. " "GameplayEffects não serão aplicados."));
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("UZfEquipmentComponent::Internal_ApplyItemGameplayEffects — "
+                 "ASC não encontrado. Modifiers não serão aplicados."));
         return;
     }
 
-    // Aplica os GameplayEffects de cada modifier do item
+    UDataTable* ModifierDataTable = nullptr;
+    if (const UZfFragment_Modifiers* ModifierFragment = ItemInstance->GetFragment<UZfFragment_Modifiers>())
+    {
+        ModifierDataTable = ModifierFragment->GetLoadedModifierDataTable();
+    }
+
     for (FZfAppliedModifier& Modifier : ItemInstance->AppliedModifiers)
     {
-        // O ModifierSubsystem (parte futura) fornecerá o GE base
-        // e populará os modificadores em runtime via DataTable.
-        // Por ora, o handle é armazenado para remoção posterior.
-        UE_LOG(LogZfInventory, Verbose, TEXT("UZfEquipmentComponent::Internal_ApplyItemGameplayEffects — " "Aplicando modifier '%s' ao ASC."),
-        *Modifier.ModifierRowName.ToString());
+        // ItemProperty — ignorado ao equipar
+        if (Modifier.TargetType == EZfModifierTargetType::ItemProperty)
+        {
+            continue;
+        }
+
+        // ── 1. Busca RuleClass no DataTable ──────────────────────────────
+        TSubclassOf<UZfModifierRule> RuleClass = nullptr;
+        if (ModifierDataTable)
+        {
+            const FZfModifierDataTypes* ModData = ModifierDataTable->FindRow<FZfModifierDataTypes>(
+                Modifier.ModifierRowName, TEXT("Internal_ApplyItemGameplayEffects"));
+
+            if (ModData)
+            {
+                RuleClass = ModData->RuleClass;
+            }
+        }
+
+        // ── 2. Calcula FinalValue ─────────────────────────────────────────
+        Modifier.FinalValue = Modifier.CurrentValue;
+
+        if (RuleClass)
+        {
+            UZfModifierRule* RuleInstance = NewObject<UZfModifierRule>(GetTransientPackage(), RuleClass);
+            if (RuleInstance)
+            {
+                FZfModifierRuleContext Context;
+                Context.ASC          = ASC;
+                Context.ItemInstance = ItemInstance;
+                RuleInstance->BindToSource(Context);
+
+                Modifier.FinalValue = RuleInstance->Calculate(Modifier.CurrentValue);
+
+                ActiveModifierRules.FindOrAdd(ItemInstance).Add(
+                    Modifier.ModifierRowName, RuleInstance);
+
+                const FName CapturedRowName = Modifier.ModifierRowName;
+                RuleInstance->OnRuleValueChanged.AddLambda(
+                    [this, ItemInstance, CapturedRowName]()
+                    {
+                        if (UAbilitySystemComponent* InnerASC = Internal_GetAbilitySystemComponent())
+                        {
+                            Internal_OnModifierRuleValueChanged(ItemInstance, CapturedRowName, InnerASC);
+                        }
+                    });
+            }
+        }
+
+        // ── 3. Snapshot do valor aplicado ─────────────────────────────────
+        Modifier.AppliedValue = Modifier.FinalValue;
+
+        // ── 4. Aplica GE no ASC ───────────────────────────────────────────
+        if (Modifier.GameplayEffect.IsNull())
+        {
+            UE_LOG(LogZfInventory, Warning,
+                TEXT("Internal_ApplyItemGameplayEffects — Modifier '%s': "
+                     "GameplayEffect está nulo."),
+                *Modifier.ModifierRowName.ToString());
+            continue;
+        }
+
+        TSubclassOf<UGameplayEffect> GEClass = Modifier.GameplayEffect.LoadSynchronous();
+        if (!GEClass) continue;
+
+        FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+        EffectContext.AddSourceObject(GetOwner());
+
+        FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(GEClass, 1.f, EffectContext);
+        if (Spec.IsValid())
+        {
+            Modifier.ActiveEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+            UE_LOG(LogZfInventory, Log,
+                TEXT("Internal_ApplyItemGameplayEffects — Modifier '%s': "
+                     "GE aplicado. FinalValue=%.2f"),
+                *Modifier.ModifierRowName.ToString(), Modifier.FinalValue);
+        }
     }
 }
 
 void UZfEquipmentComponent::Internal_RemoveItemGameplayEffects(UZfItemInstance* ItemInstance)
 {
-    if (!ItemInstance)
-    {
-        return;
-    }
+    if (!ItemInstance) return;
 
     UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
-    if (!ASC)
-    {
-        return;
-    }
+    if (!ASC) return;
 
-    // Remove todos os GameplayEffects ativos dos modifiers
+    // Desativa Rules antes de remover os efeitos
+    Internal_DeactivateModifierRules(ItemInstance);
+
     for (FZfAppliedModifier& Modifier : ItemInstance->AppliedModifiers)
     {
+        // ItemProperty — ignorado ao desequipar
+        if (Modifier.TargetType == EZfModifierTargetType::ItemProperty)
+        {
+            continue;
+        }
+
         if (Modifier.ActiveEffectHandle.IsValid())
         {
             ASC->RemoveActiveGameplayEffect(Modifier.ActiveEffectHandle);
             Modifier.ActiveEffectHandle = FActiveGameplayEffectHandle();
 
-            UE_LOG(LogZfInventory, Verbose,
-                TEXT("UZfEquipmentComponent::Internal_RemoveItemGameplayEffects — "
-                     "Modifier '%s' removido do ASC."),
+            UE_LOG(LogZfInventory, Log,
+                TEXT("Internal_RemoveItemGameplayEffects — Modifier '%s': GE removido."),
                 *Modifier.ModifierRowName.ToString());
         }
     }
+}
+
+// ============================================================
+// MODIFIER RULES — RUNTIME
+// ============================================================
+
+void UZfEquipmentComponent::Internal_DeactivateModifierRules(UZfItemInstance* ItemInstance)
+{
+    TMap<FName, TObjectPtr<UZfModifierRule>>* RulesForItem = ActiveModifierRules.Find(ItemInstance);
+
+    if (!RulesForItem) return;
+
+    for (TPair<FName, TObjectPtr<UZfModifierRule>>& Pair : *RulesForItem)
+    {
+        if (Pair.Value)
+        {
+            // Desconecta os delegates da fonte e limpa o callback
+            Pair.Value->UnbindFromSource();
+            Pair.Value->OnRuleValueChanged.Clear();
+        }
+    }
+
+    // Remove o item do mapa — GC destrói as instâncias
+    ActiveModifierRules.Remove(ItemInstance);
+}
+
+void UZfEquipmentComponent::Internal_OnModifierRuleValueChanged(
+    UZfItemInstance* ItemInstance,
+    FName ModifierRowName,
+    UAbilitySystemComponent* ASC)
+{
+    if (!ItemInstance || !ASC) return;
+
+    // Encontra o modifier no ItemInstance
+    FZfAppliedModifier* Modifier = nullptr;
+    for (FZfAppliedModifier& Mod : ItemInstance->AppliedModifiers)
+    {
+        if (Mod.ModifierRowName == ModifierRowName)
+        {
+            Modifier = &Mod;
+            break;
+        }
+    }
+
+    if (!Modifier)
+    {
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("Internal_OnModifierRuleValueChanged — "
+                 "Modifier '%s' não encontrado no ItemInstance."),
+            *ModifierRowName.ToString());
+        return;
+    }
+
+    // Encontra a Rule ativa correspondente
+    TMap<FName, TObjectPtr<UZfModifierRule>>* RulesForItem = ActiveModifierRules.Find(ItemInstance);
+
+    if (!RulesForItem) return;
+
+    TObjectPtr<UZfModifierRule>* RulePtr = RulesForItem->Find(ModifierRowName);
+    if (!RulePtr || !(*RulePtr)) return;
+
+    // Recalcula o FinalValue com o novo estado da fonte
+    const float NewFinalValue = (*RulePtr)->Calculate(Modifier->CurrentValue);
+
+    Internal_ReapplyModifier(ItemInstance, *Modifier, NewFinalValue, ASC);
+}
+
+void UZfEquipmentComponent::Internal_ReapplyModifier(
+    UZfItemInstance* ItemInstance,
+    FZfAppliedModifier& Modifier,
+    float NewFinalValue,
+    UAbilitySystemComponent* ASC)
+{
+    // ItemProperty — ignorado no ciclo de equip/unequip
+    if (Modifier.TargetType == EZfModifierTargetType::ItemProperty)
+    {
+        return;
+    }
+
+    // Remove o GE com o valor antigo
+    if (Modifier.ActiveEffectHandle.IsValid())
+    {
+        ASC->RemoveActiveGameplayEffect(Modifier.ActiveEffectHandle);
+        Modifier.ActiveEffectHandle = FActiveGameplayEffectHandle();
+    }
+
+    // Atualiza o snapshot
+    Modifier.FinalValue   = NewFinalValue;
+    Modifier.AppliedValue = NewFinalValue;
+
+    // Reaplica o GE com o novo FinalValue
+    if (!Modifier.GameplayEffect.IsNull())
+    {
+        TSubclassOf<UGameplayEffect> GEClass = Modifier.GameplayEffect.LoadSynchronous();
+        if (GEClass)
+        {
+            FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+            EffectContext.AddSourceObject(GetOwner());
+
+            FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(GEClass, 1.f, EffectContext);
+            if (Spec.IsValid())
+            {
+                Modifier.ActiveEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+            }
+        }
+    }
+
+    UE_LOG(LogZfInventory, Log,
+        TEXT("Internal_ReapplyModifier — Modifier '%s': "
+             "GE reaplicado. Novo FinalValue=%.2f"),
+        *Modifier.ModifierRowName.ToString(), NewFinalValue);
 }
 
 void UZfEquipmentComponent::Internal_UpdateSetBonuses(UZfItemInstance* ItemInstance, bool bWasEquipped)
@@ -1101,14 +1290,17 @@ void UZfEquipmentComponent::InternalEquipItem(UZfItemInstance* InItemInstance, i
     const UZfFragment_Equippable* EquippableFragment = InItemInstance->GetFragment<UZfFragment_Equippable>();
     
     FZfEquipmentSlotEntry NewSlot;
-    NewSlot.SlotTag = EquippableFragment->EquipmentSlotTag;
+    NewSlot.SlotTag      = EquippableFragment->EquipmentSlotTag;
     NewSlot.ItemInstance = InItemInstance;
     NewSlot.SlotPosition = SlotPosition;
     EquipmentList.EquippedItems.Add(NewSlot);
     
     AddReplicatedSubObject(InItemInstance);
+
+    // Aplica GEs e ativa Rules dos modifiers
+    Internal_ApplyItemGameplayEffects(InItemInstance);
     
-    // Notifica os fragments — cada um faz sua responsabilidade
+    // Notifica os fragments
     InItemInstance->NotifyFragments_ItemEquipped(this, GetOwner());
 }
 
@@ -1116,15 +1308,18 @@ void UZfEquipmentComponent::InternalUnequipItem(UZfItemInstance* InItemInstance,
 {
     check(InItemInstance != nullptr);
 
+    // Remove GEs e desativa Rules antes de remover do array
+    Internal_RemoveItemGameplayEffects(InItemInstance);
+
     EquipmentList.EquippedItems.RemoveAll(
         [InItemInstance, SlotPosition](const FZfEquipmentSlotEntry& Entry)
         {
-            return Entry.ItemInstance == InItemInstance && Entry.SlotPosition == SlotPosition;
+            return Entry.ItemInstance == InItemInstance
+                && Entry.SlotPosition == SlotPosition;
         });
 
     RemoveReplicatedSubObject(InItemInstance);
 
-    // Notifica os fragments ANTES de remover — item ainda está no EquipmentList
     InItemInstance->NotifyFragments_ItemUnequipped(this, GetOwner());
 }
 

@@ -345,39 +345,45 @@ FZfAppliedModifier UZfItemGeneratorLibrary::RollSingleModifier(const FZfModifier
 {
     FZfAppliedModifier Applied;
 
-    // Cacheia informações do modifier para evitar lookup futuro no DataTable
-    Applied.ModifierClass     = ModifierData.ModifierClass;
-    Applied.bIsDebuffModifier = ModifierData.bIsDebuffModifier;
+    // ── Cacheia campos estáticos do DataTable ─────────────────────────────
+    // Evita lookups futuros no EquipmentComponent ao aplicar/remover.
+    Applied.ModifierClass        = ModifierData.ModifierClass;
+    Applied.bIsDebuffModifier    = ModifierData.bIsDebuffModifier;
+    Applied.AffectedAttributeTag = ModifierData.AffectedAttributeTag;
+    Applied.GameplayEffect       = ModifierData.GameplayEffect;
+    Applied.TargetType           = ModifierData.TargetType;
+    Applied.ItemPropertyTag      = ModifierData.ItemPropertyTag;
+    Applied.AwakeningCount       = 0;
 
-    // Busca os dados do tier do item neste modifier
+    // ── Roll de rank e valor ──────────────────────────────────────────────
     const FZfTierData* TierData = ModifierData.GetTierData(ItemTier);
     if (!TierData)
         return Applied;
 
-    // Sorteia o rank baseado nas probabilidades do tier
     Applied.CurrentRank = RollRankForTier(*TierData);
 
-    // Busca o range de valores do rank sorteado
     const FZfModifierRankData* RankData = ModifierData.GetRankData(Applied.CurrentRank);
     if (!RankData)
         return Applied;
 
     const float MinVal = RankData->RankRange.MinValue;
     const float MaxVal = RankData->RankRange.MaxValue * RankData->CurrentMaxPercentage;
-    
-    // Arredonda para 1 casa decimal sem erro de precisão de float
+
     Applied.CurrentValue = std::round(FMath::FRandRange(MinVal, MaxVal) * 10.0) / 10.0;
-    
-    // Calcula o percentual dentro do range — usado futuramente pelo Modifier UP
+
     const float Range = MaxVal - MinVal;
     Applied.CurrentRollPercentage = (Range > 0.f)
         ? (Applied.CurrentValue - MinVal) / Range
         : 1.f;
 
     Applied.MaxRollPercentage = RankData->CurrentMaxPercentage;
-    Applied.AffectedAttributeTag = ModifierData.AffectedAttributeTag;
-    Applied.GameplayEffect = ModifierData.GameplayEffect;
-    Applied.AwakeningCount    = 0;
+
+    // ── FinalValue e AppliedValue iniciais ────────────────────────────────
+    // FinalValue == CurrentValue na geração — a Rule só existe ao equipar.
+    // O EquipmentComponent recalculará FinalValue via Rule::Calculate()
+    // e atualizará AppliedValue no momento da aplicação.
+    Applied.FinalValue   = Applied.CurrentValue;
+    Applied.AppliedValue = 0.f;
 
     return Applied;
 }
@@ -541,9 +547,21 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     NewInstance->SetItemDefinition(InItemDefinition);
     ApplyGenerationToInstance(NewInstance, Rarity, Tier, Modifiers);
     NewInstance->SetQuality(Quality);
+    NewInstance->InitializeDurability();
     NewInstance->RecalculateItemAttributes();
     
-    
+    for (FZfAppliedModifier& Modifier : NewInstance->AppliedModifiers)
+    {
+        if (Modifier.TargetType != EZfModifierTargetType::ItemProperty) continue;
+        if (!Modifier.ItemPropertyTag.IsValid()) continue;
+
+        // Modifier estático — FinalValue == CurrentValue na geração
+        // Rule só existe no contexto de equip onde o ASC está disponível
+        Modifier.FinalValue   = Modifier.CurrentValue;
+        Modifier.AppliedValue = Modifier.CurrentValue;
+
+        NewInstance->ApplyPropertyModifier(Modifier.ItemPropertyTag, Modifier.FinalValue);
+    }
     
     UE_LOG(LogZfInventory, Log,
         TEXT("w: Item gerado. Raridade=%s | Tier=%d | Quality=%d | Modifiers=%d"),

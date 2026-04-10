@@ -14,6 +14,8 @@
 #include "ZfInventoryTags.h"                // Tags nativas do inventário
 #include "ZfModifierDataTypes.generated.h"
 
+class UZfModifierRule;
+
 // ============================================================
 // FZfModifierDataTypes
 // ============================================================
@@ -82,6 +84,26 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Pode ser Blueprint ou C++
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification")
     TSoftClassPtr<UGameplayEffect> GameplayEffect;
+    
+    // Classe da regra dinâmica deste modifier.
+    // Null = modifier estático: FinalValue == CurrentValue diretamente.
+    // Não-null = modifier dinâmico: Rule.Calculate(CurrentValue, Context) → FinalValue.
+    // Cada subclasse hardcoda sua fonte e sua fórmula.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification")
+    TSubclassOf<UZfModifierRule> RuleClass;
+
+    // Para onde o FinalValue é enviado ao aplicar o modifier.
+    // GASAttribute → usa GameplayEffect + MMC.
+    // ItemProperty  → aplica direto no ItemInstance via ItemPropertyTag.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification")
+    EZfModifierTargetType TargetType = EZfModifierTargetType::GASAttribute;
+
+    // Tag da propriedade do item afetada — preenchida quando TargetType == ItemProperty.
+    // Ex: "Item.Property.Durability", "Item.Property.MaxDurability"
+    // GameplayEffect pode ficar null neste caso.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification",
+        meta = (GameplayTagFilter = "Item.Property", EditCondition = "TargetType == EZfModifierTargetType::ItemProperty"))
+    FGameplayTag ItemPropertyTag;
 
     // Como o valor é aplicado no atributo via GAS
     // Additive = flat, MultiplyBase = percentual, Override = substitui
@@ -167,11 +189,13 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Retorna nullptr se o rank não existir.
     const FZfModifierRankData* GetRankData(int32 RankLevel) const
     {
-        // Ranks são 1-based, array é 0-based
-        const int32 RankIndex = RankLevel - 1;
-        if (ArrayRanks.IsValidIndex(RankIndex))
+        // Busca pelo valor de RankLevel — independente da ordem no array
+        for (const FZfModifierRankData& Rank : ArrayRanks)
         {
-            return &ArrayRanks[RankIndex];
+            if (Rank.RankLevel == RankLevel)
+            {
+                return &Rank;
+            }
         }
         UE_LOG(LogZfInventory, Warning,
             TEXT("FZfModifierDataTableRow::GetRankData — Rank %d não existe neste modifier."),

@@ -55,7 +55,7 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
 				if (Modifier.AffectedAttributeTag == StrengthTag)
-					ItemStrength += Modifier.CurrentValue;
+					ItemStrength += Modifier.FinalValue;
 			}
 		}
 	}

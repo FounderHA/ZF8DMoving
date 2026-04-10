@@ -9,11 +9,31 @@
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultGameplayTags.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultGameplayTags.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_AddAttributePoints.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/CharacterMenu/WBP_AddAttributePoints.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateConstitution.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateConstitution.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateDexterity.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateDexterity.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateIntelligence.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/GE_RecalculateIntelligence.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/BP_ItemDropper.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/BP_ItemDropper.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/DA_Sword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/DA_Sword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Items/DT_ModifierSword.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/DT_ModifierSword.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/MapBaseDebug.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/Inventory/Itens/WBP_ItemContextDescription.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/Inventory/Itens/WBP_ItemContextDescription.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerState.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/BP_PlayerState.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/Class/DA_Warrior.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ZF8DMoving/Player/Class/DA_Warrior.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ZF8DMoving/Player/LevelProgression/AWHIfijfijwa.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConstitutionModMagnitudeCalculation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConstitutionModMagnitudeCalculation.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConvictionModMagnitudeCalculation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConvictionModMagnitudeCalculation.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfDexterityModMagnitudeCalculation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfDexterityModMagnitudeCalculation.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfIntelligenceModMagnitudeCalculation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfIntelligenceModMagnitudeCalculation.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthModMagnitudeCalculation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthModMagnitudeCalculation.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/FunctionLibrary/ZfItemGeneratorLibrary.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/FunctionLibrary/ZfItemGeneratorLibrary.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfEquipmentComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemInstance.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/LevelProgression/ZfGA_SpendAttributePoints.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/LevelProgression/ZfGA_SpendAttributePoints.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/Zfmainattributetags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfMainAttributeTags.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfInventoryTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemInstance.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfModifierDataTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfModifierDataTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/LevelProgression/ZfAttributeSpendRequest.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/LevelProgression/ZfAttributeSpendRequest.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfGameplayTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfGameplayTags.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +53,10 @@
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Editor/UMGEditor/Private/WidgetBlueprintCompiler.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Private/HAL/MallocMimalloc.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Containers/SparseArray.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Containers/SparseSet.h.inl" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Misc/MTAccessDetector.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Templates/SharedPointerInternals.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectPtr.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/KismetTextLibrary.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/GameplayTags/Private/GameplayTagContainer.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -56,6 +79,13 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_SetPiece.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfFragment_Stackable.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Fragments/ZfItemFragment.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_AttributeBase.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_DurabilityBase.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_DurabilityRemaining.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_DurabilitySpent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_InversedVitalRatio.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_MoveSpeedThreshold.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/Modifiers/ZfRule_PercentOfMaxHealth.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfInventoryTypes.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemDefinition.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/Inventory/ZfItemPickup.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -83,6 +113,13 @@
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_SetPiece.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfFragment_Stackable.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Fragments/ZfItemFragment.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_AttributeBase.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_DurabilityBase.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_DurabilityRemaining.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_DurabilitySpent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_InversedVitalRatio.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_MoveSpeedThreshold.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/Modifiers/ZfRule_PercentOfMaxHealth.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfEquipmentTags.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemDefinition.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Public/Inventory/ZfItemPickup.h" root0="FORCE_HIGHLIGHTING" />
@@ -118,7 +155,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;Uproject.ZF8DMoving.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;founder/lvlprogressionverification&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;founder/modmodifier&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -135,10 +172,10 @@
         <option name="CONFIGURATION" value="DebugGame Editor" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../UE_5.7/Engine/Binaries/Win64/UnrealEditor-Win64-DebugGame.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\UEProjects\ZF8DMoving\ZF8DMoving.uproject&quot;" />
+        <option name="EXECUTABLE_PATH" value="C:/Program Files/Epic Games/UE_5.7/Engine/Binaries/Win64/UnrealEditor-Win64-DebugGame.exe" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\Unreal Project\ZF8DMoving\ZF8DMoving.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="D:\UE_5.7" />
+        <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.7" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -151,7 +188,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/ZF8DMoving-Win64-DebugGame.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="D:\UE_5.7" />
+        <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.7" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -161,10 +198,10 @@
         <option name="CONFIGURATION" value="Development Editor" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../UE_5.7/Engine/Binaries/Win64/UnrealEditor.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\UEProjects\ZF8DMoving\ZF8DMoving.uproject&quot;" />
+        <option name="EXECUTABLE_PATH" value="C:/Program Files/Epic Games/UE_5.7/Engine/Binaries/Win64/UnrealEditor.exe" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\Unreal Project\ZF8DMoving\ZF8DMoving.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="D:\UE_5.7" />
+        <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.7" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -177,7 +214,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/ZF8DMoving.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="D:\UE_5.7" />
+        <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.7" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -190,7 +227,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/ZF8DMoving-Win64-Shipping.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="D:\UE_5.7" />
+        <option name="WORKING_DIRECTORY" value="C:\Program Files\Epic Games\UE_5.7" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -311,6 +348,9 @@
       <workItem from="1775391692890" duration="7071000" />
       <workItem from="1775440819181" duration="2211000" />
       <workItem from="1775475974011" duration="318000" />
+      <workItem from="1775826612785" duration="14631000" />
+      <workItem from="1775854579409" duration="6889000" />
+      <workItem from="1775861656382" duration="411000" />
     </task>
     <servers />
   </component>

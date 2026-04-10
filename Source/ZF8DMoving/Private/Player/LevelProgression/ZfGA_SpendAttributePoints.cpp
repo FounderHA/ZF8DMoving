@@ -70,15 +70,13 @@ void UZfGA_SpendAttributePoints::ActivateAbility(
 	// ── Valida GE configurado ─────────────────────────────────────────────
 	if (!SpendEffectClass)
 	{
-		UE_LOG(LogTemp, Error,
-			TEXT("UZfGA_SpendAttributePoints: SpendEffectClass não configurado."));
+		UE_LOG(LogTemp, Error, TEXT("UZfGA_SpendAttributePoints: SpendEffectClass não configurado."));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	// ── Aplica o GE com todos os SetByCaller ──────────────────────────────
-	FGameplayEffectSpecHandle Spec =
-		MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, SpendEffectClass);
+	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, SpendEffectClass);
 
 	if (!Spec.IsValid())
 	{

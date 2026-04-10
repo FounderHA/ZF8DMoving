@@ -51,8 +51,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "AttributeSpend")
 	int32 GetTotalPointsToSpend() const
 	{
-		return StrengthPointsToAdd + DexterityPointsToAdd + IntelligencePointsToAdd
-		     + ConstitutionPointsToAdd + ConvictionPointsToAdd;
+		return StrengthPointsToAdd + DexterityPointsToAdd + IntelligencePointsToAdd + ConstitutionPointsToAdd + ConvictionPointsToAdd;
 	}
 
 	/** Retorna true se todos os campos são >= 0 (sem valores negativos). */
