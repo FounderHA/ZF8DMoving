@@ -53,6 +53,12 @@ class ZF8DMOVING_API UZfItemInstance : public UObject
 public:
 
     UZfItemInstance();
+    
+    UFUNCTION()
+    FORCEINLINE float GetCurrentDurability() const { return CurrentDurability; }
+    
+    UFUNCTION(Server, Reliable)
+    void SetCurrentDurability(float NewDurability);
 
     // ----------------------------------------------------------
     // INICIALIZAÇÃO
