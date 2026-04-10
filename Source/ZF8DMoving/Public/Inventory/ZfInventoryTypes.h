@@ -18,8 +18,6 @@
 // ============================================================
 
 
-
-
 // -----------------------------------------------------------
 // EZfItemType
 // Define a categoria principal do item.
@@ -298,6 +296,19 @@ enum class EZfModifierOperationType : uint8
 };
 
 // -----------------------------------------------------------
+// EZfModifierTargetType
+// Define para onde o FinalValue do modifier é enviado.
+// GASAttribute → aplica via GameplayEffect + MMC no atributo.
+// ItemProperty  → aplica direto em uma variável do ItemInstance.
+// -----------------------------------------------------------
+UENUM(BlueprintType)
+enum class EZfModifierTargetType : uint8
+{
+    GASAttribute    UMETA(DisplayName = "GAS Attribute"),    // Rota padrão: GE → MMC → Atributo
+    ItemProperty    UMETA(DisplayName = "Item Property"),    // Rota direta: variável do ItemInstance
+};
+
+// -----------------------------------------------------------
 // EZfCorruptionState
 // Estado de corrupção do item.
 // -----------------------------------------------------------
@@ -493,47 +504,67 @@ struct ZF8DMOVING_API FZfAppliedModifier
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     FName ModifierRowName = NAME_None;
     
-    // classe do modifier cacheada para evitar lookup no DataTable
-    // Preenchida ao rolar o modifier e usada para validar limites por classe
+    // Classe do modifier — cacheada para evitar lookup no DataTable
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     EZfModifierClass ModifierClass = EZfModifierClass::None;
 
-    // Tag do atributo GAS que este modifier afeta — cacheada do DataTable na geração
-    // Ex: AttributeSet.Damage.PhysicalDamage
+    // Para onde este modifier envia o FinalValue — cacheado do DataTable na geração
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    EZfModifierTargetType TargetType = EZfModifierTargetType::GASAttribute;
+
+    // Tag do atributo GAS afetado — usada quando TargetType == GASAttribute
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     FGameplayTag AffectedAttributeTag;
 
-    // GE cacheado do DataTable na geração — evita lookup posterior
+    // Tag da propriedade do ItemInstance afetada — usada quando TargetType == ItemProperty
+    // Ex: "Item.Property.Durability", "Item.Property.MaxDurability"
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    FGameplayTag ItemPropertyTag;
+
+    // GE cacheado do DataTable — usado quando TargetType == GASAttribute
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     TSoftClassPtr<UGameplayEffect> GameplayEffect;
     
     // Rank atual deste modifier (1 a 6)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
-    int32 CurrentRank = 0.0f;
+    int32 CurrentRank = 0;
 
-    // Valor atual do modifier (interpolado entre Min e Max do rank * MaxRollPercentage)
+    // Resultado do roll — fator multiplicador usado pela Rule.
+    // Para modifiers sem Rule, este é o valor final diretamente.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
-    float CurrentValue = 0.0;
+    float CurrentValue = 0.f;
+
+    // Resultado de RuleClass.Calculate(CurrentValue, Context).
+    // Nulo se RuleClass for null → FinalValue == CurrentValue.
+    // Este é o valor que o MMC lê (GASAttribute) ou que é aplicado
+    // diretamente na propriedade do item (ItemProperty).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    float FinalValue = 0.f;
+
+    // Snapshot do valor efetivamente aplicado no destino.
+    // Usado na remoção/reroll para reverter exatamente o que foi aplicado,
+    // independente de a Rule ter recalculado FinalValue depois.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
+    float AppliedValue = 0.f;
 
     // Percentual atual dentro do range (0.0 = mínimo, 1.0 = máximo base)
-    // Modifier UP aumenta este valor em 10% por uso
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
-    float CurrentRollPercentage = 0.0f;
+    float CurrentRollPercentage = 0.f;
 
     // Teto atual do percentual (1.0 base, aumenta com cada Awakening)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
-    float MaxRollPercentage = 1.0f;
+    float MaxRollPercentage = 1.f;
 
     // Quantas vezes este modifier foi despertado via Awakening
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     int32 AwakeningCount = 0;
 
-    // Se verdadeiro, este modifier é de debuff (gerado pela Corrupção)
+    // Se verdadeiro, este modifier é debuff gerado pela Corrupção
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modifier|Applied")
     bool bIsDebuffModifier = false;
 
-    // Handle do GameplayEffect ativo em runtime (não replicado diretamente)
-    // Gerenciado pelo EquipmentComponent ao equipar/desequipar
+    // Handle do GE ativo em runtime (não replicado)
+    // Válido apenas quando TargetType == GASAttribute
     FActiveGameplayEffectHandle ActiveEffectHandle;
 };
 

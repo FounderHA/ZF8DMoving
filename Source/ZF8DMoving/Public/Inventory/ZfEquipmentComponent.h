@@ -40,7 +40,11 @@
 #include "ZfInventoryTypes.h"
 #include "ZfItemInstance.h"
 #include "ZfItemDefinition.h"
+#include "Inventory/Modifiers/ZfModifierRule.h"
+#include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "ZfEquipmentComponent.generated.h"
+
+
 
 // Forward declarations
 class UZfInventoryComponent;
@@ -49,6 +53,7 @@ class UAbilitySystemComponent;
 class UGameplayEffect;
 class UZfFragment_Equippable;
 class UZfFragment_SetPiece;
+class UZfModifierRule;
 
 // ============================================================
 // DELEGATES
@@ -435,7 +440,26 @@ private:
     // Gera uma ReplicationKey única para novos slots
     int32 Internal_GenerateReplicationKey() const;
 
+    // ============================================================
+    // RULES ATIVAS — apenas servidor, nunca replicado
+    // Key externa: ItemInstance que possui os modifiers.
+    // Key interna: ModifierRowName que identifica o modifier.
+    // Ciclo de vida: criado em Internal_ApplyItemGameplayEffects,
+    // destruído em Internal_DeactivateModifierRules ao desequipar.
+    // ============================================================
+    TMap<TObjectPtr<UZfItemInstance>, TMap<FName, TObjectPtr<UZfModifierRule>>> ActiveModifierRules;
 
+    // Desvincula e destrói todas as Rules ativas de um item.
+    // Chamado antes de remover os efeitos ao desequipar.
+    void Internal_DeactivateModifierRules(UZfItemInstance* ItemInstance);
+
+    // Callback disparado por OnRuleValueChanged de uma Rule ativa.
+    // Recalcula o FinalValue e reaplica o modifier no destino correto.
+    void Internal_OnModifierRuleValueChanged(UZfItemInstance* ItemInstance, FName ModifierRowName, UAbilitySystemComponent* ASC);
+
+    // Reverte o AppliedValue atual e reaplica com o novo FinalValue.
+    // Lida com GASAttribute (remove/reaplica GE) e ItemProperty (reverte/aplica).
+    void Internal_ReapplyModifier(UZfItemInstance* ItemInstance, FZfAppliedModifier& Modifier, float NewFinalValue, UAbilitySystemComponent* ASC);
 
 
 

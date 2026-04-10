@@ -55,7 +55,7 @@ float UZfDexterityModMagnitudeCalculation::CalculateBaseMagnitude_Implementation
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
 				if (Modifier.AffectedAttributeTag == DexterityTag)
-					ItemDexterity += Modifier.CurrentValue;
+					ItemDexterity += Modifier.FinalValue;
 			}
 		}
 	}

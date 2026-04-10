@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Tags/ZfGameplayTags.h"
 #include "Inventory/Fragments/ZfFragment_ItemUnique.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "Inventory/Fragments/ZfFragment_QualityAttributes.h"
@@ -30,8 +31,7 @@ UZfItemInstance::UZfItemInstance()
 // REPLICAÇÃO
 // ============================================================
 
-void UZfItemInstance::GetLifetimeReplicatedProps(
-    TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UZfItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -49,9 +49,12 @@ void UZfItemInstance::GetLifetimeReplicatedProps(
 
     // Durabilidade — replicado para todos
     DOREPLIFETIME(UZfItemInstance, CurrentDurability);
+    DOREPLIFETIME(UZfItemInstance, BonusMaxDurability);
+    DOREPLIFETIME(UZfItemInstance, TotalMaxDurability);
     DOREPLIFETIME(UZfItemInstance, bIsRepairable);
     DOREPLIFETIME(UZfItemInstance, bIsBroken);
 
+    
     // Stats base — replicado para todos
     DOREPLIFETIME(UZfItemInstance, ItemAttributes);
 
@@ -74,6 +77,10 @@ void UZfItemInstance::SetCurrentDurability_Implementation(float NewDurability)
     if (CurrentDurability != NewDurability)
     {
         CurrentDurability = NewDurability;
+
+        // Notifica Rules dinâmicas baseadas em durabilidade.
+        // Binding feito pelo EquipmentComponent ao equipar o item.
+        OnDurabilityChanged.Broadcast(CurrentDurability);
     }
 }
 
@@ -113,6 +120,16 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
         Internal_InitializeUniqueModifiers();
     }
 
+    // Após inicializar os outros campos — garante que TotalMaxDurability
+    // está correto desde o momento da criação do item.
+    Internal_RecalculateTotalMaxDurability();
+    
+    if (TotalMaxDurability != 0.f)
+    {
+        SetCurrentDurability(TotalMaxDurability);
+    }
+    
+    
     // Calcula valor de mercado inicial
     RecalculateMarketValue();
 
@@ -121,6 +138,12 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
         *ItemGuid.ToString(),
         ItemTier,
         *UEnum::GetValueAsString(ItemRarity));
+}
+
+void UZfItemInstance::InitializeDurability()
+{
+    Internal_RecalculateTotalMaxDurability();
+    SetCurrentDurability(TotalMaxDurability);
 }
 
 // ============================================================
@@ -232,6 +255,21 @@ FText UZfItemInstance::GetItemName() const
         return FText::GetEmpty();
     }
     return ItemDefinition->ItemName;
+}
+
+float UZfItemInstance::GetCurrentDurability() const
+{
+    return CurrentDurability;
+}
+
+float UZfItemInstance::GetBonusMaxDurability() const
+{
+    return BonusMaxDurability;
+}
+
+float UZfItemInstance::GetTotalMaxDurability() const
+{
+    return TotalMaxDurability;
 }
 
 FGameplayTagContainer UZfItemInstance::GetItemTags() const
@@ -350,11 +388,10 @@ void UZfItemInstance::ApplyDurabilityDamage(float DamageAmount)
     }
 
     const float PreviousDurability = CurrentDurability;
-    CurrentDurability = FMath::Max(0.0f, CurrentDurability - DamageAmount);
+    SetCurrentDurability(FMath::Max(0.f, CurrentDurability - DamageAmount));
 
-    UE_LOG(LogZfInventory, Verbose,
-        TEXT("UZfItemInstance::ApplyDurabilityDamage — "
-             "GUID: %s | Dano: %.1f | Durabilidade: %.1f → %.1f"),
+    UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::ApplyDurabilityDamage — " 
+        "GUID: %s | Dano: %.1f | Durabilidade: %.1f → %.1f"),
         *ItemGuid.ToString(), DamageAmount, PreviousDurability, CurrentDurability);
 
     // Se zerou, quebra o item
@@ -925,10 +962,14 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
 
         // Cria o FZfAppliedModifier a partir dos dados da linha
         FZfAppliedModifier NewModifier;
-        NewModifier.ModifierRowName   = Handle.RowName;
-        NewModifier.ModifierClass     = ModifierRow->ModifierClass;
-        NewModifier.bIsDebuffModifier = ModifierRow->bIsDebuffModifier;
-
+        NewModifier.ModifierRowName      = Handle.RowName;
+        NewModifier.ModifierClass        = ModifierRow->ModifierClass;
+        NewModifier.bIsDebuffModifier    = ModifierRow->bIsDebuffModifier;
+        NewModifier.AffectedAttributeTag = ModifierRow->AffectedAttributeTag;
+        NewModifier.GameplayEffect       = ModifierRow->GameplayEffect;
+        NewModifier.TargetType           = ModifierRow->TargetType;
+        NewModifier.ItemPropertyTag      = ModifierRow->ItemPropertyTag;
+        
         // Itens únicos sempre usam o rank máximo disponível
         const int32 MaxRankIndex = ModifierRow->ArrayRanks.Num() - 1;
         if (ModifierRow->ArrayRanks.IsValidIndex(MaxRankIndex))
@@ -939,6 +980,8 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
             NewModifier.CurrentValue          = RankData.RankRange.MaxValue;
             NewModifier.CurrentRollPercentage = 1.0f;
             NewModifier.MaxRollPercentage     = 1.0f;
+            NewModifier.FinalValue   = NewModifier.CurrentValue;
+            NewModifier.AppliedValue = 0.f;
         }
         else
         {
@@ -976,6 +1019,98 @@ bool UZfItemInstance::Internal_CheckIsServer(const FString& FunctionName) const
 
     return true;
 }
+
+void UZfItemInstance::Internal_RecalculateTotalMaxDurability()
+{
+    float BaseMaxDurability = 0.f;
+
+    if (const UZfFragment_Durability* DurabilityFragment = GetFragment<UZfFragment_Durability>())
+    {
+        BaseMaxDurability = DurabilityFragment->MaxDurability;
+    }
+
+    TotalMaxDurability = BaseMaxDurability + BonusMaxDurability;
+
+    UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::Internal_RecalculateTotalMaxDurability — "
+        "Base=%.1f | Bonus=%.1f | Total=%.1f | GUID: %s"),
+        BaseMaxDurability, BonusMaxDurability, TotalMaxDurability,
+        *ItemGuid.ToString());
+}
+
+// ============================================================
+// APLICAÇÃO DE MODIFIER EM PROPRIEDADE DO ITEM
+// ============================================================
+
+void UZfItemInstance::ApplyPropertyModifier(const FGameplayTag& PropertyTag, float Value)
+{
+    if (!Internal_CheckIsServer(TEXT("ApplyPropertyModifier")))
+    {
+        return;
+    }
+    
+    // "Item.Property.MaxDurability" — adiciona bônus ao teto máximo
+    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::Item_MaxDurability;
+
+     if (PropertyTag == Tag_MaxDurability)
+    {
+         // Guard contra divisão por zero
+         const float NormalizedNewDurability = (TotalMaxDurability > 0.f) ? CurrentDurability / TotalMaxDurability : 1.f; 
+         
+        BonusMaxDurability += Value;
+         
+        Internal_RecalculateTotalMaxDurability();
+         
+        const float NewDurability = NormalizedNewDurability * TotalMaxDurability;
+        SetCurrentDurability(NewDurability);
+
+        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::ApplyPropertyModifier — "
+            "MaxDurability bonus +%.1f | Total Bonus: %.1f | GUID: %s"),
+            Value, BonusMaxDurability, *ItemGuid.ToString());
+    }
+    else
+    {
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("UZfItemInstance::ApplyPropertyModifier — "
+            "Tag '%s' não reconhecida. Adicione o case correspondente. GUID: %s"),
+            *PropertyTag.ToString(), *ItemGuid.ToString());
+    }
+}
+
+void UZfItemInstance::RevertPropertyModifier(const FGameplayTag& PropertyTag, float AppliedValue)
+{
+    if (!Internal_CheckIsServer(TEXT("RevertPropertyModifier")))
+    {
+        return;
+    }
+    
+    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::Item_MaxDurability;
+    
+    if (PropertyTag == Tag_MaxDurability)
+    {
+        // Guard contra divisão por zero
+        const float NormalizedNewDurability = (TotalMaxDurability > 0.f) ? CurrentDurability / TotalMaxDurability : 1.f; 
+        
+        // BonusMaxDurability nunca vai abaixo de zero
+        BonusMaxDurability = FMath::Max(0.f, BonusMaxDurability - AppliedValue);
+        
+        Internal_RecalculateTotalMaxDurability();
+        
+        const float NewDurability = NormalizedNewDurability * TotalMaxDurability;
+        SetCurrentDurability(NewDurability);
+
+        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::RevertPropertyModifier — "
+            "MaxDurability bonus -%.1f | Total Bonus: %.1f | GUID: %s"),
+            AppliedValue, BonusMaxDurability, *ItemGuid.ToString());
+    }
+    else
+    {
+        UE_LOG(LogZfInventory, Warning,
+            TEXT("UZfItemInstance::RevertPropertyModifier — "
+                 "Tag '%s' não reconhecida. GUID: %s"),
+            *PropertyTag.ToString(), *ItemGuid.ToString());
+    }
+}
+
 
 // ============================================================
 // DEBUG

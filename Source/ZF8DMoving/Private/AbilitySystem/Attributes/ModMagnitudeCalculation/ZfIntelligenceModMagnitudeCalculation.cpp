@@ -55,7 +55,7 @@ float UZfIntelligenceModMagnitudeCalculation::CalculateBaseMagnitude_Implementat
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
 				if (Modifier.AffectedAttributeTag == IntelligenceTag)
-					ItemIntelligence += Modifier.CurrentValue;
+					ItemIntelligence += Modifier.FinalValue;
 			}
 		}
 	}

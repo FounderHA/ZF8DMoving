@@ -55,7 +55,7 @@ float UZfConstitutionModMagnitudeCalculation::CalculateBaseMagnitude_Implementat
 			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
 			{
 				if (Modifier.AffectedAttributeTag == ConstitutionTag)
-					ItemConstitution += Modifier.CurrentValue;
+					ItemConstitution += Modifier.FinalValue;
 			}
 		}
 	}

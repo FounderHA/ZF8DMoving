@@ -41,6 +41,12 @@ class UZfInventoryComponent;
 class UZfEquipmentComponent;
 class UAbilitySystemComponent;
 
+
+// Disparado no servidor sempre que CurrentDurability muda.
+// Rules dinâmicas baseadas em durabilidade fazem bind aqui.
+// @param NewDurability — valor novo após a mudança
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemDurabilityChanged, float);
+
 // ============================================================
 // UZfItemInstance
 // ============================================================
@@ -53,9 +59,6 @@ class ZF8DMOVING_API UZfItemInstance : public UObject
 public:
 
     UZfItemInstance();
-    
-    UFUNCTION()
-    FORCEINLINE float GetCurrentDurability() const { return CurrentDurability; }
     
     UFUNCTION(Server, Reliable)
     void SetCurrentDurability(float NewDurability);
@@ -127,11 +130,20 @@ public:
     // Apenas relevante para itens com UZfFragment_Durability.
     // ----------------------------------------------------------
 
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Durability")
+    void InitializeDurability();
+    
     // Durabilidade atual do item.
     // Quando chega a 0: bônus desativados, item permanece equipado,
     // Widget notifica o player.
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
-    float CurrentDurability = 0.0f;
+    float CurrentDurability = 0.f;
+    
+    // Durabilidade máxima efetiva — MaxDurability do fragment + BonusMaxDurability.
+    // Atualizado automaticamente sempre que BonusMaxDurability muda.
+    // Use este valor para UI, clamping e qualquer leitura do teto máximo.
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
+    float TotalMaxDurability = 0.f;
 
     // Se verdadeiro, o item pode ser reparado.
     // Dinâmico — pode ser alterado via gameplay
@@ -145,6 +157,22 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
     bool bIsBroken = false;
 
+    // ----------------------------------------------------------
+    // DELEGATES DE PROPRIEDADE
+    // Disparados pelo servidor quando variáveis do item mudam.
+    // Rules dinâmicas fazem bind aqui para recalcular FinalValue.
+    // Não replicado — existe apenas no servidor.
+    // ----------------------------------------------------------
+
+    // Disparado quando CurrentDurability muda via SetCurrentDurability.
+    FOnItemDurabilityChanged OnDurabilityChanged;
+
+    // Bônus de durabilidade máxima concedido por modifiers do tipo ItemProperty.
+    // Somado à MaxDurability do ZfFragment_Durability para obter o teto efetivo.
+    // Revertido exatamente via AppliedValue ao remover o modifier.
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
+    float BonusMaxDurability = 0.f;
+    
     // ----------------------------------------------------------
     // STATS BASE
     // Valores escalados por ItemTier + CurrentQuality.
@@ -169,6 +197,30 @@ public:
     // Cada entrada é um modifier já rolado com rank e valor definidos.
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Modifiers")
     TArray<FZfAppliedModifier> AppliedModifiers;
+    
+    // ----------------------------------------------------------
+    // APLICAÇÃO DE MODIFIER EM PROPRIEDADE DO ITEM
+    // Usado pelo EquipmentComponent quando TargetType == ItemProperty.
+    // Deve ser chamado apenas no servidor.
+    // ----------------------------------------------------------
+
+    // Aplica o FinalValue de um modifier diretamente em uma
+    // propriedade do item identificada pela tag.
+    // O valor já aplicado é capturado pelo EquipmentComponent
+    // como AppliedValue no FZfAppliedModifier para reversão exata.
+    // @param PropertyTag  — identifica qual propriedade mudar
+    //                       ex: "Item.Property.Durability"
+    //                           "Item.Property.MaxDurability"
+    // @param Value        — FinalValue calculado pela Rule (ou CurrentValue se null)
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Modifier")
+    void ApplyPropertyModifier(const FGameplayTag& PropertyTag, float Value);
+
+    // Reverte exatamente o valor que foi aplicado anteriormente.
+    // Usa AppliedValue (snapshot) — nunca recalcula.
+    // @param PropertyTag  — mesma tag usada em ApplyPropertyModifier
+    // @param AppliedValue — snapshot capturado no momento da aplicação
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Modifier")
+    void RevertPropertyModifier(const FGameplayTag& PropertyTag, float AppliedValue);
 
     // ----------------------------------------------------------
     // CORRUPÇÃO
@@ -242,6 +294,19 @@ public:
     // Retorna texto vazio se ItemDefinition for nulo.
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
     FText GetItemName() const;
+    
+    // Retorna a durabilidade atual do item
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetCurrentDurability() const;
+  
+    // Retorna todo o valor bonus de Durabilidade do Item
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetBonusMaxDurability() const;
+    
+    // Retorna o Total de Durabilidade do item ja calculado
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetTotalMaxDurability() const;
+    
 
     // Retorna as tags do item via ItemDefinition.
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
@@ -423,6 +488,10 @@ private:
     // Verifica se este código está rodando no servidor.
     // Loga um warning se uma operação de servidor for chamada no cliente.
     bool Internal_CheckIsServer(const FString& FunctionName) const;
+    
+    // Recalcula TotalMaxDurability = fragment.MaxDurability + BonusMaxDurability.
+    // Chamado sempre que qualquer um dos dois valores muda.
+    void Internal_RecalculateTotalMaxDurability();
 
 
 public:
