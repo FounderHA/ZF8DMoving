@@ -69,6 +69,14 @@ void UZfItemInstance::GetLifetimeReplicatedProps(
 // INICIALIZAÇÃO
 // ============================================================
 
+void UZfItemInstance::SetCurrentDurability_Implementation(float NewDurability)
+{
+    if (CurrentDurability != NewDurability)
+    {
+        CurrentDurability = NewDurability;
+    }
+}
+
 void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition, int32 InItemTier, EZfItemRarity InItemRarity)
 {
     // Garante que está rodando no servidor

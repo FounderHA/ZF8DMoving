@@ -126,23 +126,23 @@ public:
 	// O valor final (Strength, Dexterity etc.) é calculado pelo MMC no ZfMainAttributeSet.
 	// -----------------------------------------------------------------------
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StrengthPoints, Category = "CharacterProgression|AllocatedPoints")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StrengthPoints, Category = "CharacterProgression|AllocatedPoints")
 	FGameplayAttributeData StrengthPoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, StrengthPoints)
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_DexterityPoints, Category = "CharacterProgression|AllocatedPoints")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DexterityPoints, Category = "CharacterProgression|AllocatedPoints")
 	FGameplayAttributeData DexterityPoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, DexterityPoints)
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_IntelligencePoints, Category = "CharacterProgression|AllocatedPoints")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_IntelligencePoints, Category = "CharacterProgression|AllocatedPoints")
 	FGameplayAttributeData IntelligencePoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, IntelligencePoints)
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ConstitutionPoints, Category = "CharacterProgression|AllocatedPoints")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ConstitutionPoints, Category = "CharacterProgression|AllocatedPoints")
 	FGameplayAttributeData ConstitutionPoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, ConstitutionPoints)
  
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ConvictionPoints, Category = "CharacterProgression|AllocatedPoints")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ConvictionPoints, Category = "CharacterProgression|AllocatedPoints")
 	FGameplayAttributeData ConvictionPoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, ConvictionPoints)
 

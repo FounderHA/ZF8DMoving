@@ -509,8 +509,7 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     // 1 — Sorteia raridade, tier e qualidade
     const EZfItemRarity Rarity  = RollRarity(RarityWeights);
     const int32 Tier            = RollTier(TierWeights);
-    const int32 Quality         = RollQuality(
-        QualityWeights, PlayerLevel, LevelBonuses, ActiveTags, TagBonuses);
+    const int32 Quality         = RollQuality(QualityWeights, PlayerLevel, LevelBonuses, ActiveTags, TagBonuses);
 
     // 2 — Sorteia quantidade de modifiers baseado na raridade
     const int32 ModifierCount = RollModifierCount(Rarity);

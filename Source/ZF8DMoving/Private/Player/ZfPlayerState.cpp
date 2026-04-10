@@ -156,8 +156,7 @@ void AZfPlayerState::Server_ResetAttributePoints_Implementation()
  
 	FGameplayEventData Payload;
  
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		Pawn,
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Pawn,
 		ZfProgressionTags::LevelProgression_Event_Character_ResetAttributePoints,
 		Payload
 	);

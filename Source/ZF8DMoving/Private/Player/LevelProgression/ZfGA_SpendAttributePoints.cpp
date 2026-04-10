@@ -111,8 +111,7 @@ void UZfGA_SpendAttributePoints::ActivateAbility(
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-const UZfAttributeSpendRequest* UZfGA_SpendAttributePoints::GetValidatedRequest(
-	const FGameplayEventData* TriggerEventData) const
+const UZfAttributeSpendRequest* UZfGA_SpendAttributePoints::GetValidatedRequest(const FGameplayEventData* TriggerEventData) const
 {
 	if (!TriggerEventData)
 	{
