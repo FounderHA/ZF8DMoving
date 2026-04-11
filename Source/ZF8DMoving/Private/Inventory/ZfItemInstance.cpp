@@ -155,16 +155,14 @@ void UZfItemInstance::RecalculateItemAttributes()
     ItemAttributes.Empty();
 
     // Busca o fragment que define os atributos por qualidade
-    const UZfFragment_QualityAttributes* QualityFragment =
-        GetFragment<UZfFragment_QualityAttributes>();
+    const UZfFragment_QualityAttributes* QualityFragment = GetFragment<UZfFragment_QualityAttributes>();
 
     if (!QualityFragment)
         return;
 
     // Busca o DataTable de modifiers internamente
     UDataTable* ModifierDataTable = nullptr;
-    const UZfFragment_Modifiers* ModifierFragment =
-        GetFragment<UZfFragment_Modifiers>();
+    const UZfFragment_Modifiers* ModifierFragment = GetFragment<UZfFragment_Modifiers>();
 
     if (ModifierFragment)
         ModifierDataTable = ModifierFragment->ModifierConfig.ModifierDataTable.LoadSynchronous();
@@ -186,8 +184,7 @@ void UZfItemInstance::RecalculateItemAttributes()
             {
                 // Busca os dados do modifier no DataTable
                 const FZfModifierDataTypes* ModData =
-                    ModifierDataTable->FindRow<FZfModifierDataTypes>(
-                        Mod.ModifierRowName, TEXT("RecalculateItemAttributes"));
+                    ModifierDataTable->FindRow<FZfModifierDataTypes>(Mod.ModifierRowName, TEXT("RecalculateItemAttributes"));
 
                 if (!ModData) continue;
 
@@ -197,14 +194,12 @@ void UZfItemInstance::RecalculateItemAttributes()
                 switch (ModData->OperationType)
                 {
                 // Soma flat ao bonus
-                case EZfModifierOperationType::Additive:
-                    AttributeValue.ModifierBonus += Mod.CurrentValue;
+                case EZfModifierOperationType::Additive:AttributeValue.ModifierBonus += Mod.FinalValue;
                     break;
 
                 // Soma percentual do BaseValue ao bonus
                 case EZfModifierOperationType::MultiplyBase:
-                    AttributeValue.ModifierBonus +=
-                        AttributeValue.BaseValue * (Mod.CurrentValue / 100.f);
+                    AttributeValue.ModifierBonus += AttributeValue.BaseValue * (Mod.CurrentValue / 100.f);
                     break;
 
                 // Substitui o FinalValue completamente e para o cálculo
@@ -217,8 +212,7 @@ void UZfItemInstance::RecalculateItemAttributes()
             }
 
             // Calcula o FinalValue com o bonus acumulado
-            AttributeValue.FinalValue =
-                AttributeValue.BaseValue + AttributeValue.ModifierBonus;
+            AttributeValue.FinalValue = AttributeValue.BaseValue + AttributeValue.ModifierBonus;
         }
 
         ItemAttributes.Add(AttributeValue);
