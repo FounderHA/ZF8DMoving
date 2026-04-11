@@ -33,7 +33,7 @@
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "ZfInventoryTypes.h"
-#include "ZfInventoryTags.h"
+#include "Tags/ZfGameplayTags.h"
 #include "ZfModifierDataTypes.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "ZfItemDefinition.generated.h"

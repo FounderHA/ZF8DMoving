@@ -17,7 +17,7 @@ float UZfRule_DurabilitySpent::Calculate_Implementation(float CurrentValue) cons
 	{
 		// Soma o bônus de modifier ao teto base do fragment
 		MaxDurability = DurabilityFragment->MaxDurability
-					  + CachedContext.ItemInstance->BonusMaxDurability;
+					  + CachedContext.ItemInstance->GetBonusMaxDurability();
 	}
 
 	if (MaxDurability <= 0.f) return CurrentValue;

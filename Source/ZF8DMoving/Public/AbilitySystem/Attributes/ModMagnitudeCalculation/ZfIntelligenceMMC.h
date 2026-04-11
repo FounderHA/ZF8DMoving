@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameplayModMagnitudeCalculation.h"
-#include "ZfConvictionModMagnitudeCalculation.generated.h"
+#include "ZfIntelligenceMMC.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfConvictionModMagnitudeCalculation : public UGameplayModMagnitudeCalculation
+class ZF8DMOVING_API UZfIntelligenceMMC : public UGameplayModMagnitudeCalculation
 {
 	GENERATED_BODY()
 	

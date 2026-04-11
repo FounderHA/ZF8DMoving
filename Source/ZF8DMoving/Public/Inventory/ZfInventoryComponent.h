@@ -74,24 +74,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryRefreshed);
 // UZfInventoryComponent
 // ============================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UENUM(BlueprintType)
 enum class EZfInventorySortType : uint8
 {
@@ -161,18 +143,6 @@ struct TStructOpsTypeTraits<FZfInventoryList> : public TStructOpsTypeTraitsBase2
 {
     enum { WithNetDeltaSerializer = true };
 };
-
-
-
-
-
-
-
-
-
-
-
-
 
 UCLASS(ClassGroup = (Zf),BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent

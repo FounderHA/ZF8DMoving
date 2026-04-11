@@ -57,11 +57,8 @@ class ZF8DMOVING_API UZfItemInstance : public UObject
     GENERATED_BODY()
 
 public:
-
-    UZfItemInstance();
     
-    UFUNCTION(Server, Reliable)
-    void SetCurrentDurability(float NewDurability);
+    UZfItemInstance();
 
     // ----------------------------------------------------------
     // INICIALIZAÇÃO
@@ -69,93 +66,17 @@ public:
     // Deve ser chamado APENAS no servidor.
     // ----------------------------------------------------------
 
-    // Inicializa o ItemInstance com sua definição e tier.
-    // Gera o GUID único, copia os dados base do ItemDefinition
-    // e rola os modifiers iniciais se aplicável.
-    // @param InItemDefinition — o PDA que define este item
-    // @param InItemTier — tier do item (0 a 5)
-    // @param InItemRarity — raridade do item
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    void InitializeItemInstance(UZfItemDefinition* InItemDefinition, int32 InItemTier, EZfItemRarity InItemRarity);
-
     // ----------------------------------------------------------
-    // IDENTIFICAÇÃO
+    // REPLICAÇÃO
     // ----------------------------------------------------------
 
-    // GUID único gerado ao criar o item — nunca muda.
-    // Usado para identificar o item na rede e no save game.
-    // Replicado para que clientes possam identificar o item.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Identity")
-    FGuid ItemGuid;
+    // Registra as propriedades que serão replicadas pela rede.
+    // Chamado automaticamente pelo Unreal antes de replicar.
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // Referência ao ItemDefinition (PDA) deste item.
-    // Soft reference replicada — clientes carregam o asset localmente.
-    // NUNCA modifique após a inicialização.
-    UPROPERTY(Replicated, BlueprintReadWrite, Category = "Item|Identity")
-    TObjectPtr<UZfItemDefinition> ItemDefinition;
-
-    // ----------------------------------------------------------
-    // PROGRESSÃO
-    // ----------------------------------------------------------
-
-    // Tier do item (0 a 5) — define o poder base e
-    // quais ranks de modifier podem aparecer.
-    // Definido ao dropar o item e nunca muda.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Progression")
-    int32 ItemTier = 0;
-
-    // Raridade do item — influencia quantidade de modifiers
-    // e valor de mercado.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Progression")
-    EZfItemRarity ItemRarity = EZfItemRarity::Common;
-
-    // Qualidade atual do item (0 a MAX_ITEM_QUALITY = 9).
-    // Aumenta via mecânica de upgrade usando o QualityDataTable.
-    // Escala os stats base ao ser alterada.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Progression")
-    int32 CurrentQuality = 0;
-
-    // ----------------------------------------------------------
-    // STACK
-    // Apenas relevante para itens com UZfFragment_Stackable.
-    // ----------------------------------------------------------
-
-    // Quantidade atual de itens neste stack.
-    // Ex: 15 poções de vida em um slot.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Stack")
-    int32 CurrentStack = 1;
-
-    // ----------------------------------------------------------
-    // DURABILIDADE
-    // Apenas relevante para itens com UZfFragment_Durability.
-    // ----------------------------------------------------------
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Durability")
-    void InitializeDurability();
-    
-    // Durabilidade atual do item.
-    // Quando chega a 0: bônus desativados, item permanece equipado,
-    // Widget notifica o player.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
-    float CurrentDurability = 0.f;
-    
-    // Durabilidade máxima efetiva — MaxDurability do fragment + BonusMaxDurability.
-    // Atualizado automaticamente sempre que BonusMaxDurability muda.
-    // Use este valor para UI, clamping e qualquer leitura do teto máximo.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
-    float TotalMaxDurability = 0.f;
-
-    // Se verdadeiro, o item pode ser reparado.
-    // Dinâmico — pode ser alterado via gameplay
-    // (ex: corrupção pode bloquear o reparo).
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
-    bool bIsRepairable = true;
-
-    // Se verdadeiro, o item está quebrado (CurrentDurability == 0).
-    // Todos os bônus são desativados enquanto este flag estiver ativo.
-    // Replicado para que a UI do cliente possa reagir.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
-    bool bIsBroken = false;
+    // Necessário para que UObjects possam ser replicados
+    // dentro do FFastArraySerializer do InventoryComponent.
+    virtual bool IsSupportedForNetworking() const override { return true; }
 
     // ----------------------------------------------------------
     // DELEGATES DE PROPRIEDADE
@@ -167,25 +88,109 @@ public:
     // Disparado quando CurrentDurability muda via SetCurrentDurability.
     FOnItemDurabilityChanged OnDurabilityChanged;
 
+private:
+
+    // ----------------------------------------------------------
+    // IDENTIFICAÇÃO
+    // ----------------------------------------------------------
+
+    // GUID único gerado ao criar o item — nunca muda.
+    // Usado para identificar o item na rede e no save game.
+    // Replicado para que clientes possam identificar o item.
+    UPROPERTY(Replicated)
+    FGuid ItemGuid;
+
+    // Referência ao ItemDefinition (PDA) deste item.
+    // Soft reference replicada — clientes carregam o asset localmente.
+    // NUNCA modifique após a inicialização.
+    UPROPERTY(Replicated)
+    TObjectPtr<UZfItemDefinition> ItemDefinition;
+
+    // ----------------------------------------------------------
+    // PROGRESSÃO
+    // ----------------------------------------------------------
+
+    // Tier do item (0 a 5) — define o poder base e
+    // quais ranks de modifier podem aparecer.
+    // Definido ao dropar o item e nunca muda.
+    UPROPERTY(Replicated)
+    int32 ItemTier = 0;
+
+    // Raridade do item — influencia quantidade de modifiers
+    // e valor de mercado.
+    UPROPERTY(Replicated)
+    EZfItemRarity ItemRarity = EZfItemRarity::Common;
+
+    // Qualidade atual do item (0 a MAX_ITEM_QUALITY = 9).
+    // Aumenta via mecânica de upgrade usando o QualityDataTable.
+    // Escala os stats base ao ser alterada.
+    UPROPERTY(Replicated)
+    int32 ItemQuality = 0;
+
+    // ----------------------------------------------------------
+    // STACK
+    // Apenas relevante para itens com UZfFragment_Stackable.
+    // ----------------------------------------------------------
+
+    // Quantidade atual de itens neste stack.
+    // Ex: 15 poções de vida em um slot.
+    UPROPERTY(Replicated)
+    int32 CurrentStack = 1;
+
+    // ----------------------------------------------------------
+    // DURABILIDADE
+    // Apenas relevante para itens com UZfFragment_Durability.
+    // ----------------------------------------------------------
+
+    // Durabilidade atual do item.
+    // Quando chega a 0: bônus desativados, item permanece equipado,
+    // Widget notifica o player.
+    UPROPERTY(Replicated)
+    float CurrentDurability = 0.f;
+    
+    // Durabilidade máxima efetiva — MaxDurability do fragment + BonusMaxDurability.
+    // Atualizado automaticamente sempre que BonusMaxDurability muda.
+    // Use este valor para UI, clamping e qualquer leitura do teto máximo.
+    UPROPERTY(Replicated)
+    float TotalMaxDurability = 0.f;
+
     // Bônus de durabilidade máxima concedido por modifiers do tipo ItemProperty.
     // Somado à MaxDurability do ZfFragment_Durability para obter o teto efetivo.
     // Revertido exatamente via AppliedValue ao remover o modifier.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Durability")
+    UPROPERTY(Replicated)
     float BonusMaxDurability = 0.f;
-    
+
+    // Se verdadeiro, o item pode ser reparado.
+    // Dinâmico — pode ser alterado via gameplay
+    // (ex: corrupção pode bloquear o reparo).
+    UPROPERTY(Replicated)
+    bool bIsRepairable = true;
+
+    // Se verdadeiro, o item está quebrado (CurrentDurability == 0).
+    // Todos os bônus são desativados enquanto este flag estiver ativo.
+    // Replicado para que a UI do cliente possa reagir.
+    UPROPERTY(Replicated)
+    bool bIsBroken = false;
+
     // ----------------------------------------------------------
-    // STATS BASE
-    // Valores escalados por ItemTier + CurrentQuality.
-    // Apenas os stats relevantes ao tipo de item terão
-    // valores diferentes de 0.
-    // Recalculado quando qualidade, modifiers ou set bonus mudam.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Attributes")
-    TArray<FZfItemAttributeValue> ItemAttributes;
-    
-    // Recalcula todos os atributos do item baseado na qualidade atual e modifiers.
-    // Deve ser chamado quando qualidade ou modifiers mudarem.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    void RecalculateItemAttributes();
+    // CORRUPÇÃO
+    // ----------------------------------------------------------
+
+    // Estado de corrupção atual do item.
+    UPROPERTY(Replicated)
+    EZfCorruptionState CorruptionState = EZfCorruptionState::None;
+
+    // ----------------------------------------------------------
+    // MARKET VALUE
+    // Calculado automaticamente em runtime baseado em:
+    // BaseMarketValue (ItemDefinition) * RarityMultiplier *
+    // TierMultiplier + ModifierRankBonus
+    // ----------------------------------------------------------
+
+    // Valor de venda calculado para NPCs.
+    // Recalculado sempre que modifiers, tier ou quality mudam.
+    UPROPERTY(Replicated)
+    float CalculatedMarketValue = 0.0f;
 
     // ----------------------------------------------------------
     // MODIFIERS
@@ -195,8 +200,100 @@ public:
 
     // Modifiers ativos neste item.
     // Cada entrada é um modifier já rolado com rank e valor definidos.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Modifiers")
+    UPROPERTY(Replicated)
     TArray<FZfAppliedModifier> AppliedModifiers;
+
+    // ----------------------------------------------------------
+    // STATS BASE
+    // Valores escalados por ItemTier + CurrentQuality.
+    // Apenas os stats relevantes ao tipo de item terão
+    // valores diferentes de 0.
+    // Recalculado quando qualidade, modifiers ou set bonus mudam.
+    UPROPERTY(Replicated)
+    TArray<FZfItemAttributeValue> ItemAttributes;
+    
+public:
+
+    // ----------------------------------------------------------
+    // FUNÇÕES DE ACESSO AOS DADOS
+    // ----------------------------------------------------------
+    
+    // Retorna o GUID único deste item.
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    FGuid GetItemGuid() const { return ItemGuid; }
+
+    // Retorna o ItemDefinition deste item.
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    UZfItemDefinition* GetItemDefinition() const { return ItemDefinition; }
+
+    // Retorna o nome do item via ItemDefinition.
+    // Retorna texto vazio se ItemDefinition for nulo.
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    FText GetItemName() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    int32 GetItemTier() const { return ItemTier; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    EZfItemRarity GetItemRarity() const { return ItemRarity; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    int32 GetItemQuality() const { return ItemQuality; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    int32 GetCurrentStack() const { return CurrentStack; }
+    
+    // Retorna a durabilidade atual do item
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetCurrentDurability() const { return CurrentDurability; }
+  
+    // Retorna todo o valor bonus de Durabilidade do Item
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetBonusMaxDurability() const { return BonusMaxDurability; }
+    
+    // Retorna o Total de Durabilidade do item ja calculado
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetTotalMaxDurability() const { return TotalMaxDurability; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    bool GetIsRepairable() const { return bIsRepairable; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    bool GetIsBroken() const { return bIsBroken; }
+    
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    EZfCorruptionState GetCorruptionState() const { return CorruptionState; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    float GetCalculatedMarketValue() const { return CalculatedMarketValue; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    TArray<FZfAppliedModifier> GetAppliedModifiers() const  { return AppliedModifiers; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    TArray<FZfItemAttributeValue> GetItemAttributes() const { return ItemAttributes; }
+
+    
+
+    // Inicializa o ItemInstance com sua definição e tier.
+    // Gera o GUID único, copia os dados base do ItemDefinition
+    // e rola os modifiers iniciais se aplicável.
+    // @param InItemDefinition — o PDA que define este item
+    // @param InItemTier — tier do item (0 a 5)
+    // @param InItemRarity — raridade do item
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void InitializeItemInstance(UZfItemDefinition* InItemDefinition, int32 InItemTier, EZfItemRarity InItemRarity);
+
+    UFUNCTION(Server, Reliable)
+    void SetCurrentDurability(float NewDurability);
+    
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Durability")
+    void InitializeDurability();
+
+    // Recalcula todos os atributos do item baseado na qualidade atual e modifiers.
+    // Deve ser chamado quando qualidade ou modifiers mudarem.
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    void RecalculateItemAttributes();
     
     // ----------------------------------------------------------
     // APLICAÇÃO DE MODIFIER EM PROPRIEDADE DO ITEM
@@ -222,25 +319,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Modifier")
     void RevertPropertyModifier(const FGameplayTag& PropertyTag, float AppliedValue);
 
-    // ----------------------------------------------------------
-    // CORRUPÇÃO
-    // ----------------------------------------------------------
-
-    // Estado de corrupção atual do item.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Corruption")
-    EZfCorruptionState CorruptionState = EZfCorruptionState::None;
-
-    // ----------------------------------------------------------
-    // MARKET VALUE
-    // Calculado automaticamente em runtime baseado em:
-    // BaseMarketValue (ItemDefinition) * RarityMultiplier *
-    // TierMultiplier + ModifierRankBonus
-    // ----------------------------------------------------------
-
-    // Valor de venda calculado para NPCs.
-    // Recalculado sempre que modifiers, tier ou quality mudam.
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Item|Economy")
-    float CalculatedMarketValue = 0.0f;
+    
     
     // ----------------------------------------------------------
     // FUNÇÕES DE ACESSO AOS FRAGMENTS
@@ -277,36 +356,6 @@ public:
     // @return fragment encontrado ou nullptr
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Fragments")
     UZfItemFragment* GetFragmentByClass(TSubclassOf<UZfItemFragment> FragmentClass) const;
-    
-    // ----------------------------------------------------------
-    // FUNÇÕES DE ACESSO AOS DADOS
-    // ----------------------------------------------------------
-
-    // Retorna o GUID único deste item.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    FGuid GetItemGuid() const { return ItemGuid; }
-
-    // Retorna o ItemDefinition deste item.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    UZfItemDefinition* GetItemDefinition() const { return ItemDefinition; }
-
-    // Retorna o nome do item via ItemDefinition.
-    // Retorna texto vazio se ItemDefinition for nulo.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    FText GetItemName() const;
-    
-    // Retorna a durabilidade atual do item
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    float GetCurrentDurability() const;
-  
-    // Retorna todo o valor bonus de Durabilidade do Item
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    float GetBonusMaxDurability() const;
-    
-    // Retorna o Total de Durabilidade do item ja calculado
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    float GetTotalMaxDurability() const;
-    
 
     // Retorna as tags do item via ItemDefinition.
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
@@ -324,8 +373,7 @@ public:
 
     // Define a quantidade do stack.
     // @param NewStack — nova quantidade (clampada entre 1 e MaxStackSize)
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server",
-        meta = (ToolTip = "Chamar apenas no servidor."))
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server", meta = (ToolTip = "Chamar apenas no servidor."))
     void SetCurrentStack(int32 NewStack);
 
     // ZfItemInstance.h
@@ -358,7 +406,6 @@ public:
     // @param RepairAmount — quantidade de durabilidade a restaurar
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Server")
     void RepairItemByAmount(float RepairAmount);
-    
 
     // Recalcula e atualiza o valor de mercado do item.
     // Chamado automaticamente ao mudar modifiers, tier ou quality.
@@ -429,13 +476,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Corruption")
     bool CorruptItem();
 
-    // Verifica se o item está corrompido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance|Corruption")
-    bool IsCorrupted() const
-    {
-        return CorruptionState == EZfCorruptionState::Corrupted;
-    }
-
     // ----------------------------------------------------------
     // NOTIFICAÇÃO AOS FRAGMENTS
     // Propaga eventos para todos os fragments do ItemDefinition.
@@ -448,32 +488,16 @@ public:
     void NotifyFragments_ItemRemovedFromInventory(UZfInventoryComponent* InventoryComponent);
 
     // Notifica todos os fragments que o item foi equipado.
-    void NotifyFragments_ItemEquipped(
-        UZfEquipmentComponent* EquipmentComponent,
-        AActor* EquippingActor);
+    void NotifyFragments_ItemEquipped(UZfEquipmentComponent* EquipmentComponent, AActor* EquippingActor);
 
     // Notifica todos os fragments que o item foi desequipado.
-    void NotifyFragments_ItemUnequipped(
-        UZfEquipmentComponent* EquipmentComponent,
-        AActor* UnequippingActor);
+    void NotifyFragments_ItemUnequipped(UZfEquipmentComponent* EquipmentComponent, AActor* UnequippingActor);
 
     // Notifica todos os fragments que o item quebrou.
     void NotifyFragments_ItemBroken();
 
     // Notifica todos os fragments que o item foi reparado.
     void NotifyFragments_ItemRepaired();
-
-    // ----------------------------------------------------------
-    // REPLICAÇÃO
-    // ----------------------------------------------------------
-
-    // Registra as propriedades que serão replicadas pela rede.
-    // Chamado automaticamente pelo Unreal antes de replicar.
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    // Necessário para que UObjects possam ser replicados
-    // dentro do FFastArraySerializer do InventoryComponent.
-    virtual bool IsSupportedForNetworking() const override { return true; }
 
 private:
 

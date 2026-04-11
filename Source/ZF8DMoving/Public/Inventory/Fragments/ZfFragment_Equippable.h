@@ -8,7 +8,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "Inventory/ZfInventoryTypes.h"
-#include "Inventory/ZfEquipmentTags.h"
+#include "Tags/ZfGameplayTags.h"
 #include "ZfFragment_Equippable.generated.h"
 
 UENUM(BlueprintType)

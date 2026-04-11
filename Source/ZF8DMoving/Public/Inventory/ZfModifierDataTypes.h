@@ -11,7 +11,7 @@
 #include "GameplayTagContainer.h"           // FGameplayTagContainer — compatibilidade por tag
 #include "GameplayEffect.h"                 // UGameplayEffect — efeito base do GAS
 #include "ZfInventoryTypes.h"               // EZfModifierClass, EZfModifierOperationType, etc.
-#include "ZfInventoryTags.h"                // Tags nativas do inventário
+#include "Tags/ZfGameplayTags.h"            // Tags nativas do inventário
 #include "ZfModifierDataTypes.generated.h"
 
 class UZfModifierRule;

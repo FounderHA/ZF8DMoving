@@ -1,7 +1,7 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 
 #include "Items/ZfItemDropper.h"
-#include "Inventory/ZfItemPickup.h"
+#include "Items/ZfItemPickup.h"
 #include "Components/SphereComponent.h"
 
 AZfItemDropper::AZfItemDropper()

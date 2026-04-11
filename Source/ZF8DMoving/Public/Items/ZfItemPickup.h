@@ -34,9 +34,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
-#include "ZfInventoryTypes.h"
-#include "ZfItemInstance.h"
-#include "ZfItemDefinition.h"
+#include "Inventory/ZfInventoryTypes.h"
+#include "Inventory/ZfItemInstance.h"
+#include "Inventory/ZfItemDefinition.h"
 #include "ZfItemPickup.generated.h"
 
 // Forward declarations
