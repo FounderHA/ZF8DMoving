@@ -84,7 +84,7 @@ bool UZfItemGeneratorLibrary::GetItemAttributeValue(
         Fragment->Entries[AttributeIndex];
 
     OutDisplayName = Entry.DisplayName;
-    OutValue       = Entry.GetValueForQuality(ItemInstance->CurrentQuality);
+    OutValue       = Entry.GetValueForQuality(ItemInstance->GetItemQuality());
 
     return true;
 }
@@ -550,7 +550,7 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
     NewInstance->InitializeDurability();
     NewInstance->RecalculateItemAttributes();
     
-    for (FZfAppliedModifier& Modifier : NewInstance->AppliedModifiers)
+    for (FZfAppliedModifier& Modifier : NewInstance->GetAppliedModifiers())
     {
         if (Modifier.TargetType != EZfModifierTargetType::ItemProperty) continue;
         if (!Modifier.ItemPropertyTag.IsValid()) continue;

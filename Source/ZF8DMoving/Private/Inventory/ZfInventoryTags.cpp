@@ -1,4 +1,4 @@
-#include "Inventory/ZfInventoryTags.h"
+#include "Tags/ZfInventoryTags.h"
 
 namespace ZfInventoryTags
 {

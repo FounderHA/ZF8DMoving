@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConstitutionModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfDexterityMMC.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfConstitutionModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfDexterityMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -26,43 +26,43 @@ float UZfConstitutionModMagnitudeCalculation::CalculateBaseMagnitude_Implementat
 	if (!PS) return Result;
 	
 	// --- Base ---
-	float BaseConstitution = 0.f;
+	float BaseDexterity = 0.f;
 	if (PS->CharacterClassData)
-		BaseConstitution = PS->CharacterClassData->Constitution;
+		BaseDexterity = PS->CharacterClassData->Dexterity;
 
 	// --- Alocado ---
 	
-	float AllocatedConstitution = 0.f;
+	float AllocatedDexterity = 0.f;
 
 	if (const UZfProgressionAttributeSet* ProgSet = ASC->GetSet<UZfProgressionAttributeSet>())
 	{
-		AllocatedConstitution = ProgSet->GetConstitutionPoints();
+		AllocatedDexterity = ProgSet->GetDexterityPoints();
 	}
 
 	// --- Itens equipados ---
-	float ItemConstitution = 0.f;
+	float ItemDexterity = 0.f;
 
 	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag ConstitutionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Constitution"));
+		const FGameplayTag DexterityTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Dexterity"));
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{
 			if (!Item) continue;
 
-			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
+			for (const FZfAppliedModifier& Modifier : Item->GetAppliedModifiers())
 			{
-				if (Modifier.AffectedAttributeTag == ConstitutionTag)
-					ItemConstitution += Modifier.FinalValue;
+				if (Modifier.AffectedAttributeTag == DexterityTag)
+					ItemDexterity += Modifier.FinalValue;
 			}
 		}
 	}
 
 	// --- Resultado ---
-	Result = BaseConstitution + AllocatedConstitution + ItemConstitution;
+	Result = BaseDexterity + AllocatedDexterity + ItemDexterity;
 
-	UE_LOG(LogTemp, Log, TEXT("ZfConstitutionMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseConstitution, ItemConstitution, Result);
+	UE_LOG(LogTemp, Log, TEXT("ZfDexterityMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseDexterity, ItemDexterity, Result);
 	return Result;
 }

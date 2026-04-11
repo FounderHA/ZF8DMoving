@@ -353,7 +353,7 @@ void UZfEquipmentComponent::Internal_ApplyItemGameplayEffects(UZfItemInstance* I
         ModifierDataTable = ModifierFragment->GetLoadedModifierDataTable();
     }
 
-    for (FZfAppliedModifier& Modifier : ItemInstance->AppliedModifiers)
+    for (FZfAppliedModifier& Modifier : ItemInstance->GetAppliedModifiers())
     {
         // ItemProperty — ignorado ao equipar
         if (Modifier.TargetType == EZfModifierTargetType::ItemProperty)
@@ -446,7 +446,7 @@ void UZfEquipmentComponent::Internal_RemoveItemGameplayEffects(UZfItemInstance* 
     // Desativa Rules antes de remover os efeitos
     Internal_DeactivateModifierRules(ItemInstance);
 
-    for (FZfAppliedModifier& Modifier : ItemInstance->AppliedModifiers)
+    for (FZfAppliedModifier& Modifier : ItemInstance->GetAppliedModifiers())
     {
         // ItemProperty — ignorado ao desequipar
         if (Modifier.TargetType == EZfModifierTargetType::ItemProperty)
@@ -499,7 +499,7 @@ void UZfEquipmentComponent::Internal_OnModifierRuleValueChanged(
 
     // Encontra o modifier no ItemInstance
     FZfAppliedModifier* Modifier = nullptr;
-    for (FZfAppliedModifier& Mod : ItemInstance->AppliedModifiers)
+    for (FZfAppliedModifier& Mod : ItemInstance->GetAppliedModifiers())
     {
         if (Mod.ModifierRowName == ModifierRowName)
         {
@@ -1232,7 +1232,7 @@ EZfItemMechanicResult UZfEquipmentComponent::CanEquipItem(UZfItemInstance* InIte
     }
 
     // Item com durabilidade zero — não pode ser equipado
-    if (InItemInstance->bIsBroken)
+    if (InItemInstance->GetIsBroken())
     {
         return EZfItemMechanicResult::Failed_ItemBroken;
     }

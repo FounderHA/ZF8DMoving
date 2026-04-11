@@ -22,4 +22,5 @@
 #include "ZfProgressionTags.h"
 #include "ZfMainAttributeTags.h"
 #include "ZfItemsTags.h"
-#include "Inventory/ZfInventoryTags.h"
+#include "ZfEquipmentTags.h"
+#include "ZfInventoryTags.h"

@@ -12,7 +12,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/ActorChannel.h"
-#include "Inventory/ZfItemPickup.h"
+#include "Items/ZfItemPickup.h"
 #include "Player/ZfPlayerState.h"
 
 // ============================================================
@@ -336,7 +336,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
     }
 
     // Garante que não remove mais do que o stack atual
-    const int32 AmountToRemove = FMath::Min(Amount, ItemInstance->CurrentStack);
+    const int32 AmountToRemove = FMath::Min(Amount, ItemInstance->GetCurrentStack());
     
     // Remove a quantidade — retorna true se o stack zerou
     if (ItemInstance->RemoveFromStack(AmountToRemove))
@@ -362,7 +362,7 @@ void UZfInventoryComponent::TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex
     if (!StackFrag) return;
 
     // Validação de quantidade
-    if (Amount <= 0 || Amount >= ItemInstance->CurrentStack) return;
+    if (Amount <= 0 || Amount >= ItemInstance->GetCurrentStack()) return;
 
     // Resolve slot de destino
     const int32 ResolvedSlot = (ToSlotIndex == INDEX_NONE) ? GetFirstEmptySlot() : ToSlotIndex;
@@ -378,7 +378,7 @@ void UZfInventoryComponent::TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex
     if (!NewItem) return;
 
     // 2. Subtrai do stack original
-    ItemInstance->SetCurrentStack(ItemInstance->CurrentStack - Amount);
+    ItemInstance->SetCurrentStack(ItemInstance->GetCurrentStack() - Amount);
     
     // 3. Marca o slot original como dirty
     if (FindSlotByIndex(FromSlotIndex)) InventoryList.MarkItemDirty(*FindSlotByIndex(FromSlotIndex));
@@ -713,7 +713,7 @@ bool UZfInventoryComponent::InternalTryStackWithExistingItems(UZfItemInstance* I
         }
 
         // Tenta empilhar
-        const int32 Overflow = Slot.ItemInstance->AddToStack(ItemInstance->CurrentStack);
+        const int32 Overflow = Slot.ItemInstance->AddToStack(ItemInstance->GetCurrentStack());
 
         // Atualiza o stack do item incoming
         ItemInstance->SetCurrentStack(Overflow);
@@ -829,30 +829,30 @@ void UZfInventoryComponent::InternalSortInventoryBySelected(EZfInventorySortType
         break;
 
     case EZfInventorySortType::ByRarity:
-        Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
+        Items.Sort([](UZfItemInstance& A, UZfItemInstance& B)
         {
-            return static_cast<uint8>(A.ItemRarity) > static_cast<uint8>(B.ItemRarity);
+            return static_cast<uint8>(A.GetItemRarity()) > static_cast<uint8>(B.GetItemRarity());
         });
         break;
 
     case EZfInventorySortType::ByTier:
         Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
         {
-            return A.ItemTier > B.ItemTier;
+            return A.GetItemTier() > B.GetItemTier();
         });
         break;
 
     case EZfInventorySortType::ByQuantity:
         Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
         {
-            return A.CurrentStack > B.CurrentStack;
+            return A.GetCurrentStack() > B.GetCurrentStack();
         });
         break;
 
     case EZfInventorySortType::ByQuality:
         Items.Sort([](const UZfItemInstance& A, const UZfItemInstance& B)
         {
-            return A.CurrentQuality > B.CurrentQuality;
+            return A.GetItemQuality() > B.GetItemQuality();
         });
         break;
 

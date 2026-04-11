@@ -42,7 +42,7 @@ void UZfItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
     // Progressão — replicado para todos
     DOREPLIFETIME(UZfItemInstance, ItemTier);
     DOREPLIFETIME(UZfItemInstance, ItemRarity);
-    DOREPLIFETIME(UZfItemInstance, CurrentQuality);
+    DOREPLIFETIME(UZfItemInstance, ItemQuality);
 
     // Stack — replicado para todos
     DOREPLIFETIME(UZfItemInstance, CurrentStack);
@@ -111,7 +111,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
     CurrentStack = 1;
 
     // Inicializa qualidade em 0
-    CurrentQuality = 0;
+    ItemQuality = 0;
     
 
     // Se for item Único, aplica modifiers fixos do PDA
@@ -175,7 +175,7 @@ void UZfItemInstance::RecalculateItemAttributes()
         FZfItemAttributeValue AttributeValue;
         AttributeValue.AttributeTag  = Entry.AttributeTag;
         AttributeValue.DisplayName   = Entry.DisplayName;
-        AttributeValue.BaseValue     = Entry.GetValueForQuality(CurrentQuality);
+        AttributeValue.BaseValue     = Entry.GetValueForQuality(ItemQuality);
         AttributeValue.ModifierBonus = 0.f;
         AttributeValue.FinalValue    = AttributeValue.BaseValue;
 
@@ -257,20 +257,7 @@ FText UZfItemInstance::GetItemName() const
     return ItemDefinition->ItemName;
 }
 
-float UZfItemInstance::GetCurrentDurability() const
-{
-    return CurrentDurability;
-}
 
-float UZfItemInstance::GetBonusMaxDurability() const
-{
-    return BonusMaxDurability;
-}
-
-float UZfItemInstance::GetTotalMaxDurability() const
-{
-    return TotalMaxDurability;
-}
 
 FGameplayTagContainer UZfItemInstance::GetItemTags() const
 {
@@ -754,7 +741,7 @@ bool UZfItemInstance::CorruptItem()
         return false;
     }
 
-    if (IsCorrupted())
+    if (GetCorruptionState() == EZfCorruptionState::Corrupted)
     {
         UE_LOG(LogZfInventory, Warning, TEXT("UZfItemInstance::CorruptItem — " "Item GUID: %s já está corrompido."), *ItemGuid.ToString());
         return false;
@@ -815,7 +802,7 @@ void UZfItemInstance::SetAppliedModifiers(const TArray<FZfAppliedModifier>& NewM
 
 void UZfItemInstance::SetQuality(int32 NewQuality)
 {
-    CurrentQuality = NewQuality;
+    ItemQuality = NewQuality;
     RecalculateItemAttributes();
 }
 

@@ -20,7 +20,7 @@ void UZfFragment_Equippable::OnItemEquipped(UZfItemInstance* OwningInstance, UZf
 	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
 	if (!ASC) return;
 
-	for (const FZfAppliedModifier& Modifier : OwningInstance->AppliedModifiers)
+	for (const FZfAppliedModifier& Modifier : OwningInstance->GetAppliedModifiers())
 	{
 		TSubclassOf<UGameplayEffect> GEClass = Modifier.GameplayEffect.LoadSynchronous();
 

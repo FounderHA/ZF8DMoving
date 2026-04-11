@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfDexterityModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfIntelligenceMMC.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfDexterityModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfIntelligenceMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -26,43 +26,43 @@ float UZfDexterityModMagnitudeCalculation::CalculateBaseMagnitude_Implementation
 	if (!PS) return Result;
 	
 	// --- Base ---
-	float BaseDexterity = 0.f;
+	float BaseIntelligence = 0.f;
 	if (PS->CharacterClassData)
-		BaseDexterity = PS->CharacterClassData->Dexterity;
+		BaseIntelligence = PS->CharacterClassData->Intelligence;
 
 	// --- Alocado ---
 	
-	float AllocatedDexterity = 0.f;
+	float AllocatedIntelligence = 0.f;
 
 	if (const UZfProgressionAttributeSet* ProgSet = ASC->GetSet<UZfProgressionAttributeSet>())
 	{
-		AllocatedDexterity = ProgSet->GetDexterityPoints();
+		AllocatedIntelligence = ProgSet->GetIntelligencePoints();
 	}
 
 	// --- Itens equipados ---
-	float ItemDexterity = 0.f;
+	float ItemIntelligence = 0.f;
 
 	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag DexterityTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Dexterity"));
+		const FGameplayTag IntelligenceTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Intelligence"));
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{
 			if (!Item) continue;
 
-			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
+			for (const FZfAppliedModifier& Modifier : Item->GetAppliedModifiers())
 			{
-				if (Modifier.AffectedAttributeTag == DexterityTag)
-					ItemDexterity += Modifier.FinalValue;
+				if (Modifier.AffectedAttributeTag == IntelligenceTag)
+					ItemIntelligence += Modifier.FinalValue;
 			}
 		}
 	}
 
 	// --- Resultado ---
-	Result = BaseDexterity + AllocatedDexterity + ItemDexterity;
+	Result = BaseIntelligence + AllocatedIntelligence + ItemIntelligence;
 
-	UE_LOG(LogTemp, Log, TEXT("ZfDexterityMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseDexterity, ItemDexterity, Result);
+	UE_LOG(LogTemp, Log, TEXT("ZfIntelligenceMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseIntelligence, AllocatedIntelligence, Result);
 	return Result;
 }

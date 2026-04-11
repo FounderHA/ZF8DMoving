@@ -1,7 +1,7 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 // ZfItemPickup.cpp
 
-#include "Inventory/ZfItemPickup.h"
+#include "Items/ZfItemPickup.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
@@ -463,8 +463,8 @@ void AZfItemPickup::DrawDebugPickupInfo() const
         const FString InfoText = FString::Printf(
             TEXT("[Pickup]\n%s\nTier: %d | Quality: %d\nGUID: %s"),
             *ItemInstance->GetItemName().ToString(),
-            ItemInstance->ItemTier,
-            ItemInstance->CurrentQuality,
+            ItemInstance->GetItemTier(),
+            ItemInstance->GetItemQuality(),
             *ItemInstance->GetItemGuid().ToString());
 
         DrawDebugString(

@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthMMC.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfStrengthMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -52,7 +52,7 @@ float UZfStrengthModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(
 		{
 			if (!Item) continue;
 
-			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
+			for (const FZfAppliedModifier& Modifier : Item->GetAppliedModifiers())
 			{
 				if (Modifier.AffectedAttributeTag == StrengthTag)
 					ItemStrength += Modifier.FinalValue;

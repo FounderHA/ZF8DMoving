@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConvictionModMagnitudeCalculation.h"
+#include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConstitutionMMC.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
 
 
-float UZfConvictionModMagnitudeCalculation::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UZfConstitutionMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	float Result = 0.f;
 
@@ -26,43 +26,43 @@ float UZfConvictionModMagnitudeCalculation::CalculateBaseMagnitude_Implementatio
 	if (!PS) return Result;
 	
 	// --- Base ---
-	float BaseConviction = 0.f;
+	float BaseConstitution = 0.f;
 	if (PS->CharacterClassData)
-		BaseConviction = PS->CharacterClassData->Conviction;
+		BaseConstitution = PS->CharacterClassData->Constitution;
 
 	// --- Alocado ---
 	
-	float AllocatedConviction = 0.f;
+	float AllocatedConstitution = 0.f;
 
 	if (const UZfProgressionAttributeSet* ProgSet = ASC->GetSet<UZfProgressionAttributeSet>())
 	{
-		AllocatedConviction = ProgSet->GetConvictionPoints();
+		AllocatedConstitution = ProgSet->GetConstitutionPoints();
 	}
 
 	// --- Itens equipados ---
-	float ItemConviction = 0.f;
+	float ItemConstitution = 0.f;
 
 	UZfEquipmentComponent* EquipmentComponent = PS->FindComponentByClass<UZfEquipmentComponent>();
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag ConvictionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Conviction"));
+		const FGameplayTag ConstitutionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Constitution"));
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{
 			if (!Item) continue;
 
-			for (const FZfAppliedModifier& Modifier : Item->AppliedModifiers)
+			for (const FZfAppliedModifier& Modifier : Item->GetAppliedModifiers())
 			{
-				if (Modifier.AffectedAttributeTag == ConvictionTag)
-					ItemConviction += Modifier.FinalValue;
+				if (Modifier.AffectedAttributeTag == ConstitutionTag)
+					ItemConstitution += Modifier.FinalValue;
 			}
 		}
 	}
 
 	// --- Resultado ---
-	Result = BaseConviction + AllocatedConviction + ItemConviction;
+	Result = BaseConstitution + AllocatedConstitution + ItemConstitution;
 
-	UE_LOG(LogTemp, Log, TEXT("ZfConvictionMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseConviction, ItemConviction, Result);
+	UE_LOG(LogTemp, Log, TEXT("ZfConstitutionMMC: Base=%.1f | Itens=%.1f | Total=%.1f"), BaseConstitution, ItemConstitution, Result);
 	return Result;
 }
