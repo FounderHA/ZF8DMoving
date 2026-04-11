@@ -268,7 +268,9 @@ public:
     float GetCalculatedMarketValue() const { return CalculatedMarketValue; }
 
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
-    TArray<FZfAppliedModifier> GetAppliedModifiers() const  { return AppliedModifiers; }
+    const TArray<FZfAppliedModifier>& GetAppliedModifiers() const { return AppliedModifiers; }
+    
+    TArray<FZfAppliedModifier>& GetAppliedModifiers() { return AppliedModifiers; }
 
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
     TArray<FZfItemAttributeValue> GetItemAttributes() const { return ItemAttributes; }
