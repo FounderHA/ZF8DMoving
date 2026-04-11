@@ -197,6 +197,8 @@ class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
 {
     GENERATED_BODY()
 
+    friend class UZfInventoryComponent;
+    
 public:
 
     UZfEquipmentComponent();

@@ -176,7 +176,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
 
     // Tenta adicionar o item ao inventário do coletor
     int32 OutSlotIndex = INDEX_NONE;
-    const EZfItemMechanicResult Result = CollectorInventory->TryAddItemToInventory(ItemInstance);
+    const EZfItemMechanicResult Result = CollectorInventory->TryPickupItem(ItemInstance);
 
     if (Result == EZfItemMechanicResult::Success)
     {

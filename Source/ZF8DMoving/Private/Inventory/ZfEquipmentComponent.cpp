@@ -389,12 +389,10 @@ void UZfEquipmentComponent::Internal_ApplyItemGameplayEffects(UZfItemInstance* I
 
                 Modifier.FinalValue = RuleInstance->Calculate(Modifier.CurrentValue);
 
-                ActiveModifierRules.FindOrAdd(ItemInstance).Add(
-                    Modifier.ModifierRowName, RuleInstance);
+                ActiveModifierRules.FindOrAdd(ItemInstance).Add(Modifier.ModifierRowName, RuleInstance);
 
                 const FName CapturedRowName = Modifier.ModifierRowName;
-                RuleInstance->OnRuleValueChanged.AddLambda(
-                    [this, ItemInstance, CapturedRowName]()
+                RuleInstance->OnRuleValueChanged.AddLambda([this, ItemInstance, CapturedRowName]()
                     {
                         if (UAbilitySystemComponent* InnerASC = Internal_GetAbilitySystemComponent())
                         {

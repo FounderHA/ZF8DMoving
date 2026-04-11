@@ -201,6 +201,16 @@ void UZfInventoryComponent::ServerTrySplitStack_Implementation(int32 FromSlotInd
 // ============================================================
 
 
+EZfItemMechanicResult UZfInventoryComponent::TryPickupItem(UZfItemInstance* ItemInstance)
+{
+    if (InternalCheckIsServer(TEXT("TryPickupItem")))
+    {
+        return TryAddItemToInventory(ItemInstance);
+    }
+    
+    return EZfItemMechanicResult::Failed_InvalidOperation;
+}
+
 EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstance* InItemInstance)
 {
     if (!InItemInstance)

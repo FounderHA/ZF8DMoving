@@ -51,13 +51,14 @@ FText UZfItemGeneratorLibrary::FormatModifierTooltip(const FZfAppliedModifier& A
     const FString MaxStr = bDetailMode ? FString::Printf(TEXT("%.1f)"), Max)     : TEXT("");
 
     FFormatNamedArguments Args;
-    Args.Add(TEXT("value"),      FText::FromString(FString::Printf(TEXT("%.1f"), AppliedModifier.CurrentValue)));
-    Args.Add(TEXT("min"),        FText::FromString(MinStr));
-    Args.Add(TEXT("max"),        FText::FromString(MaxStr));
-    Args.Add(TEXT("rank"),       FText::AsNumber(AppliedModifier.CurrentRank));
-    Args.Add(TEXT("maxrank"),    FText::AsNumber(ModifierData->GetMaxRankCount()));
-    Args.Add(TEXT("percentage"), FText::FromString(FString::Printf(TEXT("%.0f%%"), AppliedModifier.CurrentRollPercentage * 100.f)));
-    Args.Add(TEXT("awakening"),  FText::AsNumber(AppliedModifier.AwakeningCount));
+    Args.Add(TEXT("FinalValue"), FText::FromString(FString::Printf(TEXT("%.1f"), AppliedModifier.FinalValue)));
+    Args.Add(TEXT("Value"),      FText::FromString(FString::Printf(TEXT("%.1f"), AppliedModifier.CurrentValue)));
+    Args.Add(TEXT("Min"),        FText::FromString(MinStr));
+    Args.Add(TEXT("Max"),        FText::FromString(MaxStr));
+    Args.Add(TEXT("Rank"),       FText::AsNumber(AppliedModifier.CurrentRank));
+    Args.Add(TEXT("MaxRank"),    FText::AsNumber(ModifierData->GetMaxRankCount()));
+    Args.Add(TEXT("Percentage"), FText::FromString(FString::Printf(TEXT("%.0f%%"), AppliedModifier.CurrentRollPercentage * 100.f)));
+    Args.Add(TEXT("Awakening"),  FText::AsNumber(AppliedModifier.AwakeningCount));
 
     return FText::Format(ModifierData->TooltipFormat, Args);
 }
