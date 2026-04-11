@@ -22,5 +22,5 @@ float UZfRule_PercentOfMaxHealth::Calculate_Implementation(float CurrentValue) c
 
 	if (!bFound || MaxHealth <= 0.f) return 0.f;
 
-	return CurrentValue * MaxHealth / 100.f;
+	return CurrentValue / 100.f * MaxHealth;
 }

@@ -149,7 +149,9 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 
-protected:
+    friend class UZfEquipmentComponent;
+    
+private:
 
     // ============================================================
     // CONFIGURAÇÃO
@@ -157,12 +159,12 @@ protected:
 
     // Número inicial de slots do inventário.
     // Pode ser expandido via UZfFragment_InventoryExpansion (mochila).
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    UPROPERTY()
     int32 DefaultSlotCount = 5;
 
     // Número máximo absoluto de slots — nunca ultrapassa esse valor
     // mesmo com múltiplas mochilas equipadas.
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory|Config", meta = (ClampMin = "1", ClampMax = "100"))
+    UPROPERTY()
     int32 MaxAbsoluteSlotCount = 100;
         
     // ============================================================
@@ -175,7 +177,7 @@ protected:
 
     // Tamanho atual do inventário (número de slots disponíveis)
     // Replicado para que a UI do cliente possa exibir corretamente
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(Replicated)
     int32 CurrentSlotCount = 0;
     
     // Referência ao EquipmentComponent no mesmo ator.
@@ -220,6 +222,88 @@ public:
     // FUNÇÕES SERVER - GERENCIAMENTO
     // ============================================================
 
+    // ============================================================
+    // FUNÇÕES DE CONSULTA
+    // ============================================================
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetDefaultSlotCount() const { return DefaultSlotCount; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetMaxAbsoluteSlotCount() const { return MaxAbsoluteSlotCount; }
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetCurrentSlotCount() const { return CurrentSlotCount; }
+    
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    FZfInventoryList GetInventoryList() const { return InventoryList; }
+
+    
+    // Retorna o ItemInstance em um slot específico.
+    // Retorna nullptr se o slot estiver vazio ou inválido.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    UZfItemInstance* GetItemAtSlot(int32 SlotIndex) const;
+
+    // Retorna o índice do slot de um ItemInstance.
+    // Retorna INDEX_NONE se não encontrado.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetSlotIndexOfItem(UZfItemInstance* ItemInstance) const;
+
+    // Retorna o primeiro slot vazio disponível.
+    // Retorna INDEX_NONE se o inventário estiver cheio.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetFirstEmptySlot() const;
+
+    // Retorna todos os itens que possuem uma tag específica.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    TArray<UZfItemInstance*> GetItemsByTag(const FGameplayTag& Tag) const;
+
+    // Retorna o número de slots atualmente disponíveis (vazios).
+    //@param int32 - Para verificar quantos itens tem na mochila passe 
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableSlots() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableDefaultSlots() const;
+    
+    // Retorna quantos slots estão disponíveis considerando a capacidade padrão
+    // mais os slots extras da mochila sendo equipada.
+    // @param BackpackInstance — instância da mochila sendo equipada
+    // @return quantidade de slots livres no range expandido
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetAvailableSlotsWithExpansion(UZfItemInstance* BackpackInstance) const;
+
+    // Retorna quantos itens existem a partir de um slot específico até o final.
+    // Útil para verificar se há itens nos slots que serão perdidos
+    // ao trocar uma mochila maior por uma menor.
+    // @param InitialSlotIndex — slot inicial para contar
+    // @return quantidade de itens nos slots a partir de FromSlotIndex
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetItemCountFromInitialSlot(int32 InitialSlotIndex) const;
+
+    // Move itens dos slots acima da nova capacidade para os primeiros slots livres.
+    // @param NewCapacity — nova capacidade total após troca de mochila
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
+    void RelocateItemsAboveCapacity(int32 NewCapacity);
+    
+    // Retorna o número total de slots do inventário (incluindo ocupados).
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    int32 GetTotalSlots() const;
+
+    // Verifica se um slot está vazio.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    bool IsSlotEmpty(int32 SlotIndex) const;
+
+    // Retorna todos os ItemInstances do inventário (sem slots vazios).
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    TArray<UZfItemInstance*> GetAllItems() const;
+
+    // Verifica se um índice de slot é válido.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    bool IsValidSlotIndex(int32 SlotIndex) const;
+
+    FZfInventorySlot* FindSlotByIndex(int32 SlotIndex);
+    
     // Adiciona um item do inventário pela instancia.
     // @param ItemInstance — item adicionado
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
@@ -260,6 +344,12 @@ public:
     // @param EZfInventorySortType — Tipo de Reorganização
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTrySortInventory(EZfInventorySortType SortType);
+
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryPickupItem(UZfItemInstance* ItemInstance);
+    
+
+private:
     
     // ============================================================
     // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
@@ -306,80 +396,6 @@ public:
     // Atualiza o CurrentSlotCount baseado na mochila atualmente equipada.
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
     void UpdateSlotCountFromEquippedBackpack();
-    
-    // ============================================================
-    // FUNÇÕES DE CONSULTA
-    // ============================================================
-
-    // Retorna o ItemInstance em um slot específico.
-    // Retorna nullptr se o slot estiver vazio ou inválido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    UZfItemInstance* GetItemAtSlot(int32 SlotIndex) const;
-
-    // Retorna o índice do slot de um ItemInstance.
-    // Retorna INDEX_NONE se não encontrado.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetSlotIndexOfItem(UZfItemInstance* ItemInstance) const;
-
-    // Retorna o primeiro slot vazio disponível.
-    // Retorna INDEX_NONE se o inventário estiver cheio.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetFirstEmptySlot() const;
-
-    // Retorna todos os itens que possuem uma tag específica.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    TArray<UZfItemInstance*> GetItemsByTag(const FGameplayTag& Tag) const;
-
-    // Retorna o número de slots atualmente disponíveis (vazios).
-    //@param int32 - Para verificar quantos itens tem na mochila passe 
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetAvailableSlots() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetAvailableDefaultSlots() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetDefaultSlotCount() const { return DefaultSlotCount; }
-    
-    // Retorna quantos slots estão disponíveis considerando a capacidade padrão
-    // mais os slots extras da mochila sendo equipada.
-    // @param BackpackInstance — instância da mochila sendo equipada
-    // @return quantidade de slots livres no range expandido
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetAvailableSlotsWithExpansion(UZfItemInstance* BackpackInstance) const;
-
-    // Retorna quantos itens existem a partir de um slot específico até o final.
-    // Útil para verificar se há itens nos slots que serão perdidos
-    // ao trocar uma mochila maior por uma menor.
-    // @param InitialSlotIndex — slot inicial para contar
-    // @return quantidade de itens nos slots a partir de FromSlotIndex
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetItemCountFromInitialSlot(int32 InitialSlotIndex) const;
-
-    // Move itens dos slots acima da nova capacidade para os primeiros slots livres.
-    // @param NewCapacity — nova capacidade total após troca de mochila
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
-    void RelocateItemsAboveCapacity(int32 NewCapacity);
-    
-    // Retorna o número total de slots do inventário (incluindo ocupados).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    int32 GetTotalSlots() const;
-
-    // Verifica se um slot está vazio.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool IsSlotEmpty(int32 SlotIndex) const;
-
-    // Retorna todos os ItemInstances do inventário (sem slots vazios).
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    TArray<UZfItemInstance*> GetAllItems() const;
-
-    // Verifica se um índice de slot é válido.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool IsValidSlotIndex(int32 SlotIndex) const;
-
-    FZfInventorySlot* FindSlotByIndex(int32 SlotIndex);
-    
-private:
 
     // ============================================================
     // FUNÇÕES INTERNAS - GERENCIAMENTO
@@ -423,5 +439,4 @@ private:
     // Valida se uma operação pode ser executada no servidor.
     // Loga warning se chamada no cliente.
     bool InternalCheckIsServer(const FString& FunctionName) const;
-
 };

@@ -753,8 +753,7 @@ bool UZfItemInstance::CorruptItem()
     CorruptionState = EZfCorruptionState::Corrupted;
 
     UE_LOG(LogZfInventory, Log,
-        TEXT("UZfItemInstance::CorruptItem — "
-             "Item '%s' (GUID: %s) foi corrompido."),
+        TEXT("UZfItemInstance::CorruptItem — " "Item '%s' (GUID: %s) foi corrompido."),
         *GetItemName().ToString(), *ItemGuid.ToString());
 
     return true;
