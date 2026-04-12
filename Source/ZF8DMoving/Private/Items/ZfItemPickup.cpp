@@ -41,8 +41,7 @@ AZfItemPickup::AZfItemPickup()
     CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
     SetRootComponent(CollisionSphere);
     CollisionSphere->SetSphereRadius(100.0f);
-    CollisionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    //CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap); // InteractionSensor
+    
 
     // Mesh estática — exibida quando item tem StaticMesh no Definition
     StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
@@ -63,6 +62,19 @@ AZfItemPickup::AZfItemPickup()
     ItemInfoWidget->SetWidgetSpace(EWidgetSpace::World);
     ItemInfoWidget->SetDrawSize(FVector2D(200.0f, 60.0f));
     ItemInfoWidget->SetVisibility(false);
+}
+
+void AZfItemPickup::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+    
+    // Roda após o Blueprint aplicar seu delta no constructor,
+    // garantindo que nossa configuração é a final
+    CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    CollisionSphere->SetCollisionObjectType(ECC_GameTraceChannel2);
+    CollisionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+    CollisionSphere->SetGenerateOverlapEvents(true);
 }
 
 // ============================================================
@@ -92,7 +104,7 @@ void AZfItemPickup::BeginPlay()
     // Registra os callbacks de overlap
     CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AZfItemPickup::OnOverlapBegin);
     CollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AZfItemPickup::OnOverlapEnd);
-
+    
     // Inicia timer de auto-destruição se configurado
     if (HasAuthority() && AutoDestroyAfterSeconds > 0.0f)
     {
@@ -155,18 +167,18 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
-
+ 
     if (!CollectorActor)
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
-
+ 
     if (!HasValidItem())
     {
         UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::TryCollectItem — " "Pickup não tem item válido."));
         return EZfItemMechanicResult::Failed_ItemNotFound;
     }
-
+ 
     // Obtém o InventoryComponent do coletor
     UZfInventoryComponent* CollectorInventory = nullptr;
     if (!Internal_GetCollectorInventory(CollectorActor, CollectorInventory))
@@ -174,27 +186,27 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
         UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::TryCollectItem — " "Ator '%s' não tem UZfInventoryComponent."), *CollectorActor->GetName());
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
-
+ 
     // Tenta adicionar o item ao inventário do coletor
     int32 OutSlotIndex = INDEX_NONE;
     const EZfItemMechanicResult Result = CollectorInventory->TryPickupItem(ItemInstance);
-
+ 
     if (Result == EZfItemMechanicResult::Success)
     {
         // Notifica todos os clientes da coleta
         // para efeitos visuais/sonoros
         MulticastOnItemCollected(CollectorActor);
-
+ 
         // Limpa a referência local
         UZfItemInstance* CollectedItem = ItemInstance;
         ItemInstance = nullptr;
-
+ 
         // Dispara delegate
         OnItemPickedUp.Broadcast(CollectorActor, CollectedItem);
-
+ 
         UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::TryCollectItem — " "Item '%s' coletado por '%s'. Pickup será destruído."),
             *CollectedItem->GetItemName().ToString(), *CollectorActor->GetName());
-
+ 
         // Destrói o pickup após a coleta
         SetLifeSpan(0.01f);
     }
@@ -202,7 +214,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
     {
         UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::TryCollectItem — " "Falha ao coletar item: %s"), *UEnum::GetValueAsString(Result));
     }
-
+ 
     return Result;
 }
 
@@ -212,30 +224,15 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
 
 bool AZfItemPickup::ServerRequestPickup_Validate(AActor* RequestingActor)
 {
-    if (!RequestingActor)
-    {
-        return false;
-    }
-
-    // Valida que o ator está dentro do raio de coleta
-    const float DistanceToActor = FVector::Dist(GetActorLocation(), RequestingActor->GetActorLocation());
-
-    // Permite um pequeno buffer além do raio para tolerância de rede
-    const float PickupRadiusWithBuffer = PickupRadius * 1.5f;
-
-    if (DistanceToActor > PickupRadiusWithBuffer)
-    {
-        UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::ServerRequestPickup_Validate — " 
-            "Ator '%s' muito longe do pickup. Distância: %.1f | Raio: %.1f"),
-            *RequestingActor->GetName(), DistanceToActor, PickupRadiusWithBuffer);
-        return false;
-    }
-
-    return true;
+    // Retorna false APENAS para input nulo — isso sim indica cheating
+    // Verificação de distância foi movida para _Implementation
+    // para evitar kick indevido por discrepância de predição de movimento
+    return RequestingActor != nullptr;
 }
 
 void AZfItemPickup::ServerRequestPickup_Implementation(AActor* RequestingActor)
 {
+    if (!RequestingActor) return;
     TryCollectItem(RequestingActor);
 }
 
@@ -266,6 +263,8 @@ void AZfItemPickup::MulticastOnItemCollected_Implementation(AActor* CollectorAct
 // ============================================================
 // REP NOTIFIES
 // ============================================================
+
+
 
 void AZfItemPickup::OnRep_ItemInstance()
 {

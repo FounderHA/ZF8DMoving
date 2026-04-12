@@ -6,6 +6,7 @@
 // Sets default values
 AZfPlayerCharacter::AZfPlayerCharacter()
 {
+	InteractionComponent = CreateDefaultSubobject<UZfInteractionComponent>(TEXT("InteractionComponent"));
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -77,11 +78,8 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 		return;
 	}
 	
-	if (!HasAuthority())
-	{
-		return;
-	}
-	
+	// Concessão de abilities e aplicação de GEs continuam exclusivos do
+	// servidor (já estão em PossessedBy, que só roda com HasAuthority).
 	AbilitySystemComponent = ZfPlayerState->GetAbilitySystemComponent();
 	ZfPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(ZfPlayerState,this);
 }
