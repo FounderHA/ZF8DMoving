@@ -33,12 +33,27 @@ void AZfPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
-	InitAbilityActorInfo();
 	
 	// Concede as StartupAbilities configuradas no Blueprint deste Character.
 	// GrantStartupAbilities usa FindAbilitySpecFromClass como guard —
 	// seguro contra dupla concessão em respawns.
 	GrantStartupAbilities();
+	
+	// Roda todos os GEs para inicialização dos Attributos
+	InitializeAttributes();
+	
+	RegisterAttributeRefreshDelegates();
+	RegisterResourceSyncDelegates();
+	InitializeDependentAttributes();
+	
+	// InitializeDefaults apenas para personagem novo.
+	// No load, o save restaura Health/Mana/Stamina antes deste ponto,
+	// e esta chamada é ignorada.
+	AZfPlayerState* PS = GetPlayerState<AZfPlayerState>();
+	if (PS && PS->GetIsNewCharacter())
+	{
+		InitializeDefaultsAttributes();
+	}
 }
 
 void AZfPlayerCharacter::OnRep_PlayerState()
@@ -51,7 +66,6 @@ void AZfPlayerCharacter::OnRep_PlayerState()
 UAbilitySystemComponent* AZfPlayerCharacter::GetAbilitySystemComponent() const
 {
 	AZfPlayerState* ZfPlayerState = GetPlayerState<AZfPlayerState>();
-	
 	return ZfPlayerState ? ZfPlayerState->GetAbilitySystemComponent() : nullptr;
 }
 
@@ -71,5 +85,3 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	AbilitySystemComponent = ZfPlayerState->GetAbilitySystemComponent();
 	ZfPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(ZfPlayerState,this);
 }
-
-	

@@ -27,8 +27,8 @@ float UZfConstitutionMMC::CalculateBaseMagnitude_Implementation(const FGameplayE
 	
 	// --- Base ---
 	float BaseConstitution = 0.f;
-	if (PS->CharacterClassData)
-		BaseConstitution = PS->CharacterClassData->Constitution;
+	if (PS->GetCharacterClassData())
+		BaseConstitution = PS->GetCharacterClassData()->Constitution;
 
 	// --- Alocado ---
 	

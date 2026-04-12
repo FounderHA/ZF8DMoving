@@ -32,13 +32,13 @@ public:
 
 	// Resources
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Resources")
-	float BaseHealth;
+	float BaseMaxHealth;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Resources")
-	float BaseMana;
+	float BaseMaxMana;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Resources")
-	float BaseStamina;
+	float BaseMaxStamina;
 
 	// Combat Attributes - Resources
 
