@@ -14,29 +14,42 @@ void UZfResourceAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, CurrentHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, CurrentMana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, CurrentStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfResourceAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
 }
 
 void UZfResourceAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 	
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-	}
+	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
+		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
+
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
-	{
-		SetMaxHealth(FMath::Max(GetMaxHealth(), 0.0f));
-	}
+		SetMaxHealth(FMath::Max(GetMaxHealth(), 0.f));
+
+	else if (Data.EvaluatedData.Attribute == GetCurrentManaAttribute())
+		SetCurrentMana(FMath::Clamp(GetCurrentMana(), 0.f, GetMaxMana()));
+
+	else if (Data.EvaluatedData.Attribute == GetMaxManaAttribute())
+		SetMaxMana(FMath::Max(GetMaxMana(), 0.f));
+
+	else if (Data.EvaluatedData.Attribute == GetCurrentStaminaAttribute())
+		SetCurrentStamina(FMath::Clamp(GetCurrentStamina(), 0.f, GetMaxStamina()));
+
+	else if (Data.EvaluatedData.Attribute == GetMaxStaminaAttribute())
+		SetMaxStamina(FMath::Max(GetMaxStamina(), 0.f));
 }
 
 void UZfResourceAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
 	
-	if (Attribute == GetHealthAttribute())
+	if (Attribute == GetCurrentHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
 	}
@@ -46,12 +59,32 @@ void UZfResourceAttributeSet::PostAttributeChange(const FGameplayAttribute& Attr
 	}
 }
 
-void UZfResourceAttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue) const
+void UZfResourceAttributeSet::OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, Health, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, CurrentHealth, OldValue);
 }
 
 void UZfResourceAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, MaxHealth, OldValue);
+}
+
+void UZfResourceAttributeSet::OnRep_CurrentMana(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, CurrentMana, OldValue);
+}
+
+void UZfResourceAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, MaxMana, OldValue);
+}
+
+void UZfResourceAttributeSet::OnRep_CurrentStamina(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, CurrentStamina, OldValue);
+}
+
+void UZfResourceAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfResourceAttributeSet, MaxStamina, OldValue);
 }

@@ -33,15 +33,18 @@ public:
 	UZfProgressionAttributeSet* GetProgressionAttributeSet() const;
 	UZfDamageAttributeSet* GetDamageAttributeSet() const;
 	UZfResistanceAttributeSet* GetResistanceAttributeSet() const;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Class")
-	TObjectPtr<UZfPrimaryDataAssetClass> CharacterClassData;
 
 	UFUNCTION(BlueprintCallable)
 	UZfInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	/** Retorna o Data Asset de classe do personagem. */
+	UFUNCTION(BlueprintCallable, Category = "Player|Class")
+	UZfPrimaryDataAssetClass* GetCharacterClassData() const { return CharacterClassData; }
 	
 protected:
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Class")
+	TObjectPtr<UZfPrimaryDataAssetClass> CharacterClassData;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UZfInventoryComponent> InventoryComponent;
@@ -68,7 +71,29 @@ protected:
 	TObjectPtr<UZfResistanceAttributeSet> ResistanceAttributeSet;
 
 
+private:
+	
+	/** 
+	* Define se o personagem está sendo criado pela primeira vez.
+	* true  → InitializeDefaults() será chamado após InitializeAttributes()
+	* false → load do save, defaults ignorados.
+	* Setado pelo GameMode antes da posse. Não replicado — servidor only.
+	*/
+	bool bIsNewCharacter = true;
+	
 public:
+	
+
+	/** Retorna true se o personagem está sendo criado pela primeira vez.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Player|Save")
+	bool GetIsNewCharacter() const { return bIsNewCharacter; }
+	
+	/** Chamado pelo sistema de save quando um save existente é encontrado.
+	* Após chamar este método, InitializeDefaults() não será executado.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Player|Save")
+	void SetIsNewCharacterFalse() { bIsNewCharacter = false; }
 	
 	// ─────────────────────────────────────────────────────────────────────
 	// Server RPCs — ponte entre widget (cliente) e abilities (servidor)

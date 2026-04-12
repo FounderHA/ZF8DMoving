@@ -10,6 +10,23 @@
 
 class UZfResourceAttributeSet;
 
+/** Define a dependência entre um atributo fonte e um GE que deve
+ * ser reaplicado quando esse atributo muda.
+ * Ex: Constitution muda → GE_CalculateMaxHealth é reaplicado. */
+USTRUCT(BlueprintType)
+struct FZfAttributeRefreshDependency
+{
+	GENERATED_BODY()
+
+	/** Atributo que quando muda dispara o recálculo. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dependency")
+	FGameplayAttribute SourceAttribute;
+
+	/** GE Instant a ser reaplicado quando SourceAttribute mudar. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dependency")
+	TSubclassOf<UGameplayEffect> DependentEffect;
+};
+
 UCLASS()
 class ZF8DMOVING_API AZfCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -35,8 +52,41 @@ public:
 	* ainda não estiver registrada no ASC — seguro contra dupla concessão
 	* em respawns e re-inicializações.
 	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Startup")
-	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Initialization")
+	TArray<TSubclassOf<UGameplayAbility>> InitializationGameplayAbilities;
+	
+	// -----------------------------------------------------------------------
+	// Atributos — Inicialização
+	// -----------------------------------------------------------------------
+	
+	/** 
+	* GEs Instant aplicados APENAS na criação do personagem novo.
+	* Nunca aplicados no load — o save já restaura esses valores.
+	* Use para definir estado inicial: Health = MaxHealth, Mana = MaxMana, etc.
+	* Configure no Blueprint filho desta classe.
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Initialization")
+	TArray<TSubclassOf<UGameplayEffect>> AttributeDefaultEffects;
+	
+	/** 
+	* GEs Infinite com MMC aplicados na posse do pawn.
+	* Um GE por atributo (Strength, Dexterity, MaxHealth, etc.).
+	* Configure no Blueprint filho desta classe.
+	* Ordem não importa — cada GE é independente. 
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Initialization")
+	TArray<TSubclassOf<UGameplayEffect>> InitializationAttributeEffects;
+
+	// -----------------------------------------------------------------------
+	// Atributos — Atualização de Dependencias de Attributo
+	// -----------------------------------------------------------------------
+	
+	/** Define quais GEs devem ser reaplicados quando um atributo fonte muda.
+	* Ex: Constitution → GE_CalculateMaxHealth
+	*     Intelligence → GE_CalculateMaxMana
+	* Configure no Blueprint filho desta classe. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Initialization")
+	TArray<FZfAttributeRefreshDependency> AttributeRefreshDependencies;
 	
 protected:
 	
@@ -54,4 +104,49 @@ protected:
 	*   - Novo pawn (respawn) → ability não existe ainda → concedida corretamente
 	*/
 	void GrantStartupAbilities();
+	
+	/** 
+	* Aplica todos os GEs de AttributeDefaultEffects no ASC.
+	* Chamado no PossessedBy após InitAbilityActorInfo.
+	* Seguro contra lista vazia e entradas nulas.
+	* Chamado apenas na criação do personagem, personagem existente ignora
+	*/
+	void InitializeDefaultsAttributes();
+	
+	/** 
+	* Aplica todos os GEs de AttributeInitializationEffects no ASC.
+	* Chamado no PossessedBy após InitAbilityActorInfo.
+	* Seguro contra lista vazia e entradas nulas.  
+	*/
+	void InitializeAttributes();
+	
+	/**
+	* Registra um delegate por dependência configurada em AttributeRefreshDependencies.
+	* Cada delegate observa o SourceAttribute e reaplica o DependentEffect ao mudar.
+	* Chamado no PossessedBy após InitializeAttributes().
+	*/
+	void RegisterAttributeRefreshDelegates();
+	
+	/** 
+	* Registra delegates que observam MaxHealth, MaxMana e MaxStamina.
+	* Quando qualquer um muda, sincroniza o Current correspondente
+	* proporcionalmente ao valor anterior.
+	* Chamado no PossessedBy após RegisterAttributeRefreshDelegates(). 
+	*/
+	void RegisterResourceSyncDelegates();
+	
+	/**
+	* Aplica uma vez todos os DependentEffects configurados em
+	* AttributeRefreshDependencies. Chamado após RegisterAttributeRefreshDelegates()
+	* para garantir que atributos dependentes sejam calculados na inicialização.
+	*/
+	void InitializeDependentAttributes();
+
+	/**
+	* Reaplica um GE Instant para forçar o MMC a recalcular
+	* com os valores atualizados das fontes.
+	* Chamado pelos delegates registrados em RegisterAttributeRefreshDelegates().
+	*/
+	void RefreshEffect(TSubclassOf<UGameplayEffect> EffectClass);
+
 };

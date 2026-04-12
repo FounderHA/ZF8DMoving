@@ -27,8 +27,8 @@ float UZfIntelligenceMMC::CalculateBaseMagnitude_Implementation(const FGameplayE
 	
 	// --- Base ---
 	float BaseIntelligence = 0.f;
-	if (PS->CharacterClassData)
-		BaseIntelligence = PS->CharacterClassData->Intelligence;
+	if (PS->GetCharacterClassData())
+		BaseIntelligence = PS->GetCharacterClassData()->Intelligence;
 
 	// --- Alocado ---
 	

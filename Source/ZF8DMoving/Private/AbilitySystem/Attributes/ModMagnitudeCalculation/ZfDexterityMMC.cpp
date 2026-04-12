@@ -27,8 +27,8 @@ float UZfDexterityMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 	
 	// --- Base ---
 	float BaseDexterity = 0.f;
-	if (PS->CharacterClassData)
-		BaseDexterity = PS->CharacterClassData->Dexterity;
+	if (PS->GetCharacterClassData())
+		BaseDexterity = PS->GetCharacterClassData()->Dexterity;
 
 	// --- Alocado ---
 	

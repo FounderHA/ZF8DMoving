@@ -27,8 +27,8 @@ float UZfConvictionMMC::CalculateBaseMagnitude_Implementation(const FGameplayEff
 	
 	// --- Base ---
 	float BaseConviction = 0.f;
-	if (PS->CharacterClassData)
-		BaseConviction = PS->CharacterClassData->Conviction;
+	if (PS->GetCharacterClassData())
+		BaseConviction = PS->GetCharacterClassData()->Conviction;
 
 	// --- Alocado ---
 	

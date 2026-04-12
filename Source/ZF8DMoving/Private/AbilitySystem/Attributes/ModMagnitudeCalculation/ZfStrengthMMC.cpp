@@ -27,8 +27,8 @@ float UZfStrengthMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffec
 	
 	// --- Base ---
 	float BaseStrength = 0.f;
-	if (PS->CharacterClassData)
-		BaseStrength = PS->CharacterClassData->Strength;
+	if (PS->GetCharacterClassData())
+		BaseStrength = PS->GetCharacterClassData()->Strength;
 
 	// --- Alocado ---
 	
