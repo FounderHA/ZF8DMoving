@@ -37,6 +37,7 @@
 #include "Inventory/ZfInventoryTypes.h"
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
+#include "InteractionSystem/ZfInteractionInterface.h"
 #include "ZfItemPickup.generated.h"
 
 // Forward declarations
@@ -61,7 +62,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, AActor*, Collector
 // ============================================================
 
 UCLASS(BlueprintType, Blueprintable)
-class ZF8DMOVING_API AZfItemPickup : public AActor
+class ZF8DMOVING_API AZfItemPickup : public AActor, public IZfInteractionInterface
 {
     GENERATED_BODY()
 
@@ -125,7 +126,7 @@ public:
     // Deve ser chamado apenas no servidor.
     // @param CollectorActor — ator que está coletando o item
     // @return resultado da operação
-    UFUNCTION(BlueprintCallable, Category = "Zf|Pickup")
+    UFUNCTION()
     EZfItemMechanicResult TryCollectItem(AActor* CollectorActor);
 
     // ----------------------------------------------------------
@@ -215,6 +216,7 @@ protected:
     UPROPERTY(ReplicatedUsing = OnRep_ItemInstance, BlueprintReadOnly, Category = "Pickup")
     TObjectPtr<UZfItemInstance> ItemInstance;
 
+    
     // ----------------------------------------------------------
     // REP NOTIFIES
     // ----------------------------------------------------------
