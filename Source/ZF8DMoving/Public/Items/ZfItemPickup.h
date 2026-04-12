@@ -126,7 +126,7 @@ public:
     // Deve ser chamado apenas no servidor.
     // @param CollectorActor — ator que está coletando o item
     // @return resultado da operação
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Zf|Pickup")
     EZfItemMechanicResult TryCollectItem(AActor* CollectorActor);
 
     // ----------------------------------------------------------
@@ -206,6 +206,8 @@ protected:
     // Visível apenas quando o jogador está próximo
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup|Components")
     TObjectPtr<UWidgetComponent> ItemInfoWidget;
+    
+    virtual void PostInitializeComponents() override;
 
     // ----------------------------------------------------------
     // DADOS REPLICADOS

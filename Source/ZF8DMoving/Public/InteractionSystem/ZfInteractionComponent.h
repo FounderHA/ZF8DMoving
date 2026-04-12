@@ -22,6 +22,15 @@ struct FZfActiveHoldInfo
     float Elapsed       = 0.f;
     float Duration      = 1.5f;
     bool  bActive       = false;
+
+    /**
+     * FIX: Cache do ator em foco quando o hold começou.
+     * Necessário porque CurrentFocus pode se tornar inválido durante
+     * o hold (objeto sai do range, LOS quebra), e CancelHold precisa
+     * enviar o RPC Server_InteractCanceled mesmo nesse cenário.
+     */
+    UPROPERTY()
+    TObjectPtr<AActor> HoldTarget = nullptr;
 };
 
 // ── Struct por candidato ──────────────────────────────────────────────────
@@ -83,6 +92,13 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Widgets")
     TSubclassOf<UUserWidget> DefaultIndicatorWidgetClass;
 
+    /**
+     * FIX: Canal de trace para LOS (câmera e player) agora configurável via
+     * UPROPERTY, evitando o hardcode de ECC_GameTraceChannel1.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Detection")
+    TEnumAsByte<ECollisionChannel> LOSTraceChannel = ECC_GameTraceChannel1;
+
 private:
     // ── Componentes ───────────────────────────────────────────────────
 
@@ -103,12 +119,8 @@ private:
 
     // ── Input ─────────────────────────────────────────────────────────
 
-    // Mapeia InputAction → handles de bind (uma ação pode ter vários eventos)
     TMap<TObjectPtr<UInputAction>, TArray<uint32>> ActiveInputHandles;
-
-    // Mapeia InputAction → InteractionID (para saber qual interação disparou)
     TMap<TObjectPtr<UInputAction>, FName> InputActionToInteractionID;
-
     TArray<TObjectPtr<UInputMappingContext>> ActiveMappingContexts;
 
     // ── Widgets ───────────────────────────────────────────────────────
@@ -167,7 +179,7 @@ private:
     void ShowInteractionWidget(AActor* FocusActor, const TArray<FInteractionData>& Interactions);
     void HideInteractionWidget();
     void UpdateInteractionWidgetProgress(FName InteractionID, float Progress);
-    
+
     // ── Utils ─────────────────────────────────────────────────────────
 
     bool IsLocallyControlled() const;
@@ -189,6 +201,14 @@ private:
 
     UFUNCTION(Server, Reliable)
     void Server_Interact(AActor* TargetActor, FName InteractionID);
+
+    /**
+     * FIX: Adicionado Server_InteractBegin para que o servidor também
+     * receba a notificação de início de hold, consistente com os demais
+     * RPCs (Server_Interact, Server_InteractComplete, Server_InteractCanceled).
+     */
+    UFUNCTION(Server, Reliable)
+    void Server_InteractBegin(AActor* TargetActor, FName InteractionID);
 
     UFUNCTION(Server, Reliable)
     void Server_InteractComplete(AActor* TargetActor, FName InteractionID);

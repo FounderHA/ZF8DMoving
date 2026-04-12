@@ -18,7 +18,7 @@
 UZfInteractionComponent::UZfInteractionComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
-    SetIsReplicatedByDefault(true);
+    SetIsReplicatedByDefault(false);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ void UZfInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     if (!IsLocallyControlled()) return;
-    
+
     ReconciliationTimer += DeltaTime;
     if (ReconciliationTimer >= ReconciliationInterval)
     {
@@ -84,21 +84,22 @@ void UZfInteractionComponent::SetupAwarenessSphere()
     AwarenessSphere = NewObject<USphereComponent>(Owner, TEXT("AwarenessSphere"));
     AwarenessSphere->SetupAttachment(Owner->GetRootComponent());
     AwarenessSphere->InitSphereRadius(AwarenessRadius);
-    AwarenessSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    //AwarenessSphere->SetCollisionObjectType(ECC_GameTraceChannel2); // InteractionSensor
+
+    // NÃO usar SetCollisionProfileName — ele reseta o ObjectType para WorldDynamic
+    AwarenessSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    AwarenessSphere->SetCollisionObjectType(ECC_GameTraceChannel2); // InteractionSensor
+    AwarenessSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    AwarenessSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
     AwarenessSphere->SetGenerateOverlapEvents(true);
-    AwarenessSphere->SetHiddenInGame(false);
-    AwarenessSphere->SetVisibility(true);
+    AwarenessSphere->SetHiddenInGame(true); //Debug
+    AwarenessSphere->SetVisibility(false); //Debug
 
-    //AwarenessSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    //AwarenessSphere->SetCollisionObjectType(ECC_GameTraceChannel2); // InteractionSensor
-    //AwarenessSphere->SetCollisionResponseToAllChannels(ECR_Overlap); // responde a tudo
-
-    
     AwarenessSphere->RegisterComponent();
 
     AwarenessSphere->OnComponentBeginOverlap.AddDynamic(this, &UZfInteractionComponent::OnSphereBeginOverlap);
     AwarenessSphere->OnComponentEndOverlap.AddDynamic(this, &UZfInteractionComponent::OnSphereEndOverlap);
+    
+    AwarenessSphere->UpdateOverlaps();
 }
 
 void UZfInteractionComponent::ReconcileCandidates()
@@ -190,7 +191,16 @@ void UZfInteractionComponent::UpdateFocus(float DeltaTime)
     TArray<FInteractionData> BestInteractions;
 
     const FVector OwnerLocation = GetOwner()->GetActorLocation();
-    const FVector OwnerForward  = GetOwner()->GetActorForwardVector();
+
+    // FIX: O filtro de ângulo agora usa o forward da câmera em vez do forward
+    // do ator. Em third-person, o jogador interage com o que a câmera aponta,
+    // não necessariamente com o que o personagem está voltado.
+    APlayerController* PC = GetOwningController();
+    if (!IsValid(PC)) return;
+
+    FVector CamLoc; FRotator CamRot;
+    PC->GetPlayerViewPoint(CamLoc, CamRot);
+    const FVector CamForward = CamRot.Vector();
 
     for (FZfCandidateInfo& Candidate : Candidates)
     {
@@ -200,18 +210,22 @@ void UZfInteractionComponent::UpdateFocus(float DeltaTime)
         Candidate.Interactions = IZfInteractionInterface::Execute_GetInteractionDataArray(Candidate.Actor);
         if (Candidate.Interactions.IsEmpty()) continue;
 
-        // Usa o menor InteractionRadius entre todas as interações do objeto
-        float SmallestRadius = TNumericLimits<float>::Max();
+        // FIX: Usa o MAIOR InteractionRadius entre as interações do objeto para
+        // o filtro de distância de foco. O comportamento anterior usava o menor,
+        // o que impedia o foco quando havia interações com raios diferentes —
+        // o objeto só entrava em foco quando o player estivesse dentro do menor
+        // raio, ignorando interações com raio maior que ainda estariam válidas.
+        float LargestRadius = 0.f;
         for (const FInteractionData& Data : Candidate.Interactions)
-            SmallestRadius = FMath::Min(SmallestRadius, Data.InteractionRadius);
+            LargestRadius = FMath::Max(LargestRadius, Data.InteractionRadius);
 
-        // Filtro 1: Distância mínima
+        // Filtro 1: Distância (pelo maior raio disponível)
         const float Distance = FVector::Dist(OwnerLocation, Candidate.Actor->GetActorLocation());
-        if (Distance > SmallestRadius) continue;
+        if (Distance > LargestRadius) continue;
 
-        // Filtro 2: Ângulo
+        // Filtro 2: Ângulo (camera forward — FIX aplicado acima)
         const FVector Dir = (Candidate.Actor->GetActorLocation() - OwnerLocation).GetSafeNormal();
-        if (FVector::DotProduct(OwnerForward, Dir) < MinFocusDot) continue;
+        if (FVector::DotProduct(CamForward, Dir) < MinFocusDot) continue;
 
         // Filtro 3: LOS Câmera
         if (!PassesCameraLOS(Candidate.Actor)) continue;
@@ -243,12 +257,12 @@ float UZfInteractionComponent::ComputeScore(const FZfCandidateInfo& Candidate) c
     const FVector OwnerLocation     = GetOwner()->GetActorLocation();
     const FVector CandidateLocation = Candidate.Actor->GetActorLocation();
 
-    float SmallestRadius = TNumericLimits<float>::Max();
+    float LargestRadius = 0.f;
     for (const FInteractionData& Data : Candidate.Interactions)
-        SmallestRadius = FMath::Min(SmallestRadius, Data.InteractionRadius);
+        LargestRadius = FMath::Max(LargestRadius, Data.InteractionRadius);
 
     const float Distance = FVector::Dist(OwnerLocation, CandidateLocation);
-    const float NormDist = FMath::Clamp(1.f - (Distance / FMath::Max(SmallestRadius, 1.f)), 0.f, 1.f);
+    const float NormDist = FMath::Clamp(1.f - (Distance / FMath::Max(LargestRadius, 1.f)), 0.f, 1.f);
 
     float Centrality = 0.f;
     if (APlayerController* PC = GetOwningController())
@@ -276,8 +290,10 @@ bool UZfInteractionComponent::PassesCameraLOS(AActor* Target) const
     Params.AddIgnoredActor(GetOwner());
     Params.AddIgnoredActor(Target);
 
+    // FIX: Usa LOSTraceChannel (UPROPERTY configurável) em vez de
+    // ECC_GameTraceChannel1 hardcoded.
     return !GetWorld()->LineTraceSingleByChannel(
-        Hit, CamLoc, Target->GetActorLocation(), ECC_GameTraceChannel1, Params);
+        Hit, CamLoc, Target->GetActorLocation(), LOSTraceChannel, Params);
 }
 
 bool UZfInteractionComponent::PassesPlayerLOS(AActor* Target) const
@@ -289,9 +305,11 @@ bool UZfInteractionComponent::PassesPlayerLOS(AActor* Target) const
     Params.AddIgnoredActor(GetOwner());
     Params.AddIgnoredActor(Target);
 
+    // FIX: Usa LOSTraceChannel (UPROPERTY configurável) em vez de
+    // ECC_GameTraceChannel1 hardcoded.
     return !GetWorld()->LineTraceSingleByChannel(
         Hit, GetOwner()->GetActorLocation(), Target->GetActorLocation(),
-        ECC_GameTraceChannel1, Params);
+        LOSTraceChannel, Params);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -346,7 +364,6 @@ void UZfInteractionComponent::BindInputForFocus(const TArray<FInteractionData>& 
     {
         if (!IsValid(Data.InputAction)) continue;
 
-        // Registra MappingContext se ainda não foi registrado
         if (IsValid(Data.MappingContext) && Sub &&
             !ActiveMappingContexts.Contains(Data.MappingContext))
         {
@@ -354,10 +371,9 @@ void UZfInteractionComponent::BindInputForFocus(const TArray<FInteractionData>& 
             ActiveMappingContexts.Add(Data.MappingContext);
         }
 
-        // Captura por valor para o lambda
-        FName ID           = Data.InteractionID;
+        FName ID               = Data.InteractionID;
         EInteractionInputMode Mode = Data.InputMode;
-        float HoldDur      = Data.HoldDuration;
+        float HoldDur          = Data.HoldDuration;
 
         TArray<uint32> Handles;
 
@@ -418,9 +434,17 @@ void UZfInteractionComponent::HandleInputStarted(FName InteractionID, EInteracti
         ActiveHold.Elapsed       = 0.f;
         ActiveHold.Duration      = HoldDuration;
         ActiveHold.bActive       = true;
-        IZfInteractionInterface::Execute_OnInteractBegin(CurrentFocus, GetOwningController(), InteractionID);
-    }
 
+        // FIX: Cache do ator em foco no momento do início do hold.
+        // Garante que CancelHold possa enviar o RPC mesmo se CurrentFocus
+        // se tornar inválido antes do hold ser concluído ou cancelado.
+        ActiveHold.HoldTarget = CurrentFocus;
+
+        // FIX: OnInteractBegin agora vai via Server RPC, consistente com
+        // OnInteract / OnInteractComplete / OnInteractCanceled.
+        // A chamada local foi removida — a lógica roda no servidor.
+        Server_InteractBegin(CurrentFocus, InteractionID);
+    }
 }
 
 void UZfInteractionComponent::HandleInputCompleted(FName InteractionID)
@@ -437,6 +461,8 @@ void UZfInteractionComponent::UpdateHold(float DeltaTime)
 {
     if (!IsValid(CurrentFocus))
     {
+        // FIX: Mesmo com CurrentFocus inválido, CancelHold agora consegue
+        // enviar o RPC usando ActiveHold.HoldTarget (cacheado no início do hold).
         CancelHold();
         return;
     }
@@ -444,6 +470,8 @@ void UZfInteractionComponent::UpdateHold(float DeltaTime)
     ActiveHold.Elapsed += DeltaTime;
     const float Progress = FMath::Clamp(ActiveHold.Elapsed / ActiveHold.Duration, 0.f, 1.f);
 
+    // OnInteractProgress permanece local — é exclusivamente cosmético
+    // (feedback de UI/som para o jogador local), sem necessidade de RPC.
     IZfInteractionInterface::Execute_OnInteractProgress(CurrentFocus, GetOwningController(), ActiveHold.InteractionID, Progress);
     UpdateInteractionWidgetProgress(ActiveHold.InteractionID, Progress);
 
@@ -459,12 +487,21 @@ void UZfInteractionComponent::CancelHold()
 {
     if (!ActiveHold.bActive) return;
 
-    const FName ID = ActiveHold.InteractionID;
-    ActiveHold     = FZfActiveHoldInfo();
+    const FName  ID         = ActiveHold.InteractionID;
+    AActor*      HoldTarget = ActiveHold.HoldTarget;
 
-    if (IsValid(CurrentFocus))
+    ActiveHold = FZfActiveHoldInfo();
+
+    // FIX: Usa HoldTarget (cacheado) em vez de CurrentFocus.
+    // Antes: se o foco fosse perdido durante o hold (objeto saiu do range,
+    // LOS quebrou), CurrentFocus já era nullptr/inválido aqui e o RPC
+    // Server_InteractCanceled nunca era enviado — o objeto ficava num estado
+    // de hold indefinido no servidor.
+    // Agora: HoldTarget preserva a referência ao ator correto independente
+    // do estado atual de CurrentFocus.
+    if (IsValid(HoldTarget))
     {
-        Server_InteractCanceled(CurrentFocus, ID);
+        Server_InteractCanceled(HoldTarget, ID);
     }
 
     UpdateInteractionWidgetProgress(ID, 0.f);
@@ -478,7 +515,27 @@ void UZfInteractionComponent::Server_Interact_Implementation(AActor* TargetActor
 {
     if (!IsValid(TargetActor) || !TargetActor->Implements<UZfInteractionInterface>()) return;
 
-    // Encontra o InteractionData correspondente ao ID
+    const TArray<FInteractionData> Interactions =
+        IZfInteractionInterface::Execute_GetInteractionDataArray(TargetActor);
+
+    const FInteractionData* Data = Interactions.FindByPredicate(
+        [InteractionID](const FInteractionData& D) { return D.InteractionID == InteractionID; });
+    if (!Data) return;
+
+    const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), TargetActor->GetActorLocation());
+    
+    if (Distance > Data->InteractionRadius * 1.1f) return;
+
+    IZfInteractionInterface::Execute_OnInteract(TargetActor, GetOwningController(), InteractionID);
+}
+
+// FIX: Implementação do novo Server_InteractBegin.
+// Mesma estrutura de validação dos outros RPCs: verifica ator, interface,
+// InteractionID válido e distância dentro do raio (com margem de 10%).
+void UZfInteractionComponent::Server_InteractBegin_Implementation(AActor* TargetActor, FName InteractionID)
+{
+    if (!IsValid(TargetActor) || !TargetActor->Implements<UZfInteractionInterface>()) return;
+
     const TArray<FInteractionData> Interactions =
         IZfInteractionInterface::Execute_GetInteractionDataArray(TargetActor);
 
@@ -489,7 +546,7 @@ void UZfInteractionComponent::Server_Interact_Implementation(AActor* TargetActor
     const float Distance = FVector::Dist(GetOwner()->GetActorLocation(), TargetActor->GetActorLocation());
     if (Distance > Data->InteractionRadius * 1.1f) return;
 
-    IZfInteractionInterface::Execute_OnInteract(TargetActor, GetOwningController(), InteractionID);
+    IZfInteractionInterface::Execute_OnInteractBegin(TargetActor, GetOwningController(), InteractionID);
 }
 
 void UZfInteractionComponent::Server_InteractComplete_Implementation(AActor* TargetActor, FName InteractionID)
@@ -555,7 +612,7 @@ void UZfInteractionComponent::CreateIndicatorFor(AActor* Actor)
     {
         Widget->TrackedActor = Actor;
         Widget->AddToViewport();
-        Widget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f)); // ← centraliza
+        Widget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
         IndicatorWidgets.Add(Actor, Widget);
     }
 }
@@ -587,7 +644,7 @@ void UZfInteractionComponent::UpdateWidgetsPositions()
         if (bOnScreen)
             Widget->SetPositionInViewport(ScreenPos + IndicatorOffset, true);
     }
-    
+
     // ── InteractionWidget segue o foco ────────────────────────────────
     if (IsValid(InteractionWidget) && IsValid(CurrentFocus) &&
         InteractionWidget->GetVisibility() != ESlateVisibility::Hidden)
@@ -597,13 +654,9 @@ void UZfInteractionComponent::UpdateWidgetsPositions()
         const bool bOnScreen = PC->ProjectWorldLocationToScreen(CurrentFocus->GetActorLocation(), ScreenPos, false);
 
         if (bOnScreen)
-        {
             InteractionWidget->SetPositionInViewport(ScreenPos + InteractionOffset, true);
-        }
         else
-        {
             InteractionWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
     }
 }
 
@@ -616,7 +669,6 @@ void UZfInteractionComponent::ShowInteractionWidget(AActor* FocusActor,
     TSubclassOf<UUserWidget> WidgetClass = ResolveInteractionWidgetClass(FocusActor);
     if (!WidgetClass) return;
 
-    // Recria se a classe mudou (objeto diferente com widget diferente)
     if (IsValid(InteractionWidget) && InteractionWidget->GetClass() != WidgetClass)
     {
         InteractionWidget->RemoveFromParent();
@@ -629,7 +681,7 @@ void UZfInteractionComponent::ShowInteractionWidget(AActor* FocusActor,
         if (IsValid(InteractionWidget))
         {
             InteractionWidget->AddToViewport();
-            InteractionWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f)); // ← centraliza
+            InteractionWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
         }
     }
 

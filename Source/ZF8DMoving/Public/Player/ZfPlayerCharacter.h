@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/ZfCharacter.h"
+#include "InteractionSystem/ZfInteractionComponent.h"
 #include "ZfPlayerCharacter.generated.h"
 
 UCLASS()
@@ -18,6 +19,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<UZfInteractionComponent> InteractionComponent;
 
 public:
 	// Called every frame
@@ -33,5 +37,3 @@ public:
 	virtual void InitAbilityActorInfo() override;
 
 };
-
-
