@@ -1,15 +1,12 @@
-// Copyright ZfGame Studio. All Rights Reserved.
-// ZfInteractionInterface.h
-// Interface que define um objeto interagível no mundo.
-// Adicione esta interface a qualquer ator para torná-lo interagível.
-// Tudo que o sistema precisa saber sobre a interação vem daqui.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "ZfInteractionTypes.h"
 #include "ZfInteractionInterface.generated.h"
+
+class UZfInteractionWidget;
+class UZfIndicatorWidget;
 
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable)
 class UZfInteractionInterface : public UInterface
@@ -22,89 +19,64 @@ class ZF8DMOVING_API IZfInteractionInterface
     GENERATED_BODY()
 
 public:
+    /** Retorna TODAS as interações disponíveis neste objeto */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Information")
+    TArray<FInteractionData> GetInteractionDataArray() const;
 
-    // ----------------------------------------------------------
-    // ESTADO
-    // ----------------------------------------------------------
-
-    // Retorna se este objeto pode ser interagido no momento.
-    // @param Interactor — ator que está tentando interagir
-    // @return estado atual da interação
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    EZfInteractionState GetInteractionState(AActor* Interactor) const;
-
-    // ----------------------------------------------------------
-    // CONFIGURAÇÃO
-    // ----------------------------------------------------------
-
-    // Retorna todas as ações disponíveis neste objeto.
-    // Cada ação tem seu próprio botão, método e requisitos.
-    // @return array de ações disponíveis
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    TArray<FZfInteractAction> GetInteractActions() const;
-
-    // Retorna o peso manual de prioridade deste objeto (0 a 1).
-    // Usado no cálculo de score para definir foco.
-    // @return peso de prioridade manual
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    float GetManualPriorityWeight() const;
-
-    // Retorna a widget que aparece sobre o objeto quando em range.
-    // @return classe da widget de indicação
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    TSubclassOf<UUserWidget> GetIndicatorWidgetClass() const;
-
-    // Retorna a widget que aparece quando o objeto é o foco atual.
-    // @return classe da widget de prompt de interação
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
+    /**
+     * Widget de interação customizada para este objeto.
+     * Retorne nullptr para usar o default do InteractionComponent.
+     */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Information")
     TSubclassOf<UUserWidget> GetInteractionWidgetClass() const;
 
-    // ----------------------------------------------------------
-    // CALLBACKS — chamados pelo InteractionComponent
-    // ----------------------------------------------------------
+    /**
+     * Widget indicador customizado para este objeto.
+     * Retorne nullptr para usar o default do InteractionComponent.
+     */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Information")
+    TSubclassOf<UUserWidget> GetIndicatorWidgetClass() const;
 
-    // Chamado quando este objeto se torna o foco atual do player.
-    // Use para destacar visualmente o objeto.
-    // @param Interactor — ator que focou este objeto
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteractionFocused(AActor* Interactor);
+    /** Offset em screen space da InteractionWidget relativo ao objeto */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+    FVector2D GetInteractionWidgetOffset() const;
 
-    // Chamado quando este objeto perde o foco do player.
-    // Use para remover o destaque visual.
-    // @param Interactor — ator que perdeu o foco
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteractionUnfocused(AActor* Interactor);
+    /** Offset em screen space do IndicatorWidget relativo ao objeto */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+    FVector2D GetIndicatorWidgetOffset() const;
 
-    // Chamado quando o player interage com este objeto.
-    // Executado no servidor via RPC.
-    // @param Interactor — ator que interagiu
-    // @param ActionIndex — índice da ação em GetInteractActions()
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteract(AActor* Interactor, int32 ActionIndex);
+    // ── Área ──────────────────────────────────────────────────────────
 
-    // Chamado quando o player entra no range deste objeto.
-    // @param Interactor — ator que entrou no range
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteractorEnterRange(AActor* Interactor);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnPlayerEnterRange(APlayerController* InstigatorController);
 
-    // Chamado quando o player sai do range deste objeto.
-    // @param Interactor — ator que saiu do range
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteractorExitRange(AActor* Interactor);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnPlayerExitRange(APlayerController* InstigatorController);
 
-    // Chamado quando o Hold é cancelado antes de completar.
-    // @param Interactor — ator que cancelou
-    // @param ActionIndex — índice da ação cancelada
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    void OnInteractionHoldCancelled(AActor* Interactor, int32 ActionIndex);
+    // ── Foco ──────────────────────────────────────────────────────────
 
-    // Retorna o offset de posição da widget de indicação no espaço local do objeto.
-    // @return offset em unidades do mundo
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    FVector GetIndicatorOffset() const;
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnFocusGained(APlayerController* InstigatorController);
 
-    // Retorna o offset de posição da widget de prompt no espaço local do objeto.
-    // @return offset em unidades do mundo
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Zf|Interaction")
-    FVector GetPromptOffset() const;
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnFocusLost(APlayerController* InstigatorController);
+
+    // ── Press ─────────────────────────────────────────────────────────
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnInteract(APlayerController* InstigatorController, FName InteractionID);
+
+    // ── Hold ──────────────────────────────────────────────────────────
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnInteractBegin(APlayerController* InstigatorController, FName InteractionID);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnInteractProgress(APlayerController* InstigatorController, FName InteractionID, float Progress);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnInteractComplete(APlayerController* InstigatorController, FName InteractionID);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+    void OnInteractCanceled(APlayerController* InstigatorController, FName InteractionID);
 };

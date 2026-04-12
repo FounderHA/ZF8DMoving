@@ -42,13 +42,14 @@ AZfItemPickup::AZfItemPickup()
     SetRootComponent(CollisionSphere);
     CollisionSphere->SetSphereRadius(100.0f);
     CollisionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    //CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap); // InteractionSensor
 
     // Mesh estática — exibida quando item tem StaticMesh no Definition
     StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
     StaticMeshComponent->SetupAttachment(CollisionSphere);
     StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     StaticMeshComponent->SetRelativeLocation(FVector::ZeroVector);
-
+    
     // Mesh esquelética — alternativa para itens com SkeletalMesh
     SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
     SkeletalMeshComponent->SetupAttachment(CollisionSphere);
@@ -306,7 +307,7 @@ void AZfItemPickup::OnOverlapBegin(
     // Se não requer interação, coleta automaticamente no servidor
     if (!bRequiresInteractionToPickup && HasAuthority())
     {
-        TryCollectItem(OtherActor);
+        //TryCollectItem(OtherActor);
     }
 }
 
