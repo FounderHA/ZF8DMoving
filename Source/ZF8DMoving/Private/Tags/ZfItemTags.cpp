@@ -4,6 +4,6 @@
 
 namespace ZfItemPropertyTags
 {
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Durability,     "Item.Property.Durability",     "Durabilidade Atual do item")
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_MaxDurability,  "Item.Property.MaxDurability",  "Maxima Durabilidade do Item")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_Durability,     "Item.Property.Durability",     "Durabilidade Atual do item")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Item_MaxDurability,  "Item.Property.MaxDurability",  "Maxima Durabilidade do Item")
 }
