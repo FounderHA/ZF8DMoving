@@ -80,29 +80,28 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "GameplayEffect.type.AttributeSet"))
     FGameplayTag AffectedAttributeTag;
 
-    // GE que aplica este modifier no ASC via MMC
-    // Pode ser Blueprint ou C++
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification")
-    TSoftClassPtr<UGameplayEffect> GameplayEffect;
-    
-    // Classe da regra dinâmica deste modifier.
-    // Null = modifier estático: FinalValue == CurrentValue diretamente.
-    // Não-null = modifier dinâmico: Rule.Calculate(CurrentValue, Context) → FinalValue.
-    // Cada subclasse hardcoda sua fonte e sua fórmula.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification")
-    TSubclassOf<UZfModifierRule> RuleClass;
-
     // Para onde o FinalValue é enviado ao aplicar o modifier.
     // GASAttribute → usa GameplayEffect + MMC.
     // ItemProperty  → aplica direto no ItemInstance via ItemPropertyTag.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification")
     EZfModifierTargetType TargetType = EZfModifierTargetType::GASAttribute;
 
+    // GE que aplica este modifier no ASC via MMC
+    // Pode ser Blueprint ou C++
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification", meta=(EditCondition = "TargetType == EZfModifierTargetType::GASAttribute", EditConditionHides))
+    TSoftClassPtr<UGameplayEffect> GameplayEffect;
+    
+    // Classe da regra dinâmica deste modifier.
+    // Null = modifier estático: FinalValue == CurrentValue diretamente.
+    // Não-null = modifier dinâmico: Rule.Calculate(CurrentValue, Context) → FinalValue.
+    // Cada subclasse hardcoda sua fonte e sua fórmula.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Classification", meta=(EditCondition = "TargetType == EZfModifierTargetType::GASAttribute", EditConditionHides))
+    TSubclassOf<UZfModifierRule> RuleClass;
+
     // Tag da propriedade do item afetada — preenchida quando TargetType == ItemProperty.
     // Ex: "Item.Property.Durability", "Item.Property.MaxDurability"
     // GameplayEffect pode ficar null neste caso.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification",
-        meta = (GameplayTagFilter = "Item.Property", EditCondition = "TargetType == EZfModifierTargetType::ItemProperty"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta = (GameplayTagFilter = "Item.Property", EditCondition = "TargetType == EZfModifierTargetType::ItemProperty", EditConditionHides))
     FGameplayTag ItemPropertyTag;
 
     // Como o valor é aplicado no atributo via GAS
