@@ -1,19 +1,19 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 // ZfGatherSkillCheckWidget.cpp
 
-#include "UI/GatheringSystem/ZfGatherSkillCheckWidget.h"
+#include "GatheringSystem/ZfGatheringSkillCheckWidget.h"
 
 #include "Components/Image.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "GatheringSystem/ZfGatherResourceData.h"
+#include "GatheringSystem/ZfGatheringResourceData.h"
 #include "Tags/ZfGatheringTags.h"
 
 // ============================================================
 // NativeConstruct
 // ============================================================
 
-void UZfGatherSkillCheckWidget::NativeConstruct()
+void UZfGatheringSkillCheckWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
@@ -26,8 +26,8 @@ void UZfGatherSkillCheckWidget::NativeConstruct()
 // InitSkillCheck
 // ============================================================
 
-void UZfGatherSkillCheckWidget::InitSkillCheck(
-    UZfGatherResourceData* InResourceData,
+void UZfGatheringSkillCheckWidget::InitSkillCheck(
+    UZfGatheringResourceData* InResourceData,
     const FGameplayTag&    InToolTag,
     AActor*                InOwnerActor)
 {
@@ -59,8 +59,8 @@ void UZfGatherSkillCheckWidget::InitSkillCheck(
     CurrentGoodSize    = ToolEntry->GoodSize;
     CurrentPerfectSize = ToolEntry->PerfectSize;
 
-    // Calcula velocidade: 1 volta por QTEWindowSeconds
-    AngularSpeed = 1.0f / FMath::Max(ResourceData->QTEWindowSeconds, 0.1f);
+    // Calcula velocidade: 1 volta por NeedleRotationTime
+    AngularSpeed = 1.0f / FMath::Max(ResourceData->NeedleRotationTime, 0.1f);
 
     // Cria o Dynamic Material Instance a partir do ZoneImage
     if (ZoneImage)
@@ -87,7 +87,7 @@ void UZfGatherSkillCheckWidget::InitSkillCheck(
 // StartRound
 // ============================================================
 
-void UZfGatherSkillCheckWidget::StartRound()
+void UZfGatheringSkillCheckWidget::StartRound()
 {
     if (!SkillCheckMID || !ToolEntry)
     {
@@ -119,7 +119,7 @@ void UZfGatherSkillCheckWidget::StartRound()
 // OnInteractPressed
 // ============================================================
 
-void UZfGatherSkillCheckWidget::OnInteractPressed()
+void UZfGatheringSkillCheckWidget::OnInteractPressed()
 {
     if (State != EZfSkillCheckState::Running)
         return;
@@ -131,7 +131,7 @@ void UZfGatherSkillCheckWidget::OnInteractPressed()
 // NativeTick
 // ============================================================
 
-void UZfGatherSkillCheckWidget::NativeTick(
+void UZfGatheringSkillCheckWidget::NativeTick(
     const FGeometry& MyGeometry, float DeltaTime)
 {
     Super::NativeTick(MyGeometry, DeltaTime);
@@ -179,7 +179,7 @@ void UZfGatherSkillCheckWidget::NativeTick(
 // EvaluateHit
 // ============================================================
 
-EZfGatherHitResult UZfGatherSkillCheckWidget::EvaluateHit() const
+EZfGatherHitResult UZfGatheringSkillCheckWidget::EvaluateHit() const
 {
     // Aplica o AngleOffset para que a avaliação bata com o visual
     const float AdjustedAngle = FMath::Fmod(
@@ -198,7 +198,7 @@ EZfGatherHitResult UZfGatherSkillCheckWidget::EvaluateHit() const
 // IsAngleInRange
 // ============================================================
 
-bool UZfGatherSkillCheckWidget::IsAngleInRange(
+bool UZfGatheringSkillCheckWidget::IsAngleInRange(
     float Angle, float Start, float Size) const
 {
     const float End = Start + Size;
@@ -215,7 +215,7 @@ bool UZfGatherSkillCheckWidget::IsAngleInRange(
 // UpdateMaterialZones
 // ============================================================
 
-void UZfGatherSkillCheckWidget::UpdateMaterialZones() const
+void UZfGatheringSkillCheckWidget::UpdateMaterialZones() const
 {
     if (!SkillCheckMID)
         return;
@@ -234,7 +234,7 @@ void UZfGatherSkillCheckWidget::UpdateMaterialZones() const
 // ProcessResult
 // ============================================================
 
-void UZfGatherSkillCheckWidget::ProcessResult(EZfGatherHitResult Result)
+void UZfGatheringSkillCheckWidget::ProcessResult(EZfGatherHitResult Result)
 {
     // Para o ponteiro
     State = EZfSkillCheckState::ShowingResult;
@@ -258,7 +258,7 @@ void UZfGatherSkillCheckWidget::ProcessResult(EZfGatherHitResult Result)
 // BroadcastResultEvent
 // ============================================================
 
-void UZfGatherSkillCheckWidget::BroadcastResultEvent(
+void UZfGatheringSkillCheckWidget::BroadcastResultEvent(
     EZfGatherHitResult Result) const
 {
     if (!OwnerActor)
@@ -279,7 +279,7 @@ void UZfGatherSkillCheckWidget::BroadcastResultEvent(
 // GetTagForResult
 // ============================================================
 
-FGameplayTag UZfGatherSkillCheckWidget::GetTagForResult(
+FGameplayTag UZfGatheringSkillCheckWidget::GetTagForResult(
     EZfGatherHitResult Result)
 {
     switch (Result)

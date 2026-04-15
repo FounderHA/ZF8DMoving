@@ -128,7 +128,7 @@ public:
     // @param PerfectSize   — tamanho da zona interna/amarela (0.0 a 1.0, < GoodSize)
     // @param WindowSeconds — tempo disponível para reagir
     UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
-    void K2_OnQTEStarted(float GoodSize, float PerfectSize, float WindowSeconds);
+    void K2_OnQTEStarted(float GoodSize, float PerfectSize, float NeedleRotationTime);
 
     // Chamado após cada golpe — feedback visual e sonoro.
     // @param HitResult    — resultado do QTE

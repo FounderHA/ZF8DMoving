@@ -16,14 +16,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "GatheringSystem/ZfGatherTypes.h"
-#include "ZfGatherSkillCheckWidget.generated.h"
+#include "GatheringSystem/ZfGatheringTypes.h"
+#include "ZfGatheringSkillCheckWidget.generated.h"
 
 // Forward declarations
 class UImage;
 class UTextBlock;
 class UMaterialInstanceDynamic;
-class UZfGatherResourceData;
+class UZfGatheringResourceData;
 struct FZfGatherToolEntry;
 
 // ============================================================
@@ -45,7 +45,7 @@ enum class EZfSkillCheckState : uint8
 // ============================================================
 
 UCLASS()
-class ZF8DMOVING_API UZfGatherSkillCheckWidget : public UUserWidget
+class ZF8DMOVING_API UZfGatheringSkillCheckWidget : public UUserWidget
 {
     GENERATED_BODY()
 
@@ -60,7 +60,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Zf|SkillCheck")
     void InitSkillCheck(
-        UZfGatherResourceData* InResourceData,
+        UZfGatheringResourceData* InResourceData,
         const FGameplayTag&    InToolTag,
         AActor*                InOwnerActor
     );
@@ -173,7 +173,7 @@ private:
     // ----------------------------------------------------------
 
     UPROPERTY()
-    TObjectPtr<UZfGatherResourceData> ResourceData;
+    TObjectPtr<UZfGatheringResourceData> ResourceData;
 
     UPROPERTY()
     TObjectPtr<AActor> OwnerActor;
