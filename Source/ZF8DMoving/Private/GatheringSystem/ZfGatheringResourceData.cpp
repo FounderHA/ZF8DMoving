@@ -97,6 +97,15 @@ EDataValidationResult UZfGatheringResourceData::IsDataValid(FDataValidationConte
                 TEXT("ZfGatherResourceData: AllowedTools[%d] tem ZoneSize fora do range (0.01 - 1.0)."), i)));
             Result = EDataValidationResult::Invalid;
         }
+
+        if (Entry.PerfectSize <= 0.0f || Entry.PerfectSize >= Entry.GoodSize)
+        {
+            Context.AddError(FText::FromString(FString::Printf(
+                TEXT("ZfGatherResourceData: AllowedTools[%d] PerfectSize (%.2f) deve ser "
+                     "maior que 0 e menor que GoodSize (%.2f)."),
+                i, Entry.PerfectSize, Entry.GoodSize)));
+            Result = EDataValidationResult::Invalid;
+        }
     }
 
     if (LootTable.IsEmpty())
@@ -136,7 +145,7 @@ EDataValidationResult UZfGatheringResourceData::IsDataValid(FDataValidationConte
     if (NeedleRotationTime < 0.3f)
     {
         Context.AddWarning(FText::FromString(
-            TEXT("ZfGatherResourceData: QTEWindowSeconds muito baixo (< 0.3s).")));
+            TEXT("ZfGatherResourceData: NeedleRotationTime muito baixo (< 0.3s).")));
     }
 
     return Result;
@@ -168,11 +177,12 @@ FString UZfGatheringResourceData::GetDebugString() const
     for (int32 i = 0; i < AllowedTools.Num(); i++)
     {
         Debug += FString::Printf(
-            TEXT("  [%d] Tag: %s | DamageMult: %.2f | ZoneSize: %.2f\n"),
+        TEXT("  [%d] Tag: %s | DamageMult: %.2f | GoodSize: %.2f | PerfectSize: %.2f\n"),
             i,
             *AllowedTools[i].ToolTag.ToString(),
             AllowedTools[i].DamageMultiplier,
-            AllowedTools[i].GoodSize);
+            AllowedTools[i].GoodSize,
+            AllowedTools[i].PerfectSize);
     }
 
     Debug += FString::Printf(TEXT("LootTable (%d):\n"), LootTable.Num());

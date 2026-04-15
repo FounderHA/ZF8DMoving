@@ -279,11 +279,6 @@ void UZfGA_GatheringBase::Internal_ResolveAndFinish()
     Internal_SpawnDrops(Drops);
     K2_OnDropsResolved(Drops, FinalScore);
 
-    if (TargetGatherableComponent)
-    {
-        TargetGatherableComponent->Deplete();
-    }
-
     Internal_Cleanup();
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
