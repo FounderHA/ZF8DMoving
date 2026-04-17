@@ -1,56 +1,53 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 // ZfGatherableComponent.h
-// Component que vive nos atores de recurso do mundo e gerencia
-// o estado de coleta: HP atual, disponibilidade, depleção e respawn.
 //
-// CONCEITO:
-// Qualquer ator que queira ser coletável adiciona este component.
-// Ele é a interface entre o mundo (o ator do recurso) e o sistema
-// de coleta (a GA_GatherBase).
+// RESPONSABILIDADES:
+// - Estado do recurso: HP, depleção, respawn
+// - Todo o QTE: ângulo atual (tick), zonas, avaliação, resultado
 //
-// RESPONSABILIDADE:
-// - Guardar a referência ao ZfGatherResourceData
-// - Manter o HP atual do recurso entre sessões de coleta
-// - Controlar se o recurso está disponível ou esgotado
-// - Gerenciar o timer de respawn
-// - Disparar delegates para o Blueprint reagir visualmente
-//
-// HP PERSISTENTE:
-// O CurrentHP vive aqui — não na GA. Se o jogador para no meio
-// da coleta e volta, o recurso continua com o HP danificado.
-// O HP reseta apenas quando o recurso é esgotado e respawna.
-//
-// REPLICAÇÃO:
-// bIsDepleted e CurrentHP são replicados para que todos os
-// clientes vejam o estado correto do recurso.
+// A widget é puramente visual — lê delegates, não sabe de nada.
+// O sistema de interação chama RegisterHit() direto via GA.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "GatheringSystem/ZfGatheringTypes.h"
 #include "ZfGatheringComponent.generated.h"
 
-// Forward declarations
 class UZfGatheringResourceData;
 
 // ============================================================
-// DELEGATES
+// DELEGATES — recurso
 // ============================================================
 
-// Disparado quando o recurso é esgotado.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResourceDepleted);
-
-// Disparado quando o recurso reaparece após respawn.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResourceRespawned);
-
-// Disparado quando o HP do recurso muda — útil para barra de vida no Blueprint.
-// @param CurrentHP — HP atual após o dano
-// @param MaxHP     — HP máximo do recurso
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceHPChanged, float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceHPChanged,
+    float, CurrentHP, float, MaxHP);
 
 // ============================================================
-// UZfGatherableComponent
+// DELEGATES — Skill Check (widget faz bind aqui, só lê)
+// ============================================================
+
+// Novo round iniciado — widget posiciona as zonas no material.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnSkillCheckRoundBegun,
+    float, GoodStart,
+    float, GoodSize,
+    float, PerfectStart,
+    float, PerfectSize);
+
+// Ângulo atualizado a cada frame — widget gira o ponteiro.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckAngleUpdated,
+    float, NormalizedAngle);
+
+// Resultado avaliado — widget exibe o feedback visual.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckHitEvaluated,
+    EZfGatherHitResult, Result);
+
+// ============================================================
+// UZfGatheringComponent
 // ============================================================
 
 UCLASS(ClassGroup = "Zf|Gathering", BlueprintType, Blueprintable,
@@ -67,12 +64,11 @@ public:
     // CONFIGURAÇÃO
     // ----------------------------------------------------------
 
-    // DataAsset que define este recurso.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Config")
     TObjectPtr<UZfGatheringResourceData> GatherResourceData;
 
     // ----------------------------------------------------------
-    // DELEGATES
+    // DELEGATES — recurso
     // ----------------------------------------------------------
 
     UPROPERTY(BlueprintAssignable, Category = "Gather|Events")
@@ -81,20 +77,34 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Gather|Events")
     FOnResourceRespawned OnResourceRespawned;
 
-    // Disparado a cada golpe — Blueprint pode exibir barra de HP diminuindo.
     UPROPERTY(BlueprintAssignable, Category = "Gather|Events")
     FOnResourceHPChanged OnResourceHPChanged;
+
+    // ----------------------------------------------------------
+    // DELEGATES — Skill Check
+    // ----------------------------------------------------------
+
+    UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
+    FOnSkillCheckRoundBegun OnSkillCheckRoundBegun;
+
+    UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
+    FOnSkillCheckAngleUpdated OnSkillCheckAngleUpdated;
+
+    UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
+    FOnSkillCheckHitEvaluated OnSkillCheckHitEvaluated;
 
     // ----------------------------------------------------------
     // CICLO DE VIDA
     // ----------------------------------------------------------
 
     virtual void BeginPlay() override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction) override;
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // ----------------------------------------------------------
-    // ESTADO — leitura
+    // ESTADO DO RECURSO — leitura
     // ----------------------------------------------------------
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
@@ -103,81 +113,126 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     bool IsDepleted() const { return bIsDepleted; }
 
-    // Retorna o HP atual do recurso.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     float GetCurrentHP() const { return CurrentHP; }
 
-    // Retorna o HP máximo definido no DataAsset.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     float GetMaxHP() const;
 
-    // Retorna o HP como percentual (0.0 a 1.0) — útil para barra de vida.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     float GetHPPercent() const;
 
-    // Retorna o tempo restante até o respawn.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     float GetRespawnTimeRemaining() const;
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     UZfGatheringResourceData* GetGatherResourceData() const { return GatherResourceData; }
 
+    UFUNCTION(BlueprintPure, Category = "Zf|Gatherable|SkillCheck")
+    bool IsRoundActive() const { return bRoundActive; }
+    
     // ----------------------------------------------------------
-    // ESTADO — escrita
-    // Chamadas pela GA_GatherBase durante e após a coleta.
+    // ESTADO DO RECURSO — escrita
     // ----------------------------------------------------------
 
-    // Aplica dano ao HP atual do recurso.
-    // Se HP chegar a 0, chama Deplete automaticamente.
-    // Chamado pela GA_GatherBase a cada golpe.
-    // @param DamageAmount — dano a aplicar
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     void ApplyDamage(float DamageAmount);
 
-    // Esgota o recurso e inicia o timer de respawn.
-    // Normalmente chamado internamente por ApplyDamage quando HP <= 0.
-    // Pode ser chamado externamente para forçar depleção.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     void Deplete();
 
-    // Força o respawn imediato ignorando o timer.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     void ForceRespawn();
+
+    // ----------------------------------------------------------
+    // SKILL CHECK — chamados pela GA
+    // ----------------------------------------------------------
+
+    // Inicia um novo round: gera zonas, liga o Tick, guarda o Instigator.
+    // Chamado pela GA em Internal_ExecuteNextHit, após K2_OnQTEStarted.
+    // @param InGoodSize         — tamanho da zona externa (0.0–1.0)
+    // @param InPerfectSize      — tamanho da zona interna (0.0–1.0, < GoodSize)
+    // @param InNeedleRotTime    — duração de uma volta em segundos
+    // @param InInstigator       — ator do jogador (dono do ASC)
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
+    void BeginSkillCheckRound(
+        float InGoodSize,
+        float InPerfectSize,
+        float InNeedleRotTime,
+        AActor* InInstigator);
+
+    // Para o Tick do QTE. Chamado pela GA no cleanup.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
+    void EndSkillCheck();
+
+    // Registra o hit no ângulo atual — chamado via GA::RegisterGatherHit().
+    // Avalia o ângulo, dispara OnSkillCheckHitEvaluated e envia GameplayEvent.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
+    void RegisterHit();
+
+    // Avalia um ângulo sem disparar eventos — útil para debug.
+    UFUNCTION(BlueprintPure, Category = "Zf|Gatherable|SkillCheck")
+    EZfGatherHitResult EvaluateAngle(float Angle) const;
+
+    // Chamado pelo OnInteract do objeto quando o jogador pressiona
+    // o botão durante o QTE. Verifica se o round está ativo e se o
+    // InstigatorPawn é o jogador correto antes de registrar.
+    // Seguro chamar a qualquer momento — ignora se não for o momento certo.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
+    void TryRegisterHit(AActor* InstigatorPawn);
 
 private:
 
     // ----------------------------------------------------------
-    // ESTADO INTERNO REPLICADO
+    // ESTADO — recurso (replicado)
     // ----------------------------------------------------------
 
-    // True quando o recurso foi esgotado e está aguardando respawn.
-    // Replicado — clientes veem e reagem via OnRep.
     UPROPERTY(ReplicatedUsing = OnRep_IsDepleted, VisibleInstanceOnly, Category = "Gather|State")
     bool bIsDepleted = false;
 
-    // HP atual do recurso — persiste entre sessões de coleta.
-    // Replicado para que clientes exibam barra de HP correta.
     UPROPERTY(ReplicatedUsing = OnRep_CurrentHP, VisibleInstanceOnly, Category = "Gather|State")
     float CurrentHP = 0.0f;
 
-    // Handle do timer de respawn.
     FTimerHandle RespawnTimerHandle;
+
+    // ----------------------------------------------------------
+    // ESTADO — Skill Check (não replicado, cliente local)
+    // ----------------------------------------------------------
+
+    // true enquanto o ponteiro estiver girando
+    bool bRoundActive = false;
+
+    // Ângulo atual normalizado (0.0 a 1.0)
+    float CurrentAngle = 0.0f;
+
+    // Voltas por segundo (1.0 / NeedleRotationTime)
+    float AngularSpeed = 0.0f;
+
+    // Zonas do round atual
+    float RoundGoodStart    = 0.0f;
+    float RoundGoodSize     = 0.0f;
+    float RoundPerfectStart = 0.0f;
+    float RoundPerfectSize  = 0.0f;
+
+    // Ator do jogador — usado para enviar o GameplayEvent
+    UPROPERTY()
+    TObjectPtr<AActor> CachedInstigator;
 
     // ----------------------------------------------------------
     // REP NOTIFIES
     // ----------------------------------------------------------
 
-    // Clientes reagem à mudança de bIsDepleted.
     UFUNCTION()
     void OnRep_IsDepleted();
 
-    // Clientes disparam OnResourceHPChanged quando HP muda.
     UFUNCTION()
     void OnRep_CurrentHP();
 
     // ----------------------------------------------------------
-    // FUNÇÕES INTERNAS
+    // HELPERS
     // ----------------------------------------------------------
 
+    bool IsAngleInRange(float Angle, float Start, float Size) const;
+    void Internal_SendHitEvent(EZfGatherHitResult Result);
     void Internal_OnRespawnTimerExpired();
 };

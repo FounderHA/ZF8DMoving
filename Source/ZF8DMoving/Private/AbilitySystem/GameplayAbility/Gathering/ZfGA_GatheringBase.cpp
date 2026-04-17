@@ -14,6 +14,8 @@
 #include "Tags/ZfGameplayTags.h"
 #include "Math/UnrealMathUtility.h"
 #include "GameFramework/PlayerState.h"
+#include "EnhancedInputComponent.h"
+#include "GameFramework/PlayerController.h"
 
 // ============================================================
 // Constructor
@@ -48,6 +50,9 @@ void UZfGA_GatheringBase::ActivateAbility(
         return;
     }
 
+    // Registra o input de hit diretamente — sem passar pelo sistema de interação
+    Internal_BindHitInput();
+
     Internal_ExecuteNextHit();
 }
 
@@ -67,17 +72,80 @@ void UZfGA_GatheringBase::CancelAbility(
 }
 
 // ============================================================
+// Internal_BindHitInput
+// Registra o binding do botão de hit diretamente no PlayerController.
+// Ativo apenas enquanto a ability estiver rodando.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_BindHitInput()
+{
+    if (!GatherHitInputAction)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ZfGA_GatherBase: GatherHitInputAction não configurado na GA."));
+        return;
+    }
+
+    APlayerController* PC = Cast<APlayerController>(
+        GetActorInfo().PlayerController.Get());
+
+    if (!PC) return;
+
+    UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent);
+    if (!EIC) return;
+
+    HitInputHandle = EIC->BindAction(
+        GatherHitInputAction,
+        ETriggerEvent::Started,
+        this,
+        &UZfGA_GatheringBase::Internal_OnHitInputPressed).GetHandle();
+}
+
+// ============================================================
+// Internal_UnbindHitInput
+// Remove o binding — chamado no cleanup.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_UnbindHitInput()
+{
+    if (HitInputHandle == 0) return;
+
+    APlayerController* PC = Cast<APlayerController>(
+        GetActorInfo().PlayerController.Get());
+
+    if (!PC) return;
+
+    UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent);
+    if (!EIC) return;
+
+    EIC->RemoveBindingByHandle(HitInputHandle);
+    HitInputHandle = 0;
+}
+
+// ============================================================
+// Internal_OnHitInputPressed
+// Chamado pelo Enhanced Input quando o jogador pressiona o botão.
+// Repassa para o component — ele usa o CurrentAngle interno.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_OnHitInputPressed()
+{
+    if (TargetGatherableComponent)
+    {
+        TargetGatherableComponent->RegisterHit();
+    }
+}
+
+// ============================================================
 // Internal_ValidateAndSetup
 // ============================================================
 
 bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* TriggerEventData)
 {
-    // 1. Extrai o ator do recurso do EventData
     if (!TriggerEventData || !TriggerEventData->OptionalObject)
     {
         UE_LOG(LogTemp, Warning,
-            TEXT("ZfGA_GatherBase: OptionalObject nulo. "
-                 "Passe o ator do recurso em EventData.OptionalObject."));
+            TEXT("ZfGA_GatherBase: OptionalObject nulo."));
         return false;
     }
 
@@ -88,7 +156,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 2. Valida o GatherableComponent
     TargetGatherableComponent = ResourceActor->FindComponentByClass<UZfGatheringComponent>();
     if (!TargetGatherableComponent)
     {
@@ -113,7 +180,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 3. Busca a ferramenta via EquipmentComponent
     AActor* AvatarActor = GetAvatarActorFromActorInfo();
     if (!AvatarActor)
     {
@@ -121,7 +187,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // EquipmentComponent pode estar no PlayerState
     APlayerState* PS = AvatarActor->GetInstigatorController<APlayerController>()
         ? AvatarActor->GetInstigatorController<APlayerController>()->GetPlayerState<APlayerState>()
         : nullptr;
@@ -145,7 +210,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 4. Busca o ZfFragment_GatherTool
     const UZfFragment_GatheringTool* GatherFragment =
         ToolInstance->GetFragment<UZfFragment_GatheringTool>();
     if (!GatherFragment)
@@ -156,7 +220,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 5. Resolve os stats base da ferramenta (BaseDamage, DropMultiplier, ScoreBonus)
     ResolvedToolStats = GatherFragment->ResolveGatherStats(ToolInstance);
     if (!ResolvedToolStats.bIsValid)
     {
@@ -164,7 +227,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 6. Verifica se a ferramenta pode coletar este recurso
     if (!TargetResourceData->IsToolAllowed(ResolvedToolStats.ToolTag))
     {
         UE_LOG(LogTemp, Warning,
@@ -174,12 +236,6 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    // 7. Cacheia os valores do FZfGatherToolEntry do recurso para esta ferramenta.
-    //    DamageMultiplier, GoodSize e PerfectSize variam por recurso —
-    //    por isso vivem no ToolEntry do recurso, não no fragment da ferramenta.
-    //    GoodSize e PerfectSize são populados no ResolvedToolStats para que
-    //    Internal_ExecuteNextHit possa passá-los ao K2_OnQTEStarted sem
-    //    precisar buscar o ToolEntry a cada golpe.
     const FZfGatherToolEntry* ToolEntry =
         TargetResourceData->FindToolEntry(ResolvedToolStats.ToolTag);
 
@@ -198,28 +254,29 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
 
 void UZfGA_GatheringBase::Internal_ExecuteNextHit()
 {
-    // HP no component chegou a zero — recurso esgotado, finaliza
     if (TargetGatherableComponent->GetCurrentHP() <= 0.0f)
     {
         Internal_ResolveAndFinish();
         return;
     }
 
-    // Notifica Blueprint para exibir o QTE com as duas zonas.
-    // GoodSize   → zona externa (verde)  — cacheado do ToolEntry do recurso
-    // PerfectSize → zona interna (amarela) — cacheado do ToolEntry do recurso
     K2_OnQTEStarted(
         ResolvedToolStats.GoodSize,
         ResolvedToolStats.PerfectSize,
         TargetResourceData->NeedleRotationTime);
 
-    // Aguarda o resultado do QTE via GameplayEvent
+    TargetGatherableComponent->BeginSkillCheckRound(
+        ResolvedToolStats.GoodSize,
+        ResolvedToolStats.PerfectSize,
+        TargetResourceData->NeedleRotationTime,
+        GetAvatarActorFromActorInfo());
+
     ActiveQTEWaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
         this,
         ZfGatheringTags::QTE::Gathering_QTE_Hit,
         nullptr,
         false,
-        true);
+        false);
 
     ActiveQTEWaitTask->EventReceived.AddDynamic(
         this,
@@ -242,28 +299,31 @@ void UZfGA_GatheringBase::Internal_OnQTEResultReceived(FGameplayEventData EventD
 
     const EZfGatherHitResult HitResult = Internal_TagToHitResult(EventData.EventTag);
 
-    // Calcula o dano deste golpe
-    // BaseDamage * DamageMultiplier(recurso) * DamageMultiplier(QTE)
     const float DamageMultiplierQTE = FZfGatherHitRecord::GetDamageMultiplierForResult(HitResult);
     const float DamageDealt =
         ResolvedToolStats.BaseDamage *
         CachedResourceDamageMultiplier *
         DamageMultiplierQTE;
 
-    // Aplica o dano no component — HP persiste entre sessões de coleta
     TargetGatherableComponent->ApplyDamage(DamageDealt);
 
-    // Registra o hit
     FZfGatherHitRecord Record;
     Record.HitResult   = HitResult;
     Record.DamageDealt = DamageDealt;
     Record.ScoreValue  = FZfGatherHitRecord::GetScoreForResult(HitResult);
     HitRecords.Add(Record);
 
-    // Notifica Blueprint — RemainingHP vem do component agora
     K2_OnHitImpact(HitResult, DamageDealt, TargetGatherableComponent->GetCurrentHP());
 
-    // Próximo golpe ou finaliza
+    UE_LOG(LogTemp, Warning,
+    TEXT("GA: HitResult=%d | BaseDamage=%.1f | ResourceMult=%.2f | QTEMult=%.2f | DamageDealt=%.1f | HPRestante=%.1f"),
+    (int32)HitResult,
+    ResolvedToolStats.BaseDamage,
+    CachedResourceDamageMultiplier,
+    DamageMultiplierQTE,
+    DamageDealt,
+    TargetGatherableComponent->GetCurrentHP());
+    
     Internal_ExecuteNextHit();
 }
 
@@ -289,10 +349,7 @@ void UZfGA_GatheringBase::Internal_ResolveAndFinish()
 
 float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
 {
-    if (HitRecords.IsEmpty())
-    {
-        return 0.0f;
-    }
+    if (HitRecords.IsEmpty()) return 0.0f;
 
     float ScoreSum = 0.0f;
     for (const FZfGatherHitRecord& Record : HitRecords)
@@ -300,9 +357,7 @@ float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
         ScoreSum += Record.ScoreValue;
     }
 
-    // Divide pelo número de golpes realizados — dinâmico no sistema de dano
     const float RawScore = ScoreSum / static_cast<float>(HitRecords.Num());
-
     return FMath::Clamp(RawScore + ResolvedToolStats.ScoreBonus, 0.0f, 1.0f);
 }
 
@@ -313,7 +368,6 @@ float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
 TArray<FZfGatherDropResult> UZfGA_GatheringBase::Internal_ResolveLootTable(float FinalScore) const
 {
     TArray<FZfGatherDropResult> Drops;
-
     if (!TargetResourceData) return Drops;
 
     for (const FZfGatherLootEntry& Entry : TargetResourceData->LootTable)
@@ -352,9 +406,7 @@ TArray<FZfGatherDropResult> UZfGA_GatheringBase::Internal_ResolveLootTable(float
 
 void UZfGA_GatheringBase::Internal_SpawnDrops(const TArray<FZfGatherDropResult>& Drops)
 {
-    // Spawn de atores só no servidor
     if (GetWorld()->GetNetMode() == NM_Client) return;
-
     if (Drops.IsEmpty() || !TargetGatherableComponent) return;
 
     UWorld* World = GetWorld();
@@ -414,7 +466,8 @@ void UZfGA_GatheringBase::Internal_SpawnDrops(const TArray<FZfGatherDropResult>&
 // Internal_TagToHitResult
 // ============================================================
 
-EZfGatherHitResult UZfGA_GatheringBase::Internal_TagToHitResult(const FGameplayTag& EventTag) const
+EZfGatherHitResult UZfGA_GatheringBase::Internal_TagToHitResult(
+    const FGameplayTag& EventTag) const
 {
     if (EventTag == ZfGatheringTags::QTE::Gathering_QTE_Hit_Perfect) return EZfGatherHitResult::Perfect;
     if (EventTag == ZfGatheringTags::QTE::Gathering_QTE_Hit_Good)    return EZfGatherHitResult::Good;
@@ -428,10 +481,18 @@ EZfGatherHitResult UZfGA_GatheringBase::Internal_TagToHitResult(const FGameplayT
 
 void UZfGA_GatheringBase::Internal_Cleanup()
 {
+    // Remove o binding de input antes de tudo
+    Internal_UnbindHitInput();
+
     if (ActiveQTEWaitTask)
     {
         ActiveQTEWaitTask->EndTask();
         ActiveQTEWaitTask = nullptr;
+    }
+
+    if (TargetGatherableComponent)
+    {
+        TargetGatherableComponent->EndSkillCheck();
     }
 
     TargetGatherableComponent      = nullptr;
