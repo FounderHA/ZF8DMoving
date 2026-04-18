@@ -24,9 +24,9 @@ public:
 	
 	// ── Health ────────────────────────────────────────────────────────────
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentHealth, Category = "HealthSet")
-	FGameplayAttributeData CurrentHealth;
-	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, CurrentHealth)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "HealthSet")
+	FGameplayAttributeData Health;
+	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, Health)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "HealthSet")
 	FGameplayAttributeData MaxHealth;
@@ -34,9 +34,9 @@ public:
 	
 	// ── Mana ──────────────────────────────────────────────────────────────
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentMana, Category = "ManaSet")
-	FGameplayAttributeData CurrentMana;
-	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, CurrentMana)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Mana, Category = "ManaSet")
+	FGameplayAttributeData Mana;
+	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, Mana)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "ManaSet")
 	FGameplayAttributeData MaxMana;
@@ -44,9 +44,9 @@ public:
 	
 	// ── Stamina ───────────────────────────────────────────────────────────
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentStamina, Category = "StaminaSet")
-	FGameplayAttributeData CurrentStamina;
-	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, CurrentStamina)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Stamina, Category = "StaminaSet")
+	FGameplayAttributeData Stamina;
+	ATTRIBUTE_ACCESSORS(UZfResourceAttributeSet, Stamina)
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "StaminaSet")
 	FGameplayAttributeData MaxStamina;
@@ -55,19 +55,19 @@ public:
 protected:
 	
 	UFUNCTION()
-	virtual void OnRep_CurrentHealth(const FGameplayAttributeData& OldValue) const;
+	virtual void OnRep_Health(const FGameplayAttributeData& OldValue) const;
 
 	UFUNCTION()
 	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) const;
 	
 	UFUNCTION()
-	virtual void OnRep_CurrentMana(const FGameplayAttributeData& OldValue) const;
+	virtual void OnRep_Mana(const FGameplayAttributeData& OldValue) const;
 	
 	UFUNCTION()
 	virtual void OnRep_MaxMana(const FGameplayAttributeData& OldValue) const;
 	
 	UFUNCTION()
-	virtual void OnRep_CurrentStamina(const FGameplayAttributeData& OldValue) const;
+	virtual void OnRep_Stamina(const FGameplayAttributeData& OldValue) const;
 	
 	UFUNCTION()
 	virtual void OnRep_MaxStamina(const FGameplayAttributeData& OldValue) const;

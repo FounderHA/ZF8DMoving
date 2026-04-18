@@ -14,8 +14,10 @@
 class UZfMainAttributeSet;
 class UZfResourceAttributeSet;
 class UZfProgressionAttributeSet;
-class UZfDamageAttributeSet;
+class UZfOffensiveAttributeSet;
 class UZfResistanceAttributeSet;
+class UZfStealAttributesSet;
+class UZfMovementAttributeSet;
 
 UCLASS()
 class ZF8DMOVING_API AZfPlayerState : public APlayerState, public IAbilitySystemInterface
@@ -31,8 +33,10 @@ public:
 	UZfResourceAttributeSet* GetResourceAttributeSet() const;
 	UZfMainAttributeSet* GetMainAttributeSet() const;
 	UZfProgressionAttributeSet* GetProgressionAttributeSet() const;
-	UZfDamageAttributeSet* GetDamageAttributeSet() const;
+	UZfOffensiveAttributeSet* GetDamageAttributeSet() const;
 	UZfResistanceAttributeSet* GetResistanceAttributeSet() const;
+	UZfStealAttributesSet* GetStealAttributeSet() const;
+	UZfMovementAttributeSet* GetMovementAttributeSet() const;
 
 	UFUNCTION(BlueprintCallable)
 	UZfInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
@@ -65,10 +69,16 @@ protected:
 	TObjectPtr<UZfProgressionAttributeSet> ProgressionAttributeSet;
 	
 	UPROPERTY()
-	TObjectPtr<UZfDamageAttributeSet> DamageAttributeSet;
+	TObjectPtr<UZfOffensiveAttributeSet> DamageAttributeSet;
 	
 	UPROPERTY()
 	TObjectPtr<UZfResistanceAttributeSet> ResistanceAttributeSet;
+	
+	UPROPERTY()
+	TObjectPtr<UZfStealAttributesSet> StealAttributeSet;
+	
+	UPROPERTY()
+	TObjectPtr<UZfMovementAttributeSet> MovementAttributeSet;
 
 
 private:

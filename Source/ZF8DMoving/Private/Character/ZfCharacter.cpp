@@ -198,22 +198,22 @@ void AZfCharacter::RegisterResourceSyncDelegates()
 
             const float OldMax = Data.OldValue;
             const float NewMax = Data.NewValue;
-            const float Current = Set->GetCurrentHealth();
+            const float Current = Set->GetHealth();
 
             if (OldMax > 0.f)
             {
                 const float Proportion = Current / OldMax;
-                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentHealthAttribute(),
+                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetHealthAttribute(),
                     FMath::Clamp(Proportion * NewMax, 0.f, NewMax));
             }
             else
             {
                 if (Current <= 0.f)
                     // Personagem novo — começa no máximo
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentHealthAttribute(), NewMax);
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetHealthAttribute(), NewMax);
                 else
                     // Load do save — apenas clampa
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentHealthAttribute(),
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetHealthAttribute(),
                         FMath::Clamp(Current, 0.f, NewMax));
             }
         });
@@ -231,19 +231,19 @@ void AZfCharacter::RegisterResourceSyncDelegates()
 
             const float OldMax = Data.OldValue;
             const float NewMax = Data.NewValue;
-            const float Current = Set->GetCurrentMana();
+            const float Current = Set->GetMana();
 
             if (OldMax > 0.f)
             {
                 const float Proportion = Current / OldMax;
-                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentManaAttribute(), FMath::Clamp(Proportion * NewMax, 0.f, NewMax));
+                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetManaAttribute(), FMath::Clamp(Proportion * NewMax, 0.f, NewMax));
             }
             else
             {
                 if (Current <= 0.f)
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentManaAttribute(), NewMax);
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetManaAttribute(), NewMax);
                 else
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentManaAttribute(),
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetManaAttribute(),
                         FMath::Clamp(Current, 0.f, NewMax));
             }
         });
@@ -261,19 +261,19 @@ void AZfCharacter::RegisterResourceSyncDelegates()
 
             const float OldMax = Data.OldValue;
             const float NewMax = Data.NewValue;
-            const float Current = Set->GetCurrentStamina();
+            const float Current = Set->GetStamina();
 
             if (OldMax > 0.f)
             {
                 const float Proportion = Current / OldMax;
-                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentStaminaAttribute(), FMath::Clamp(Proportion * NewMax, 0.f, NewMax));
+                ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetStaminaAttribute(), FMath::Clamp(Proportion * NewMax, 0.f, NewMax));
             }
             else
             {
                 if (Current <= 0.f)
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentStaminaAttribute(), NewMax);
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetStaminaAttribute(), NewMax);
                 else
-                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetCurrentStaminaAttribute(),
+                    ASC->SetNumericAttributeBase(UZfResourceAttributeSet::GetStaminaAttribute(),
                         FMath::Clamp(Current, 0.f, NewMax));
             }
         });
