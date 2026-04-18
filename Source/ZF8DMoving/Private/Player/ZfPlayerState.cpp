@@ -15,8 +15,10 @@
 #include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
-#include "AbilitySystem/Attributes/ZfDamageAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfOffensiveAttributeSet.h"
 #include "AbilitySystem/Attributes/ZfResistanceAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfStealAttributesSet.h"
+#include "AbilitySystem/Attributes/ZfMovementAttributeSet.h"
 
 AZfPlayerState::AZfPlayerState()
 {
@@ -35,8 +37,10 @@ AZfPlayerState::AZfPlayerState()
 	ResourceAttributeSet = CreateDefaultSubobject<UZfResourceAttributeSet>(TEXT("ResourceAttributeSet"));
 	MainAttributeSet = CreateDefaultSubobject<UZfMainAttributeSet>(TEXT("MainAttributeSet"));
 	ProgressionAttributeSet = CreateDefaultSubobject<UZfProgressionAttributeSet>(TEXT("ProgressionAttributeSet"));
-	DamageAttributeSet = CreateDefaultSubobject<UZfDamageAttributeSet>(TEXT("DamageAttributeSet"));
+	DamageAttributeSet = CreateDefaultSubobject<UZfOffensiveAttributeSet>(TEXT("DamageAttributeSet"));
 	ResistanceAttributeSet = CreateDefaultSubobject<UZfResistanceAttributeSet>(TEXT("ResistanceAttributeSet"));
+	StealAttributeSet = CreateDefaultSubobject<UZfStealAttributesSet>(TEXT("StealAttributeSet"));
+	MovementAttributeSet = CreateDefaultSubobject<UZfMovementAttributeSet>(TEXT("MovementAttributeSet"));
 }
 
 UAbilitySystemComponent* AZfPlayerState::GetAbilitySystemComponent() const
@@ -66,7 +70,7 @@ UZfProgressionAttributeSet* AZfPlayerState::GetProgressionAttributeSet() const
 	return ProgressionAttributeSet;
 }
 
-UZfDamageAttributeSet* AZfPlayerState::GetDamageAttributeSet() const
+UZfOffensiveAttributeSet* AZfPlayerState::GetDamageAttributeSet() const
 {
 	return DamageAttributeSet;
 }
@@ -76,6 +80,15 @@ UZfResistanceAttributeSet* AZfPlayerState::GetResistanceAttributeSet() const
 	return ResistanceAttributeSet;
 }
 
+UZfStealAttributesSet* AZfPlayerState::GetStealAttributeSet() const
+{
+	return StealAttributeSet;
+}
+
+UZfMovementAttributeSet* AZfPlayerState::GetMovementAttributeSet() const
+{
+	return MovementAttributeSet;
+}
 
 //
 //============================ Debug Attribut ============================

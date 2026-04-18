@@ -8,13 +8,13 @@
 struct FZfTemplateStatics
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(Strength);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(CurrentHealth);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(Health);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(MaxHealth);
 	
 	FZfTemplateStatics()
 	{
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UZfMainAttributeSet, Strength, Source, false);
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UZfResourceAttributeSet, CurrentHealth, Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UZfResourceAttributeSet, Health, Source, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UZfResourceAttributeSet, MaxHealth, Source, false);
 	}
 };
@@ -29,7 +29,7 @@ UZfTemplateEffectExecutionCalculation::UZfTemplateEffectExecutionCalculation()
 {
 	RelevantAttributesToCapture.Add(TemplateStatics().StrengthDef);
 	RelevantAttributesToCapture.Add(TemplateStatics().MaxHealthDef);
-	RelevantAttributesToCapture.Add(TemplateStatics().CurrentHealthDef);
+	RelevantAttributesToCapture.Add(TemplateStatics().HealthDef);
 }
 
 void UZfTemplateEffectExecutionCalculation::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -60,7 +60,7 @@ void UZfTemplateEffectExecutionCalculation::Execute_Implementation(const FGamepl
 	SourceStrength = FMath::Max(0.0f, SourceStrength);
 	
 	float SourceHealth;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(TemplateStatics().CurrentHealthDef, EvaluateParameters, SourceHealth);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(TemplateStatics().HealthDef, EvaluateParameters, SourceHealth);
 	SourceHealth = FMath::Max(0.0f, SourceHealth);
 	
 	float SourceMaxHealth;

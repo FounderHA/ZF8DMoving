@@ -5,7 +5,7 @@
 TArray<FGameplayAttribute> UZfRule_InversedVitalRatio::GetSourceAttributes() const
 {
 	return {
-		UZfResourceAttributeSet::GetCurrentHealthAttribute(),
+		UZfResourceAttributeSet::GetHealthAttribute(),
 		UZfResourceAttributeSet::GetMaxHealthAttribute()
 	};
 }
@@ -16,7 +16,7 @@ float UZfRule_InversedVitalRatio::Calculate_Implementation(float CurrentValue) c
 
 	bool bFound = false;
 	const float CurrentHealth = CachedContext.ASC->GetGameplayAttributeValue(
-		UZfResourceAttributeSet::GetCurrentHealthAttribute(), bFound);
+		UZfResourceAttributeSet::GetHealthAttribute(), bFound);
 
 	const float MaxHealth = CachedContext.ASC->GetGameplayAttributeValue(
 		UZfResourceAttributeSet::GetMaxHealthAttribute(), bFound);

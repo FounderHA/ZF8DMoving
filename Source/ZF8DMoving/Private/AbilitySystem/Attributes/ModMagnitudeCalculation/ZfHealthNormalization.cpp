@@ -20,7 +20,7 @@ float UZfHealthNormalization::CalculateBaseMagnitude_Implementation(const FGamep
 	float CurrentHealth = 0.f;
 	if (const UZfResourceAttributeSet* ProgSet = ASC->GetSet<UZfResourceAttributeSet>())
 	{
-		CurrentHealth = ProgSet->GetCurrentHealth();
+		CurrentHealth = ProgSet->GetHealth();
 	}
 	
 	// --- MaxHealth ---
