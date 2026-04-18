@@ -14,6 +14,7 @@
 #include "Tags/ZfGameplayTags.h"
 #include "Math/UnrealMathUtility.h"
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/Character.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/PlayerController.h"
 
@@ -24,10 +25,15 @@
 UZfGA_GatheringBase::UZfGA_GatheringBase()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 }
 
 // ============================================================
 // ActivateAbility
+//
+// Roda nos dois lados (servidor e cliente dono):
+//   SERVIDOR: valida, commit, lock, cancellation listeners, inicia QTE
+//   CLIENTE:  bind input (hit + move), bind delegate visual
 // ============================================================
 
 void UZfGA_GatheringBase::ActivateAbility(
@@ -38,22 +44,44 @@ void UZfGA_GatheringBase::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+    // Validação e setup de referências — roda nos dois lados.
+    // O cliente precisa de TargetGatherableComponent para bindar os delegates visuais.
     if (!Internal_ValidateAndSetup(TriggerEventData))
     {
         CancelAbility(Handle, ActorInfo, ActivationInfo, true);
         return;
     }
 
-    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+    // ── CLIENTE DONO — bind ANTES da lógica do servidor ─────────────
+    // IMPORTANTE: No listen server HasAuthority e IsLocallyControlled são
+    // ambos true. O bind precisa existir ANTES de Internal_ExecuteNextHit
+    // chamar BeginSkillCheckRound que dispara OnSkillCheckRoundBegun.
+    // Clientes remotos também passam por aqui (IsLocallyControlled = true
+    // para o dono do ASC) e fazem o bind para receber o evento via RepNotify.
+    if (ActorInfo && ActorInfo->IsLocallyControlled())
     {
-        CancelAbility(Handle, ActorInfo, ActivationInfo, true);
-        return;
+        Internal_BindHitInput();
+        Internal_BindClientDelegates();
     }
 
-    // Registra o input de hit diretamente — sem passar pelo sistema de interação
-    Internal_BindHitInput();
+    // ── SERVIDOR ────────────────────────────────────────────────
+    if (HasAuthority(&ActivationInfo))
+    {
+        if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+        {
+            CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+            return;
+        }
 
-    Internal_ExecuteNextHit();
+        // Trava o recurso — impede outros jogadores de coletar simultaneamente
+        TargetGatherableComponent->StartGatheringLock(GetAvatarActorFromActorInfo());
+
+        // Bind dos listeners de cancelamento (movimento, abilities, status tags)
+        Internal_BindCancellationListeners();
+
+        // Inicia o primeiro round do QTE — delegates do cliente já estão bindados
+        Internal_ExecuteNextHit();
+    }
 }
 
 // ============================================================
@@ -73,67 +101,287 @@ void UZfGA_GatheringBase::CancelAbility(
 
 // ============================================================
 // Internal_BindHitInput
-// Registra o binding do botão de hit diretamente no PlayerController.
-// Ativo apenas enquanto a ability estiver rodando.
 // ============================================================
 
 void UZfGA_GatheringBase::Internal_BindHitInput()
 {
-    if (!GatherHitInputAction)
-    {
-        UE_LOG(LogTemp, Warning,
-            TEXT("ZfGA_GatherBase: GatherHitInputAction não configurado na GA."));
-        return;
-    }
-
     APlayerController* PC = Cast<APlayerController>(
         GetActorInfo().PlayerController.Get());
-
     if (!PC) return;
 
     UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent);
     if (!EIC) return;
 
-    HitInputHandle = EIC->BindAction(
-        GatherHitInputAction,
-        ETriggerEvent::Started,
-        this,
-        &UZfGA_GatheringBase::Internal_OnHitInputPressed).GetHandle();
+    if (GatherHitInputAction)
+    {
+        HitInputHandle = EIC->BindAction(
+            GatherHitInputAction,
+            ETriggerEvent::Started,
+            this,
+            &UZfGA_GatheringBase::Internal_OnHitInputPressed).GetHandle();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ZfGA_GatherBase: GatherHitInputAction não configurado na GA."));
+    }
+
+    // Bind de movimento — cancela localmente para resposta imediata no cliente
+    if (MoveInputAction)
+    {
+        MoveInputHandle = EIC->BindAction(
+            MoveInputAction,
+            ETriggerEvent::Started,
+            this,
+            &UZfGA_GatheringBase::Internal_OnMovementInputPressed).GetHandle();
+    }
 }
 
 // ============================================================
 // Internal_UnbindHitInput
-// Remove o binding — chamado no cleanup.
 // ============================================================
 
 void UZfGA_GatheringBase::Internal_UnbindHitInput()
 {
-    if (HitInputHandle == 0) return;
-
     APlayerController* PC = Cast<APlayerController>(
         GetActorInfo().PlayerController.Get());
-
     if (!PC) return;
 
     UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent);
     if (!EIC) return;
 
-    EIC->RemoveBindingByHandle(HitInputHandle);
-    HitInputHandle = 0;
+    if (HitInputHandle != 0)
+    {
+        EIC->RemoveBindingByHandle(HitInputHandle);
+        HitInputHandle = 0;
+    }
+
+    if (MoveInputHandle != 0)
+    {
+        EIC->RemoveBindingByHandle(MoveInputHandle);
+        MoveInputHandle = 0;
+    }
 }
 
 // ============================================================
 // Internal_OnHitInputPressed
-// Chamado pelo Enhanced Input quando o jogador pressiona o botão.
-// Repassa para o component — ele usa o CurrentAngle interno.
+// Cliente pressiona o botão → envia Server RPC.
+// O servidor avalia o ângulo interno — cliente não envia dados de ângulo.
 // ============================================================
 
 void UZfGA_GatheringBase::Internal_OnHitInputPressed()
+{
+    Server_RegisterHit();
+}
+
+// ============================================================
+// Internal_OnMovementInputPressed
+// Cliente detecta movimento via input → cancela localmente (client prediction).
+// O servidor também cancela via Internal_CheckMovement (timer).
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_OnMovementInputPressed()
+{
+    CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+}
+
+// ============================================================
+// Server_RegisterHit_Implementation
+// Executado no servidor quando o cliente pressiona o botão de hit.
+// Chama RegisterHit() no componente que usa seu próprio ângulo interno.
+// ============================================================
+
+void UZfGA_GatheringBase::Server_RegisterHit_Implementation()
 {
     if (TargetGatherableComponent)
     {
         TargetGatherableComponent->RegisterHit();
     }
+}
+
+// ============================================================
+// Internal_BindCancellationListeners
+// Chamado apenas no servidor.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_BindCancellationListeners()
+{
+    AActor* Avatar = GetAvatarActorFromActorInfo();
+    if (!Avatar) return;
+
+    // Salva posição inicial para detectar movimento
+    GatherStartLocation = Avatar->GetActorLocation();
+
+    // Timer de verificação de movimento (0.1s — funciona em dedicated server)
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().SetTimer(
+            MovementCheckHandle,
+            this,
+            &UZfGA_GatheringBase::Internal_CheckMovement,
+            0.1f,
+            true); // looping
+    }
+
+    // Qualquer ability que ativar enquanto coleta roda cancela esta GA
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+    if (ASC)
+    {
+        AbilityActivatedDelegateHandle = ASC->AbilityActivatedCallbacks.AddUObject(
+            this, &UZfGA_GatheringBase::Internal_OnAnyAbilityActivated);
+
+        // Status tags que cancelam a coleta (hit react, knockback, etc.)
+        for (const FGameplayTag& Tag : CancellationStatusTags)
+        {
+            FDelegateHandle Handle = ASC->RegisterGameplayTagEvent(
+                Tag,
+                EGameplayTagEventType::NewOrRemoved).AddUObject(
+                    this,
+                    &UZfGA_GatheringBase::Internal_OnStatusTagChanged);
+
+            StatusTagEventHandles.Add(Handle);
+        }
+    }
+}
+
+// ============================================================
+// Internal_UnbindCancellationListeners
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_UnbindCancellationListeners()
+{
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(MovementCheckHandle);
+    }
+
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+    if (ASC)
+    {
+        if (AbilityActivatedDelegateHandle.IsValid())
+        {
+            ASC->AbilityActivatedCallbacks.Remove(AbilityActivatedDelegateHandle);
+            AbilityActivatedDelegateHandle.Reset();
+        }
+
+        for (int32 i = 0; i < CancellationStatusTags.Num(); i++)
+        {
+            if (i < StatusTagEventHandles.Num() && StatusTagEventHandles[i].IsValid())
+            {
+                ASC->RegisterGameplayTagEvent(
+                    CancellationStatusTags[i],
+                    EGameplayTagEventType::NewOrRemoved).Remove(StatusTagEventHandles[i]);
+            }
+        }
+        StatusTagEventHandles.Empty();
+    }
+}
+
+// ============================================================
+// Internal_CheckMovement
+// Timer no servidor — verifica se o Avatar se moveu desde o início.
+// Qualquer velocidade (> 1 cm/s) cancela a coleta.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_CheckMovement()
+{
+    AActor* Avatar = GetAvatarActorFromActorInfo();
+    if (!Avatar)
+    {
+        CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+        return;
+    }
+
+    // Usa velocidade atual — mais confiável que delta de posição em altas taxas de tick
+    if (ACharacter* Char = Cast<ACharacter>(Avatar))
+    {
+        if (Char->GetVelocity().SizeSquared() > 1.0f)
+        {
+            UE_LOG(LogTemp, Log, TEXT("ZfGA_GatherBase: Cancelado por movimento."));
+            CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+        }
+    }
+}
+
+// ============================================================
+// Internal_OnAnyAbilityActivated
+// Chamado quando qualquer ability ativa no ASC do jogador.
+// Esta GA se cancela — o jogador está fazendo outra ação.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_OnAnyAbilityActivated(UGameplayAbility* ActivatedAbility)
+{
+    // Ignora se a ability que ativou for esta mesma (evita loop)
+    if (ActivatedAbility == this) return;
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGA_GatherBase: Cancelado por ability '%s'."),
+        *GetNameSafe(ActivatedAbility));
+
+    CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+}
+
+// ============================================================
+// Internal_OnStatusTagChanged
+// Chamado quando uma tag de status é adicionada ao ASC do jogador.
+// Cancela a coleta se a tag foi ADICIONADA (NewCount > 0).
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_OnStatusTagChanged(
+    const FGameplayTag Tag, int32 NewCount)
+{
+    if (NewCount <= 0) return; // Tag removida — não cancela
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGA_GatherBase: Cancelado por status tag '%s'."),
+        *Tag.ToString());
+
+    CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+}
+
+// ============================================================
+// Internal_BindClientDelegates
+// Bind no cliente para K2_OnClientRoundBegun (criar/exibir widget).
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_BindClientDelegates()
+{
+    if (!TargetGatherableComponent) return;
+
+    TargetGatherableComponent->OnSkillCheckRoundBegun.AddDynamic(
+        this, &UZfGA_GatheringBase::Internal_OnClientRoundBegun);
+}
+
+// ============================================================
+// Internal_UnbindClientDelegates
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_UnbindClientDelegates()
+{
+    if (!TargetGatherableComponent) return;
+
+    TargetGatherableComponent->OnSkillCheckRoundBegun.RemoveDynamic(
+        this, &UZfGA_GatheringBase::Internal_OnClientRoundBegun);
+}
+
+// ============================================================
+// Internal_OnClientRoundBegun
+// Recebido no cliente quando um novo round chega via RepNotify.
+// Chama K2_OnClientRoundBegun para que o Blueprint crie/mostre a widget.
+// ============================================================
+
+void UZfGA_GatheringBase::Internal_OnClientRoundBegun(
+    float GoodStart, float GoodSize,
+    float PerfectStart, float PerfectSize,
+    float NeedleRotTime)
+{
+    // Cria a widget via Blueprint — só precisa acontecer UMA VEZ.
+    // Rounds seguintes são gerenciados pela própria widget via Internal_OnRoundBegun.
+    // Após esta chamada, a GA se desvincula para não criar outra widget a cada round.
+    K2_OnClientRoundBegun(GoodSize, PerfectSize, NeedleRotTime);
+
+    // Desvincula — a widget cuida dos rounds seguintes sozinha
+    Internal_UnbindClientDelegates();
 }
 
 // ============================================================
@@ -144,8 +392,7 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
 {
     if (!TriggerEventData || !TriggerEventData->OptionalObject)
     {
-        UE_LOG(LogTemp, Warning,
-            TEXT("ZfGA_GatherBase: OptionalObject nulo."));
+        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: OptionalObject nulo."));
         return false;
     }
 
@@ -165,9 +412,16 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    if (!TargetGatherableComponent->IsAvailable())
+    // Verifica se o recurso está disponível e não está sendo coletado por outro jogador
+    if (TargetGatherableComponent->IsDepleted())
     {
         UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: Recurso esgotado."));
+        return false;
+    }
+
+    if (TargetGatherableComponent->IsBeingGathered())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: Recurso já está sendo coletado."));
         return false;
     }
 
@@ -205,7 +459,7 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
     if (!ToolInstance)
     {
         UE_LOG(LogTemp, Warning,
-            TEXT("ZfGA_GatherBase: Nenhum item equipado no slot '%s'."),
+            TEXT("ZfGA_GatherBase: Nenhum item no slot '%s'."),
             *ToolSlotTag.ToString());
         return false;
     }
@@ -239,9 +493,9 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
     const FZfGatherToolEntry* ToolEntry =
         TargetResourceData->FindToolEntry(ResolvedToolStats.ToolTag);
 
-    CachedResourceDamageMultiplier  = ToolEntry->DamageMultiplier;
-    ResolvedToolStats.GoodSize      = ToolEntry->GoodSize;
-    ResolvedToolStats.PerfectSize   = ToolEntry->PerfectSize;
+    CachedResourceDamageMultiplier = ToolEntry->DamageMultiplier;
+    ResolvedToolStats.GoodSize     = ToolEntry->GoodSize;
+    ResolvedToolStats.PerfectSize  = ToolEntry->PerfectSize;
 
     HitRecords.Empty();
 
@@ -265,12 +519,13 @@ void UZfGA_GatheringBase::Internal_ExecuteNextHit()
         ResolvedToolStats.PerfectSize,
         TargetResourceData->NeedleRotationTime);
 
+    // Inicia o round no componente — gera zonas e replica ao cliente via RoundData
     TargetGatherableComponent->BeginSkillCheckRound(
         ResolvedToolStats.GoodSize,
         ResolvedToolStats.PerfectSize,
-        TargetResourceData->NeedleRotationTime,
-        GetAvatarActorFromActorInfo());
+        TargetResourceData->NeedleRotationTime);
 
+    // Aguarda o resultado do hit (GameplayEvent enviado por Internal_SendHitEvent)
     ActiveQTEWaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
         this,
         ZfGatheringTags::QTE::Gathering_QTE_Hit,
@@ -315,15 +570,10 @@ void UZfGA_GatheringBase::Internal_OnQTEResultReceived(FGameplayEventData EventD
 
     K2_OnHitImpact(HitResult, DamageDealt, TargetGatherableComponent->GetCurrentHP());
 
-    UE_LOG(LogTemp, Warning,
-    TEXT("GA: HitResult=%d | BaseDamage=%.1f | ResourceMult=%.2f | QTEMult=%.2f | DamageDealt=%.1f | HPRestante=%.1f"),
-    (int32)HitResult,
-    ResolvedToolStats.BaseDamage,
-    CachedResourceDamageMultiplier,
-    DamageMultiplierQTE,
-    DamageDealt,
-    TargetGatherableComponent->GetCurrentHP());
-    
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGA_GatherBase: Hit=%d | Dano=%.1f | HPRestante=%.1f"),
+        (int32)HitResult, DamageDealt, TargetGatherableComponent->GetCurrentHP());
+
     Internal_ExecuteNextHit();
 }
 
@@ -353,9 +603,7 @@ float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
 
     float ScoreSum = 0.0f;
     for (const FZfGatherHitRecord& Record : HitRecords)
-    {
         ScoreSum += Record.ScoreValue;
-    }
 
     const float RawScore = ScoreSum / static_cast<float>(HitRecords.Num());
     return FMath::Clamp(RawScore + ResolvedToolStats.ScoreBonus, 0.0f, 1.0f);
@@ -365,7 +613,8 @@ float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
 // Internal_ResolveLootTable
 // ============================================================
 
-TArray<FZfGatherDropResult> UZfGA_GatheringBase::Internal_ResolveLootTable(float FinalScore) const
+TArray<FZfGatherDropResult> UZfGA_GatheringBase::Internal_ResolveLootTable(
+    float FinalScore) const
 {
     TArray<FZfGatherDropResult> Drops;
     if (!TargetResourceData) return Drops;
@@ -376,14 +625,9 @@ TArray<FZfGatherDropResult> UZfGA_GatheringBase::Internal_ResolveLootTable(float
         if (FMath::FRand() > Entry.DropChance) continue;
 
         UZfItemDefinition* LoadedDefinition = Entry.ItemDefinition.LoadSynchronous();
-        if (!LoadedDefinition)
-        {
-            UE_LOG(LogTemp, Warning,
-                TEXT("ZfGA_GatherBase: Falha ao carregar ItemDefinition da loot table."));
-            continue;
-        }
+        if (!LoadedDefinition) continue;
 
-        const int32 BaseQuantity  = FMath::RandRange(Entry.QuantityMin, Entry.QuantityMax);
+        const int32 BaseQuantity = FMath::RandRange(Entry.QuantityMin, Entry.QuantityMax);
         const int32 FinalQuantity = FMath::Max(
             1,
             FMath::RoundToInt(static_cast<float>(BaseQuantity) * ResolvedToolStats.DropMultiplier));
@@ -421,14 +665,7 @@ void UZfGA_GatheringBase::Internal_SpawnDrops(const TArray<FZfGatherDropResult>&
 
         TSubclassOf<AZfItemPickup> PickupClass =
             Drop.ItemDefinition->ItemPickupActorClass.LoadSynchronous();
-
-        if (!PickupClass)
-        {
-            UE_LOG(LogTemp, Warning,
-                TEXT("ZfGA_GatherBase: '%s' não tem ItemPickupActorClass configurada."),
-                *Drop.ItemDefinition->GetName());
-            continue;
-        }
+        if (!PickupClass) continue;
 
         for (int32 i = 0; i < Drop.Quantity; i++)
         {
@@ -481,8 +718,12 @@ EZfGatherHitResult UZfGA_GatheringBase::Internal_TagToHitResult(
 
 void UZfGA_GatheringBase::Internal_Cleanup()
 {
-    // Remove o binding de input antes de tudo
+    // Remove bindings de input (cliente)
     Internal_UnbindHitInput();
+    Internal_UnbindClientDelegates();
+
+    // Remove listeners de cancelamento (servidor)
+    Internal_UnbindCancellationListeners();
 
     if (ActiveQTEWaitTask)
     {
@@ -490,6 +731,7 @@ void UZfGA_GatheringBase::Internal_Cleanup()
         ActiveQTEWaitTask = nullptr;
     }
 
+    // Para o QTE e libera o lock no componente
     if (TargetGatherableComponent)
     {
         TargetGatherableComponent->EndSkillCheck();
@@ -500,4 +742,5 @@ void UZfGA_GatheringBase::Internal_Cleanup()
     ResolvedToolStats              = FZfResolvedGatherStats();
     CachedResourceDamageMultiplier = 1.0f;
     HitRecords.Empty();
+    GatherStartLocation            = FVector::ZeroVector;
 }

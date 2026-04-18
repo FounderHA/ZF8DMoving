@@ -13,7 +13,8 @@
 
 UZfGatheringComponent::UZfGatheringComponent()
 {
-    // Tick desligado por padrão — ligado apenas durante um round ativo
+    // Tick desligado por padrão — ligado apenas durante um round ativo.
+    // Só processa no servidor (HasAuthority check no corpo do Tick).
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bStartWithTickEnabled = false;
 
@@ -42,8 +43,8 @@ void UZfGatheringComponent::BeginPlay()
 
 // ============================================================
 // TickComponent
-// Roda apenas enquanto bRoundActive = true.
-// Avança o ângulo, notifica a widget e detecta volta completa (Missed).
+// Roda apenas no servidor — é a fonte da verdade do ângulo.
+// Avança CurrentAngle e detecta volta completa (Missed).
 // ============================================================
 
 void UZfGatheringComponent::TickComponent(
@@ -53,12 +54,13 @@ void UZfGatheringComponent::TickComponent(
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+    // Segurança: Tick só processa no servidor.
+    // O cliente tem seu próprio tick visual local na widget — independente deste.
+    if (!GetOwner()->HasAuthority()) return;
+
     if (!bRoundActive) return;
 
     CurrentAngle += AngularSpeed * DeltaTime;
-
-    // Notifica a widget para girar o ponteiro
-    OnSkillCheckAngleUpdated.Broadcast(CurrentAngle);
 
     // Volta completa sem input = Missed
     if (CurrentAngle >= 1.0f)
@@ -66,9 +68,16 @@ void UZfGatheringComponent::TickComponent(
         bRoundActive = false;
         CurrentAngle = 0.0f;
 
-        // Avalia como Missed, dispara delegates e envia GameplayEvent
         const EZfGatherHitResult Result = EZfGatherHitResult::Missed;
-        OnSkillCheckHitEvaluated.Broadcast(Result);
+
+        // Atualiza LastHitData — replica ao cliente via OnRep_LastHitData
+        LastHitData.Result = Result;
+        LastHitData.HitIndex++;
+
+        // Listen server: chama manualmente para o host receber o feedback visual
+        OnRep_LastHitData();
+
+        // Envia GameplayEvent para a GA processar o Missed
         Internal_SendHitEvent(Result);
     }
 }
@@ -81,22 +90,22 @@ void UZfGatheringComponent::GetLifetimeReplicatedProps(
     TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
     DOREPLIFETIME(UZfGatheringComponent, bIsDepleted);
     DOREPLIFETIME(UZfGatheringComponent, CurrentHP);
+    DOREPLIFETIME(UZfGatheringComponent, CurrentGatherer);
+    DOREPLIFETIME(UZfGatheringComponent, RoundData);
+    DOREPLIFETIME(UZfGatheringComponent, LastHitData);
 }
 
 // ============================================================
-// GetMaxHP
+// GetMaxHP / GetHPPercent / GetRespawnTimeRemaining
 // ============================================================
 
 float UZfGatheringComponent::GetMaxHP() const
 {
     return GatherResourceData ? GatherResourceData->ResourceHP : 0.0f;
 }
-
-// ============================================================
-// GetHPPercent
-// ============================================================
 
 float UZfGatheringComponent::GetHPPercent() const
 {
@@ -105,16 +114,45 @@ float UZfGatheringComponent::GetHPPercent() const
     return FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f);
 }
 
-// ============================================================
-// GetRespawnTimeRemaining
-// ============================================================
-
 float UZfGatheringComponent::GetRespawnTimeRemaining() const
 {
     if (!bIsDepleted) return 0.0f;
     UWorld* World = GetWorld();
     if (!World) return 0.0f;
     return World->GetTimerManager().GetTimerRemaining(RespawnTimerHandle);
+}
+
+// ============================================================
+// StartGatheringLock
+// Trava o recurso para o Instigator — apenas no servidor.
+// ============================================================
+
+void UZfGatheringComponent::StartGatheringLock(AActor* Instigator)
+{
+    if (!GetOwner()->HasAuthority()) return;
+
+    CurrentGatherer = Instigator;
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent: Lock adquirido por '%s' em '%s'."),
+        *GetNameSafe(Instigator),
+        *GetOwner()->GetName());
+}
+
+// ============================================================
+// Internal_ReleaseGatheringLock
+// Libera o lock — chamado por EndSkillCheck.
+// ============================================================
+
+void UZfGatheringComponent::Internal_ReleaseGatheringLock()
+{
+    if (!GetOwner()->HasAuthority()) return;
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent: Lock liberado em '%s'."),
+        *GetOwner()->GetName());
+
+    CurrentGatherer = nullptr;
 }
 
 // ============================================================
@@ -176,29 +214,26 @@ void UZfGatheringComponent::ForceRespawn()
 
 // ============================================================
 // BeginSkillCheckRound
-// Gera zonas aleatórias, liga o Tick e notifica a widget.
+// Gera zonas aleatórias no servidor, seta RoundData que replica ao cliente.
+// O cliente recebe OnRep_RoundData → dispara OnSkillCheckRoundBegun → widget reage.
 // ============================================================
 
 void UZfGatheringComponent::BeginSkillCheckRound(
     float InGoodSize,
     float InPerfectSize,
-    float InNeedleRotTime,
-    AActor* InInstigator)
+    float InNeedleRotTime)
 {
-    CachedInstigator = InInstigator;
+    // Este método deve ser chamado apenas pelo servidor
+    if (!GetOwner()->HasAuthority()) return;
 
+    // Armazena zonas locais (servidor) para avaliação
     RoundGoodSize    = InGoodSize;
     RoundPerfectSize = InPerfectSize;
-
-    // Gera posição aleatória para a zona Good
-    RoundGoodStart = FMath::FRand();
-
-    // Perfect centralizado dentro do Good
+    RoundGoodStart   = FMath::FRand();
     RoundPerfectStart = FMath::Fmod(
-        RoundGoodStart + (RoundGoodSize - RoundPerfectSize) * 0.5f,
-        1.0f);
+        RoundGoodStart + (RoundGoodSize - RoundPerfectSize) * 0.5f, 1.0f);
 
-    // Velocidade: 1 volta por NeedleRotTime segundos
+    // Velocidade: 1 volta por InNeedleRotTime segundos
     AngularSpeed = 1.0f / FMath::Max(InNeedleRotTime, 0.1f);
 
     // Reseta o ângulo e ativa o Tick
@@ -206,50 +241,63 @@ void UZfGatheringComponent::BeginSkillCheckRound(
     bRoundActive = true;
     SetComponentTickEnabled(true);
 
-    // Notifica a widget para posicionar as zonas
-    OnSkillCheckRoundBegun.Broadcast(
-        RoundGoodStart,
-        RoundGoodSize,
-        RoundPerfectStart,
-        RoundPerfectSize);
+    RoundData.GoodStart     = RoundGoodStart;
+    RoundData.GoodSize      = RoundGoodSize;
+    RoundData.PerfectStart  = RoundPerfectStart;
+    RoundData.PerfectSize   = RoundPerfectSize;
+    RoundData.NeedleRotTime = InNeedleRotTime;
+    RoundData.RoundIndex++;
 
-    UE_LOG(LogTemp, Warning, TEXT("GatherComponent: Round iniciado | GoodStart=%.2f | PerfectStart=%.2f | Speed=%.2f"),
-    RoundGoodStart, RoundPerfectStart, AngularSpeed);
+    // Listen server: RepNotify não dispara no próprio servidor.
+    // Chamamos manualmente para que o host também receba o evento visual.
+    // Clientes remotos recebem via replicação normalmente.
+    OnRep_RoundData();
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent: Round %d iniciado | GoodStart=%.2f | PerfectStart=%.2f | Speed=%.2f"),
+        RoundData.RoundIndex, RoundGoodStart, RoundPerfectStart, AngularSpeed);
 }
 
 // ============================================================
 // EndSkillCheck
-// Para o Tick — chamado pela GA no cleanup.
+// Para o Tick e libera o lock. Chamado pela GA no cleanup.
 // ============================================================
 
 void UZfGatheringComponent::EndSkillCheck()
 {
     bRoundActive = false;
     CurrentAngle = 0.0f;
-    CachedInstigator = nullptr;
     SetComponentTickEnabled(false);
+
+    Internal_ReleaseGatheringLock();
 }
 
 // ============================================================
 // RegisterHit
-// Chamado via GA::RegisterGatherHit() quando o jogador clica.
-// Usa o CurrentAngle interno — não precisa de parâmetros.
+// Avalia o ângulo ATUAL DO SERVIDOR — sem dados do cliente.
+// Chamado via GA::Server_RegisterHit_Implementation.
 // ============================================================
 
 void UZfGatheringComponent::RegisterHit()
 {
     if (!bRoundActive) return;
+    if (!GetOwner()->HasAuthority()) return;
 
-    // Para o Tick imediatamente
+    // Para o Tick imediatamente — impede avanço adicional do ângulo
     bRoundActive = false;
     SetComponentTickEnabled(false);
 
+    // Avalia usando o ângulo interno do servidor — fonte da verdade
     const EZfGatherHitResult Result = EvaluateAngle(CurrentAngle);
 
-    // Notifica a widget para exibir o feedback
-    OnSkillCheckHitEvaluated.Broadcast(Result);
+    // Atualiza LastHitData — replica ao cliente via OnRep_LastHitData
+    LastHitData.Result = Result;
+    LastHitData.HitIndex++;
 
-    // Envia o GameplayEvent para a GA processar o golpe
+    // Listen server: chama manualmente para o host receber o feedback visual
+    OnRep_LastHitData();
+
+    // Envia o GameplayEvent para a GA processar o golpe no servidor
     Internal_SendHitEvent(Result);
 }
 
@@ -266,8 +314,8 @@ EZfGatherHitResult UZfGatheringComponent::EvaluateAngle(float Angle) const
     else if (IsAngleInRange(Angle, RoundGoodStart, RoundGoodSize))
         Result = EZfGatherHitResult::Good;
 
-    UE_LOG(LogTemp, Warning,
-        TEXT("GatherComponent: Avaliacao | Angulo=%.3f | Resultado=%d"),
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent: Avaliação | Ângulo=%.3f | Resultado=%d"),
         Angle, (int32)Result);
 
     return Result;
@@ -291,11 +339,13 @@ bool UZfGatheringComponent::IsAngleInRange(
 
 // ============================================================
 // Internal_SendHitEvent
+// Envia o GameplayEvent para o ASC do CurrentGatherer (instigador).
 // ============================================================
 
 void UZfGatheringComponent::Internal_SendHitEvent(EZfGatherHitResult Result)
 {
-    if (!CachedInstigator) return;
+    // CurrentGatherer é o pawn do jogador — usado como destino do GameplayEvent
+    if (!CurrentGatherer) return;
 
     FGameplayTag ResultTag;
     switch (Result)
@@ -312,19 +362,21 @@ void UZfGatheringComponent::Internal_SendHitEvent(EZfGatherHitResult Result)
 
     FGameplayEventData Payload;
     Payload.EventTag       = ResultTag;
-    Payload.Instigator     = CachedInstigator;
+    Payload.Instigator     = CurrentGatherer;
     Payload.EventMagnitude = 0.0f;
 
-    UE_LOG(LogTemp, Warning, TEXT("GatherComponent: GameplayEvent enviado | Tag=%s"), *ResultTag.ToString());
-    
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent: GameplayEvent enviado | Tag=%s"),
+        *ResultTag.ToString());
+
     UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-        CachedInstigator,
+        CurrentGatherer,
         ResultTag,
         Payload);
 }
 
 // ============================================================
-// OnRep_IsDepleted
+// REP NOTIFIES
 // ============================================================
 
 void UZfGatheringComponent::OnRep_IsDepleted()
@@ -335,36 +387,43 @@ void UZfGatheringComponent::OnRep_IsDepleted()
         OnResourceRespawned.Broadcast();
 }
 
-// ============================================================
-// OnRep_CurrentHP
-// ============================================================
-
 void UZfGatheringComponent::OnRep_CurrentHP()
 {
     OnResourceHPChanged.Broadcast(CurrentHP, GetMaxHP());
 }
 
-
-// ============================================================
-// TryRegisterHit
-// Chamado pelo OnInteract do objeto — seguro chamar a qualquer momento.
-// ============================================================
-
-void UZfGatheringComponent::TryRegisterHit(AActor* InstigatorPawn)
+void UZfGatheringComponent::OnRep_CurrentGatherer()
 {
-    // Ignora se o round não estiver ativo
-    if (!bRoundActive) return;
-
-    // Ignora se não for o jogador que iniciou este round
-    if (CachedInstigator != InstigatorPawn) return;
-
-    UE_LOG(LogTemp, Warning, TEXT("GatherComponent: TryRegisterHit | bRoundActive=%d | InstigatorMatch=%d"),
-    bRoundActive, CachedInstigator == InstigatorPawn);
-
-    UE_LOG(LogTemp, Warning, TEXT("GatherComponent: Hit registrado | Angulo=%.3f"), CurrentAngle);
-    
-    RegisterHit();
+    // Reservado para uso futuro.
+    // Ex: ocultar widget de interação para outros jogadores quando ocupado.
 }
+
+void UZfGatheringComponent::OnRep_RoundData()
+{
+    // O cliente recebeu dados de novo round — notifica a widget.
+    // A widget inicia o tick visual local com a velocidade correta.
+    OnSkillCheckRoundBegun.Broadcast(
+        RoundData.GoodStart,
+        RoundData.GoodSize,
+        RoundData.PerfectStart,
+        RoundData.PerfectSize,
+        RoundData.NeedleRotTime);
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent [Client]: OnRep_RoundData | Round=%d | GoodStart=%.2f"),
+        RoundData.RoundIndex, RoundData.GoodStart);
+}
+
+void UZfGatheringComponent::OnRep_LastHitData()
+{
+    // O cliente recebeu o resultado do hit avaliado pelo servidor — notifica a widget.
+    OnSkillCheckHitEvaluated.Broadcast(LastHitData.Result);
+
+    UE_LOG(LogTemp, Log,
+        TEXT("ZfGatherableComponent [Client]: OnRep_LastHitData | Hit=%d | Result=%d"),
+        LastHitData.HitIndex, (int32)LastHitData.Result);
+}
+
 // ============================================================
 // Internal_OnRespawnTimerExpired
 // ============================================================
