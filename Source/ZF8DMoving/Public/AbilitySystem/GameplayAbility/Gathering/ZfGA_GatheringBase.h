@@ -43,6 +43,21 @@ struct ZF8DMOVING_API FZfGatherDropResult
 // ============================================================
 // UZfGA_GatherBase
 // ============================================================
+//
+// FLUXO MULTIPLAYER:
+// - ActivateAbility roda nos dois lados (servidor e cliente dono)
+// - Servidor: valida, faz commit, trava recurso, inicia QTE, bind de cancelamento
+// - Cliente dono: bind de input para registrar clique (Server RPC)
+//
+// CANCELAMENTO (servidor):
+// - Movimento:         Timer verifica velocidade do Avatar a cada 0.1s
+// - Outras abilities:  Delegate OnAbilityActivated do ASC
+// - Status tags:       RegisterGameplayTagEvent para cada tag em CancellationStatusTags
+//
+// REGISTRO DE HIT:
+// - Cliente pressiona botão → Enhanced Input → Server_RegisterHit()
+// - Servidor recebe RPC → RegisterHit() no componente → avalia ângulo interno
+// - Cliente NUNCA envia dados de ângulo — servidor é a fonte da verdade
 
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class ZF8DMOVING_API UZfGA_GatheringBase : public UGameplayAbility
@@ -65,10 +80,21 @@ public:
     FGameplayTag GatherActivationEventTag;
 
     // Input Action do botão de hit durante o QTE.
-    // Configure na GA Blueprint com o mesmo IA_Interact do seu projeto.
-    // A GA registra o binding ao ativar e remove ao terminar.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Config")
     TObjectPtr<UInputAction> GatherHitInputAction;
+
+    // Input Action de movimento (W/A/S/D ou equivalente).
+    // Ao ser pressionado pelo cliente, cancela imediatamente a coleta localmente.
+    // O servidor também detecta movimento via timer — os dois são complementares.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Config")
+    TObjectPtr<UInputAction> MoveInputAction;
+
+    // Tags de status no ASC do jogador que cancelam a coleta quando aplicadas.
+    // Ex: "Status.HitReact", "Status.Knockback", "Status.Stunned"
+    // Estas tags devem ser adicionadas pelos GameplayEffects de combate/CC.
+    // A GA observa no servidor — não precisa tocar nesta GA ao adicionar novos status.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Config")
+    TArray<FGameplayTag> CancellationStatusTags;
 
     // ----------------------------------------------------------
     // GETTERS — Blueprint
@@ -103,15 +129,27 @@ public:
     // HOOKS PARA BLUEPRINT
     // ----------------------------------------------------------
 
+    // Chamado no servidor ao iniciar cada round do QTE.
+    // Use para tocar montagens de animação, sons, etc. (lógica de servidor).
     UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
     void K2_OnQTEStarted(float GoodSize, float PerfectSize, float NeedleRotationTime);
 
+    // Chamado no CLIENTE ao iniciar cada round (via delegate do componente).
+    // Use para criar e mostrar a SkillCheck widget aqui.
+    // NOTA: Ao criar a widget, chame InitSkillCheck() passando o componente
+    //       retornado por GetTargetGatherableComponent().
+    UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
+    void K2_OnClientRoundBegun(float GoodSize, float PerfectSize, float NeedleRotTime);
+
+    // Chamado no servidor após cada hit ser processado.
     UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
     void K2_OnHitImpact(EZfGatherHitResult HitResult, float DamageDealt, float RemainingHP);
 
+    // Chamado no servidor ao finalizar a coleta com sucesso.
     UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
     void K2_OnDropsResolved(const TArray<FZfGatherDropResult>& Drops, float ScoreFinal);
 
+    // Chamado no servidor ao cancelar a coleta.
     UFUNCTION(BlueprintImplementableEvent, Category = "Zf|GatherAbility")
     void K2_OnGatherCancelled();
 
@@ -130,14 +168,68 @@ private:
     UPROPERTY()
     TObjectPtr<UAbilityTask_WaitGameplayEvent> ActiveQTEWaitTask;
 
-    // Handle do binding de input — usado para remover no cleanup
-    uint32 HitInputHandle = 0;
+    // ----------------------------------------------------------
+    // INPUT — Hit (cliente)
+    // ----------------------------------------------------------
 
-    bool Internal_ValidateAndSetup(const FGameplayEventData* TriggerEventData);
-    void Internal_ExecuteNextHit();
+    uint32 HitInputHandle  = 0;
+    uint32 MoveInputHandle = 0;
+
     void Internal_BindHitInput();
     void Internal_UnbindHitInput();
     void Internal_OnHitInputPressed();
+    void Internal_OnMovementInputPressed();
+
+    // RPC: cliente pressiona o botão → servidor registra o hit no componente.
+    // O servidor usa o ângulo INTERNO do componente — cliente não envia ângulo.
+    UFUNCTION(Server, Reliable)
+    void Server_RegisterHit();
+
+    // ----------------------------------------------------------
+    // CANCELAMENTO (servidor)
+    // ----------------------------------------------------------
+
+    // Timer que verifica se o Avatar se moveu (dedicated server não tem input)
+    FTimerHandle MovementCheckHandle;
+    FVector      GatherStartLocation;
+
+    // Handle do delegate OnAbilityActivated do ASC
+    FDelegateHandle AbilityActivatedDelegateHandle;
+
+    // Handles dos eventos de tag de status
+    TArray<FDelegateHandle> StatusTagEventHandles;
+
+    void Internal_BindCancellationListeners();
+    void Internal_UnbindCancellationListeners();
+
+    void Internal_CheckMovement();
+
+    // AbilityActivatedCallbacks tem assinatura void(UGameplayAbility*) — apenas um parâmetro.
+    void Internal_OnAnyAbilityActivated(UGameplayAbility* ActivatedAbility);
+
+    void Internal_OnStatusTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+    // ----------------------------------------------------------
+    // CLIENTE — notificações visuais
+    // ----------------------------------------------------------
+
+    // Chamado quando o cliente recebe OnSkillCheckRoundBegun do componente.
+    // Repassa para K2_OnClientRoundBegun (hook Blueprint para criar a widget).
+    UFUNCTION()
+    void Internal_OnClientRoundBegun(
+        float GoodStart, float GoodSize,
+        float PerfectStart, float PerfectSize,
+        float NeedleRotTime);
+
+    void Internal_BindClientDelegates();
+    void Internal_UnbindClientDelegates();
+
+    // ----------------------------------------------------------
+    // LÓGICA PRINCIPAL (servidor)
+    // ----------------------------------------------------------
+
+    bool Internal_ValidateAndSetup(const FGameplayEventData* TriggerEventData);
+    void Internal_ExecuteNextHit();
 
     UFUNCTION()
     void Internal_OnQTEResultReceived(FGameplayEventData EventData);

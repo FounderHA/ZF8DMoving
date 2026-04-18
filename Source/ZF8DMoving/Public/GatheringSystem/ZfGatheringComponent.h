@@ -3,10 +3,29 @@
 //
 // RESPONSABILIDADES:
 // - Estado do recurso: HP, depleção, respawn
-// - Todo o QTE: ângulo atual (tick), zonas, avaliação, resultado
+// - Lock de coleta: apenas um jogador por vez (CurrentGatherer)
+// - QTE server-authoritative: ângulo e avaliação no servidor
+//   Dados replicados ao cliente via RepNotify para feedback visual
 //
-// A widget é puramente visual — lê delegates, não sabe de nada.
-// O sistema de interação chama RegisterHit() direto via GA.
+// FLUXO MULTIPLAYER:
+// 1. GA chama StartGatheringLock(Instigator) → trava o recurso no servidor
+// 2. GA chama BeginSkillCheckRound()  → servidor gera zonas, seta RoundData
+// 3. OnRep_RoundData dispara no cliente → widget inicia tick visual local
+// 4. Jogador clica → GA::Server_RegisterHit() → Component::RegisterHit()
+// 5. Servidor avalia ângulo → seta LastHitData → envia GameplayEvent para GA
+// 6. OnRep_LastHitData dispara no cliente → widget exibe feedback
+// 7. GA processa dano → loop ou finaliza
+// 8. GA chama EndSkillCheck() → para Tick, libera lock
+//
+// SEGURANÇA:
+// - Tick do ângulo roda APENAS no servidor (HasAuthority check)
+// - RegisterHit() avalia o ângulo do SERVIDOR — cliente não envia dados de ângulo
+// - Lock impede dois jogadores coletando simultaneamente
+//
+// WIDGET:
+// - Não recebe mais ângulo via delegate frame-a-frame (removido OnSkillCheckAngleUpdated)
+// - Inicia seu próprio tick visual local ao receber OnSkillCheckRoundBegun
+// - NeedleRotTime é replicado junto com as zonas para sincronizar a velocidade visual
 
 #pragma once
 
@@ -31,18 +50,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceHPChanged,
 // DELEGATES — Skill Check (widget faz bind aqui, só lê)
 // ============================================================
 
-// Novo round iniciado — widget posiciona as zonas no material.
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnSkillCheckRoundBegun,
+// Novo round iniciado — disparado pelo OnRep_RoundData no cliente.
+// Inclui NeedleRotTime para que a widget inicie o tick visual na velocidade correta.
+// ATENÇÃO: Assinatura alterada em relação à versão anterior — agora tem 5 parâmetros.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnSkillCheckRoundBegun,
     float, GoodStart,
     float, GoodSize,
     float, PerfectStart,
-    float, PerfectSize);
+    float, PerfectSize,
+    float, NeedleRotTime);
 
-// Ângulo atualizado a cada frame — widget gira o ponteiro.
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckAngleUpdated,
-    float, NormalizedAngle);
-
-// Resultado avaliado — widget exibe o feedback visual.
+// Resultado do hit avaliado pelo servidor — disparado pelo OnRep_LastHitData no cliente.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckHitEvaluated,
     EZfGatherHitResult, Result);
 
@@ -84,12 +102,13 @@ public:
     // DELEGATES — Skill Check
     // ----------------------------------------------------------
 
+    // Disparado no cliente quando OnRep_RoundData é recebido.
+    // A widget faz bind aqui para posicionar zonas e iniciar tick visual.
     UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
     FOnSkillCheckRoundBegun OnSkillCheckRoundBegun;
 
-    UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
-    FOnSkillCheckAngleUpdated OnSkillCheckAngleUpdated;
-
+    // Disparado no cliente quando OnRep_LastHitData é recebido.
+    // A widget faz bind aqui para exibir o feedback do resultado.
     UPROPERTY(BlueprintAssignable, Category = "Gather|SkillCheck|Events")
     FOnSkillCheckHitEvaluated OnSkillCheckHitEvaluated;
 
@@ -98,8 +117,12 @@ public:
     // ----------------------------------------------------------
 
     virtual void BeginPlay() override;
+
+    // Tick roda APENAS no servidor (HasAuthority check interno).
+    // Avança CurrentAngle e detecta volta completa (Missed).
     virtual void TickComponent(float DeltaTime, ELevelTick TickType,
         FActorComponentTickFunction* ThisTickFunction) override;
+
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -108,7 +131,7 @@ public:
     // ----------------------------------------------------------
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
-    bool IsAvailable() const { return !bIsDepleted; }
+    bool IsAvailable() const { return !bIsDepleted && !IsBeingGathered(); }
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
     bool IsDepleted() const { return bIsDepleted; }
@@ -130,9 +153,33 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Zf|Gatherable|SkillCheck")
     bool IsRoundActive() const { return bRoundActive; }
-    
+
+    // Retorna os dados do round atual.
+    // Usado em C++ por InitSkillCheck para inicialização tardia da widget.
+    // Não exposto ao Blueprint — FZfSkillCheckRoundData é uma struct interna.
+    const FZfSkillCheckRoundData& GetCurrentRoundData() const { return RoundData; }
+
     // ----------------------------------------------------------
-    // ESTADO DO RECURSO — escrita
+    // LOCK DE COLETA
+    // Garante que apenas um jogador colete o recurso por vez.
+    // ----------------------------------------------------------
+
+    // True se algum jogador está coletando este recurso no momento.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
+    bool IsBeingGathered() const { return CurrentGatherer != nullptr; }
+
+    // Retorna o pawn que está coletando. Nullptr se livre.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
+    AActor* GetCurrentGatherer() const { return CurrentGatherer; }
+
+    // Trava o recurso para o Instigator.
+    // Deve ser chamado pela GA ANTES do primeiro BeginSkillCheckRound.
+    // Só executa com autoridade — ignorado em clientes.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
+    void StartGatheringLock(AActor* Instigator);
+
+    // ----------------------------------------------------------
+    // ESTADO DO RECURSO — escrita (servidor)
     // ----------------------------------------------------------
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable")
@@ -145,41 +192,32 @@ public:
     void ForceRespawn();
 
     // ----------------------------------------------------------
-    // SKILL CHECK — chamados pela GA
+    // SKILL CHECK — chamados pela GA no servidor
     // ----------------------------------------------------------
 
-    // Inicia um novo round: gera zonas, liga o Tick, guarda o Instigator.
-    // Chamado pela GA em Internal_ExecuteNextHit, após K2_OnQTEStarted.
-    // @param InGoodSize         — tamanho da zona externa (0.0–1.0)
-    // @param InPerfectSize      — tamanho da zona interna (0.0–1.0, < GoodSize)
-    // @param InNeedleRotTime    — duração de uma volta em segundos
-    // @param InInstigator       — ator do jogador (dono do ASC)
+    // Inicia um novo round: gera zonas aleatórias, liga o Tick no servidor,
+    // seta RoundData que replica ao cliente via RepNotify.
+    // NOTA: StartGatheringLock deve ser chamado antes do primeiro round.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
     void BeginSkillCheckRound(
         float InGoodSize,
         float InPerfectSize,
-        float InNeedleRotTime,
-        AActor* InInstigator);
+        float InNeedleRotTime);
 
-    // Para o Tick do QTE. Chamado pela GA no cleanup.
+    // Para o Tick do QTE e libera o lock de coleta.
+    // Chamado pela GA no cleanup (cancelamento ou conclusão).
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
     void EndSkillCheck();
 
-    // Registra o hit no ângulo atual — chamado via GA::RegisterGatherHit().
-    // Avalia o ângulo, dispara OnSkillCheckHitEvaluated e envia GameplayEvent.
+    // Registra o hit no ângulo ATUAL DO SERVIDOR.
+    // Chamado pela GA via Server_RegisterHit RPC — sem dados de ângulo do cliente.
+    // Avalia, seta LastHitData (replica ao cliente) e envia GameplayEvent para a GA.
     UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
     void RegisterHit();
 
     // Avalia um ângulo sem disparar eventos — útil para debug.
     UFUNCTION(BlueprintPure, Category = "Zf|Gatherable|SkillCheck")
     EZfGatherHitResult EvaluateAngle(float Angle) const;
-
-    // Chamado pelo OnInteract do objeto quando o jogador pressiona
-    // o botão durante o QTE. Verifica se o round está ativo e se o
-    // InstigatorPawn é o jogador correto antes de registrar.
-    // Seguro chamar a qualquer momento — ignora se não for o momento certo.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Gatherable|SkillCheck")
-    void TryRegisterHit(AActor* InstigatorPawn);
 
 private:
 
@@ -193,30 +231,42 @@ private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentHP, VisibleInstanceOnly, Category = "Gather|State")
     float CurrentHP = 0.0f;
 
+    // Pawn que está coletando o recurso atualmente.
+    // Replicado para que todos os clientes saibam que o recurso está ocupado.
+    // Reservado para uso futuro na UI (ex: ocultar widget de interação para outros players).
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentGatherer, VisibleInstanceOnly, Category = "Gather|State")
+    TObjectPtr<AActor> CurrentGatherer;
+
     FTimerHandle RespawnTimerHandle;
 
     // ----------------------------------------------------------
-    // ESTADO — Skill Check (não replicado, cliente local)
+    // ESTADO — Skill Check (replicado via structs)
     // ----------------------------------------------------------
 
-    // true enquanto o ponteiro estiver girando
-    bool bRoundActive = false;
+    // Dados do round atual — replicados ao cliente para iniciar o visual.
+    // OnRep_RoundData dispara OnSkillCheckRoundBegun → widget posiciona zonas.
+    UPROPERTY(ReplicatedUsing = OnRep_RoundData, VisibleInstanceOnly, Category = "Gather|SkillCheck")
+    FZfSkillCheckRoundData RoundData;
 
-    // Ângulo atual normalizado (0.0 a 1.0)
-    float CurrentAngle = 0.0f;
+    // Resultado do último hit — replicado ao cliente para exibir o feedback.
+    // OnRep_LastHitData dispara OnSkillCheckHitEvaluated → widget anima resultado.
+    UPROPERTY(ReplicatedUsing = OnRep_LastHitData, VisibleInstanceOnly, Category = "Gather|SkillCheck")
+    FZfSkillCheckHitData LastHitData;
 
-    // Voltas por segundo (1.0 / NeedleRotationTime)
-    float AngularSpeed = 0.0f;
+    // ----------------------------------------------------------
+    // ESTADO — Skill Check (servidor apenas, NÃO replicado)
+    // Estes valores são a fonte da verdade para a avaliação de hits.
+    // ----------------------------------------------------------
 
-    // Zonas do round atual
+    bool  bRoundActive      = false;
+    float CurrentAngle      = 0.0f;  // 0.0–1.0, fonte da verdade
+    float AngularSpeed      = 0.0f;  // voltas/segundo
+
+    // Zonas do round — usadas por EvaluateAngle()
     float RoundGoodStart    = 0.0f;
     float RoundGoodSize     = 0.0f;
     float RoundPerfectStart = 0.0f;
     float RoundPerfectSize  = 0.0f;
-
-    // Ator do jogador — usado para enviar o GameplayEvent
-    UPROPERTY()
-    TObjectPtr<AActor> CachedInstigator;
 
     // ----------------------------------------------------------
     // REP NOTIFIES
@@ -228,6 +278,18 @@ private:
     UFUNCTION()
     void OnRep_CurrentHP();
 
+    // Reservado para uso futuro (ex: bloquear indicadores em outros clientes).
+    UFUNCTION()
+    void OnRep_CurrentGatherer();
+
+    // Notifica o cliente de novo round → dispara OnSkillCheckRoundBegun.
+    UFUNCTION()
+    void OnRep_RoundData();
+
+    // Notifica o cliente do resultado → dispara OnSkillCheckHitEvaluated.
+    UFUNCTION()
+    void OnRep_LastHitData();
+
     // ----------------------------------------------------------
     // HELPERS
     // ----------------------------------------------------------
@@ -235,4 +297,5 @@ private:
     bool IsAngleInRange(float Angle, float Start, float Size) const;
     void Internal_SendHitEvent(EZfGatherHitResult Result);
     void Internal_OnRespawnTimerExpired();
+    void Internal_ReleaseGatheringLock();
 };
