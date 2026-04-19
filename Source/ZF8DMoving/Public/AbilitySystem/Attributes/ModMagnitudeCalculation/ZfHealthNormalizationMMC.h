@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameplayModMagnitudeCalculation.h"
-#include "ZfHealthNormalization.generated.h"
+#include "ZfHealthNormalizationMMC.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ZF8DMOVING_API UZfHealthNormalization : public UGameplayModMagnitudeCalculation
+class ZF8DMOVING_API UZfHealthNormalizationMMC : public UGameplayModMagnitudeCalculation
 {
 	GENERATED_BODY()
 	

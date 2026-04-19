@@ -4,6 +4,8 @@
 #include "Character/ZfCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ZfResourceAttributeSet.h"
+#include "AbilitySystem/Attributes/ZfMovementAttributeSet.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AZfCharacter::AZfCharacter()
@@ -48,6 +50,7 @@ void AZfCharacter::InitAbilityActorInfo()
 	InitializeAttributes();
 	RegisterAttributeRefreshDelegates();
 	RegisterResourceSyncDelegates();
+	RegisterMovementSyncDelegate();
 	InitializeDependentAttributes();
 }
 
@@ -186,8 +189,7 @@ void AZfCharacter::RegisterResourceSyncDelegates()
     if (!ResourceSet) return;
 
     // ── MaxHealth → CurrentHealth ─────────────────────────────────────────
-    ASC->GetGameplayAttributeValueChangeDelegate(
-        UZfResourceAttributeSet::GetMaxHealthAttribute())
+    ASC->GetGameplayAttributeValueChangeDelegate(UZfResourceAttributeSet::GetMaxHealthAttribute())
         .AddLambda([this](const FOnAttributeChangeData& Data)
         {
             UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
@@ -337,4 +339,35 @@ void AZfCharacter::RefreshEffect(TSubclassOf<UGameplayEffect> EffectClass)
 	}
 
 	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+}
+
+void AZfCharacter::RegisterMovementSyncDelegate()
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	const UZfMovementAttributeSet* MovSet = ASC->GetSet<UZfMovementAttributeSet>();
+	if (!MovSet) return;
+
+	// Bind do delegate — dispara no servidor quando o GE muda MoveSpeed,
+	// e no owning client quando o atributo replicado chega via OnRep.
+	ASC->GetGameplayAttributeValueChangeDelegate(
+		UZfMovementAttributeSet::GetMoveSpeedAttribute())
+		.AddUObject(this, &AZfCharacter::OnMoveSpeedChanged);
+
+	// Safety net: o atributo pode ter chegado replicado antes deste bind
+	// (race condition entre OnRep_PlayerState e replicação de atributos).
+	// Aplica o valor atual imediatamente para garantir estado consistente.
+	const float CurrentSpeed = MovSet->GetMoveSpeed();
+	if (CurrentSpeed > 0.f)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
+	}
+}
+
+void AZfCharacter::OnMoveSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	// Chamado no servidor e no owning client.
+	// Simulated proxies recebem MaxWalkSpeed via replicação nativa do CMC.
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 }

@@ -40,8 +40,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Resources")
 	float BaseMaxStamina;
 
-	// Combat Attributes - Resources
-
+	// Regens
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Regens")
 	float HealthRegen;
 	
@@ -50,6 +49,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Regens")
 	float StaminaRegen;
+	
+	// Movement
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
+	float BaseMoveSpeed;
 	
 	// Combat Attributes - Resistances
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resistences")
