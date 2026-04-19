@@ -70,7 +70,7 @@ namespace ZfGatheringTags
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_FishingSpot_Ocean,  "Gathering.Resource.FishingSpot.Ocean")
     }
 
-    namespace ItemProperties
+    namespace ToolProperties
     {
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Property_DropMultiplier, "Gathering.Property.DropMultiplier")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Property_ScoreBonus,     "Gathering.Property.ScoreBonus")

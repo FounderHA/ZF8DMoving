@@ -101,7 +101,7 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Tag da propriedade do item afetada — preenchida quando TargetType == ItemProperty.
     // Ex: "Item.Property.Durability", "Item.Property.MaxDurability"
     // GameplayEffect pode ficar null neste caso.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta = (GameplayTagFilter = "Item.Property", EditCondition = "TargetType == EZfModifierTargetType::ItemProperty", EditConditionHides))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta = (GameplayTagFilter = "Item", EditCondition = "TargetType == EZfModifierTargetType::ItemProperty", EditConditionHides))
     FGameplayTag ItemPropertyTag;
 
     // Como o valor é aplicado no atributo via GAS

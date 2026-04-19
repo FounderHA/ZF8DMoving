@@ -47,9 +47,9 @@ FZfResolvedGatherStats UZfFragment_GatheringTool::ResolveGatherStats(const UZfIt
     // Filtra por TargetType == ItemProperty e tags Gather.*
     // ----------------------------------------------------------
 
-    const FGameplayTag Tag_BonusDamage    = ZfGatheringTags::ItemProperties::Gathering_Property_BonusDamage;
-    const FGameplayTag Tag_DropMultiplier = ZfGatheringTags::ItemProperties::Gathering_Property_DropMultiplier;
-    const FGameplayTag Tag_ScoreBonus     = ZfGatheringTags::ItemProperties::Gathering_Property_ScoreBonus;
+    const FGameplayTag Tag_BonusDamage    = ZfGatheringTags::ToolProperties::Gathering_Property_BonusDamage;
+    const FGameplayTag Tag_DropMultiplier = ZfGatheringTags::ToolProperties::Gathering_Property_DropMultiplier;
+    const FGameplayTag Tag_ScoreBonus     = ZfGatheringTags::ToolProperties::Gathering_Property_ScoreBonus;
 
     for (const FZfAppliedModifier& Modifier : ItemInstance->GetAppliedModifiers())
     {

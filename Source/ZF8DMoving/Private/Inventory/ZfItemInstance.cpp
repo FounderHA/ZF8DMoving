@@ -1029,7 +1029,7 @@ void UZfItemInstance::ApplyPropertyModifier(const FGameplayTag& PropertyTag, flo
     }
     
     // "Item.Property.MaxDurability" — adiciona bônus ao teto máximo
-    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::Item_MaxDurability;
+    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::ItemProperties::Item_MaxDurability;
 
      if (PropertyTag == Tag_MaxDurability)
     {
@@ -1063,7 +1063,7 @@ void UZfItemInstance::RevertPropertyModifier(const FGameplayTag& PropertyTag, fl
         return;
     }
     
-    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::Item_MaxDurability;
+    const FGameplayTag Tag_MaxDurability = ZfItemPropertyTags::ItemProperties::Item_MaxDurability;
     
     if (PropertyTag == Tag_MaxDurability)
     {

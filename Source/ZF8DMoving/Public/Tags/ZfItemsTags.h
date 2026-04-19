@@ -15,6 +15,19 @@
  */
 namespace ZfItemPropertyTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Durability)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_MaxDurability)
+	namespace ItemProperties
+	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Durability)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_MaxDurability)
+	}
+		
+	namespace ToolProperties
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Gathering_ScoreBonus)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Gathering_DamageBonus)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Gathering_GoodSizeBonus)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Gathering_PerfectSizeBonus)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Gathering_NeedleSpeedBonus)
+	}
 }
+

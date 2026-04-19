@@ -108,7 +108,7 @@ namespace ZfGatheringTags
     // Usadas nos modifiers da ferramenta com TargetType = ItemProperty.
     // O ZfFragment_GatheringTool filtra por estas tags ao resolver stats.
     // ----------------------------------------------------------
-    namespace ItemProperties
+    namespace ToolProperties
     {
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Property_DropMultiplier)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Property_ScoreBonus)
