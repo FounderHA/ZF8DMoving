@@ -7,6 +7,7 @@
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfEquipmentComponent.h"
 #include "GameFramework/Character.h"
+#include "GatheringSystem/ZfGatheringComponent.h"
 #include "Player/ZfPlayerState.h"
 
 
@@ -46,6 +47,13 @@ UZfEquipmentComponent* UZfHelperLibrary::FindEquipmentComponent(AActor* Actor)
     if (!Actor) return nullptr;
 
     return Actor->FindComponentByClass<UZfEquipmentComponent>();
+}
+
+UZfGatheringComponent* UZfHelperLibrary::FindGatheringComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfGatheringComponent>();
 }
 
 FString UZfHelperLibrary::ToRomanNumeral(int32 Number)

@@ -122,7 +122,7 @@ void UZfGA_GatheringBase::Internal_BindHitInput()
     }
     else
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: GatherHitInputAction não configurado na GA."));
     }
 
@@ -297,7 +297,7 @@ void UZfGA_GatheringBase::Internal_CheckMovement()
     {
         if (Char->GetVelocity().SizeSquared() > 1.0f)
         {
-            UE_LOG(LogTemp, Log, TEXT("ZfGA_GatherBase: Cancelado por movimento."));
+            UE_LOG(LogZfGathering, Log, TEXT("ZfGA_GatherBase: Cancelado por movimento."));
             CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
         }
     }
@@ -314,7 +314,7 @@ void UZfGA_GatheringBase::Internal_OnAnyAbilityActivated(UGameplayAbility* Activ
     // Ignora se a ability que ativou for esta mesma (evita loop)
     if (ActivatedAbility == this) return;
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGA_GatherBase: Cancelado por ability '%s'."),
         *GetNameSafe(ActivatedAbility));
 
@@ -332,7 +332,7 @@ void UZfGA_GatheringBase::Internal_OnStatusTagChanged(
 {
     if (NewCount <= 0) return; // Tag removida — não cancela
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGA_GatherBase: Cancelado por status tag '%s'."),
         *Tag.ToString());
 
@@ -392,43 +392,48 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
 {
     if (!TriggerEventData || !TriggerEventData->OptionalObject)
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: OptionalObject nulo."));
+        UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: OptionalObject nulo."));
         return false;
     }
 
     const AActor* ResourceActor = Cast<AActor>(TriggerEventData->OptionalObject);
     if (!ResourceActor)
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: OptionalObject não é um AActor."));
+        UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: OptionalObject não é um AActor."));
         return false;
     }
 
     TargetGatherableComponent = ResourceActor->FindComponentByClass<UZfGatheringComponent>();
     if (!TargetGatherableComponent)
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: '%s' não tem ZfGatherableComponent."),
             *ResourceActor->GetName());
         return false;
     }
 
-    // Verifica se o recurso está disponível e não está sendo coletado por outro jogador
-    if (TargetGatherableComponent->IsDepleted())
+    // Estas verificações dependem de estado replicado (bIsDepleted, CurrentGatherer)
+    // que pode estar stale no cliente. Só executa no servidor para evitar falsos
+    // cancelamentos por latência que quebrariam o bind dos delegates visuais.
+    if (TargetGatherableComponent->GetOwner()->HasAuthority())
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: Recurso esgotado."));
-        return false;
-    }
+        if (TargetGatherableComponent->IsDepleted())
+        {
+            UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: Recurso esgotado."));
+            return false;
+        }
 
-    if (TargetGatherableComponent->IsBeingGathered())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: Recurso já está sendo coletado."));
-        return false;
+        if (TargetGatherableComponent->IsBeingGathered())
+        {
+            UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: Recurso já está sendo coletado."));
+            return false;
+        }
     }
 
     TargetResourceData = TargetGatherableComponent->GetGatherResourceData();
     if (!TargetResourceData)
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: GatherResourceData não configurado em '%s'."),
             *ResourceActor->GetName());
         return false;
@@ -437,13 +442,15 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
     AActor* AvatarActor = GetAvatarActorFromActorInfo();
     if (!AvatarActor)
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: AvatarActor nulo."));
+        UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: AvatarActor nulo."));
         return false;
     }
 
-    APlayerState* PS = AvatarActor->GetInstigatorController<APlayerController>()
-        ? AvatarActor->GetInstigatorController<APlayerController>()->GetPlayerState<APlayerState>()
-        : nullptr;
+    APlayerState* PS = nullptr;
+    if (APawn* AvatarPawn = Cast<APawn>(AvatarActor))
+    {
+        PS = AvatarPawn->GetPlayerState<APlayerState>();
+    }
 
     UZfEquipmentComponent* EquipmentComponent = PS
         ? PS->FindComponentByClass<UZfEquipmentComponent>()
@@ -451,14 +458,14 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
 
     if (!EquipmentComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: EquipmentComponent não encontrado."));
+        UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: EquipmentComponent não encontrado."));
         return false;
     }
 
     UZfItemInstance* ToolInstance = EquipmentComponent->GetItemAtSlotTag(ToolSlotTag);
     if (!ToolInstance)
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: Nenhum item no slot '%s'."),
             *ToolSlotTag.ToString());
         return false;
@@ -468,7 +475,7 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         ToolInstance->GetFragment<UZfFragment_GatheringTool>();
     if (!GatherFragment)
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: Item no slot '%s' não tem ZfFragment_GatherTool."),
             *ToolSlotTag.ToString());
         return false;
@@ -477,13 +484,13 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
     ResolvedToolStats = GatherFragment->ResolveGatherStats(ToolInstance);
     if (!ResolvedToolStats.bIsValid)
     {
-        UE_LOG(LogTemp, Warning, TEXT("ZfGA_GatherBase: ResolveGatherStats falhou."));
+        UE_LOG(LogZfGathering, Warning, TEXT("ZfGA_GatherBase: ResolveGatherStats falhou."));
         return false;
     }
 
     if (!TargetResourceData->IsToolAllowed(ResolvedToolStats.ToolTag))
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGA_GatherBase: Ferramenta '%s' não aceita por '%s'."),
             *ResolvedToolStats.ToolTag.ToString(),
             *TargetResourceData->GetName());
@@ -570,7 +577,7 @@ void UZfGA_GatheringBase::Internal_OnQTEResultReceived(FGameplayEventData EventD
 
     K2_OnHitImpact(HitResult, DamageDealt, TargetGatherableComponent->GetCurrentHP());
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGA_GatherBase: Hit=%d | Dano=%.1f | HPRestante=%.1f"),
         (int32)HitResult, DamageDealt, TargetGatherableComponent->GetCurrentHP());
 

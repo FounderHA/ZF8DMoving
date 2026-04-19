@@ -7,6 +7,8 @@
 #include "Tags/ZfGatheringTags.h"
 #include "Engine/World.h"
 
+DEFINE_LOG_CATEGORY(LogZfGathering);
+
 // ============================================================
 // Constructor
 // ============================================================
@@ -35,7 +37,7 @@ void UZfGatheringComponent::BeginPlay()
     }
     else
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGatherableComponent::BeginPlay — GatherResourceData não configurado em '%s'."),
             *GetOwner()->GetName());
     }
@@ -133,7 +135,7 @@ void UZfGatheringComponent::StartGatheringLock(AActor* Instigator)
 
     CurrentGatherer = Instigator;
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent: Lock adquirido por '%s' em '%s'."),
         *GetNameSafe(Instigator),
         *GetOwner()->GetName());
@@ -148,7 +150,7 @@ void UZfGatheringComponent::Internal_ReleaseGatheringLock()
 {
     if (!GetOwner()->HasAuthority()) return;
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent: Lock liberado em '%s'."),
         *GetOwner()->GetName());
 
@@ -179,6 +181,7 @@ void UZfGatheringComponent::ApplyDamage(float DamageAmount)
 
 void UZfGatheringComponent::Deplete()
 {
+    if (!GetOwner()->HasAuthority()) return;
     if (bIsDepleted) return;
 
     bIsDepleted = true;
@@ -205,6 +208,7 @@ void UZfGatheringComponent::Deplete()
 
 void UZfGatheringComponent::ForceRespawn()
 {
+    if (!GetOwner()->HasAuthority()) return;
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearTimer(RespawnTimerHandle);
@@ -218,20 +222,24 @@ void UZfGatheringComponent::ForceRespawn()
 // O cliente recebe OnRep_RoundData → dispara OnSkillCheckRoundBegun → widget reage.
 // ============================================================
 
-void UZfGatheringComponent::BeginSkillCheckRound(
-    float InGoodSize,
-    float InPerfectSize,
-    float InNeedleRotTime)
+void UZfGatheringComponent::BeginSkillCheckRound(float InGoodSize, float InPerfectSize, float InNeedleRotTime)
 {
     // Este método deve ser chamado apenas pelo servidor
     if (!GetOwner()->HasAuthority()) return;
 
     // Armazena zonas locais (servidor) para avaliação
-    RoundGoodSize    = InGoodSize;
-    RoundPerfectSize = InPerfectSize;
-    RoundGoodStart   = FMath::FRand();
-    RoundPerfectStart = FMath::Fmod(
-        RoundGoodStart + (RoundGoodSize - RoundPerfectSize) * 0.5f, 1.0f);
+    RoundGoodSize     = InGoodSize;
+    RoundPerfectSize  = InPerfectSize;
+    RoundGoodStart    = FMath::FRandRange(0.6f, 0.8f);
+
+    // Se a zona Good ultrapassar 1.0, recua o GoodStart para caber exato
+    const float GoodEnd = RoundGoodStart + RoundGoodSize;
+    if (GoodEnd > 1.0f)
+    {
+        RoundGoodStart = 1.0f - RoundGoodSize;
+    }
+    
+    RoundPerfectStart = FMath::Fmod(RoundGoodStart + (RoundGoodSize - RoundPerfectSize) * 0.5f, 1.0f);
 
     // Velocidade: 1 volta por InNeedleRotTime segundos
     AngularSpeed = 1.0f / FMath::Max(InNeedleRotTime, 0.1f);
@@ -253,7 +261,7 @@ void UZfGatheringComponent::BeginSkillCheckRound(
     // Clientes remotos recebem via replicação normalmente.
     OnRep_RoundData();
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent: Round %d iniciado | GoodStart=%.2f | PerfectStart=%.2f | Speed=%.2f"),
         RoundData.RoundIndex, RoundGoodStart, RoundPerfectStart, AngularSpeed);
 }
@@ -265,6 +273,8 @@ void UZfGatheringComponent::BeginSkillCheckRound(
 
 void UZfGatheringComponent::EndSkillCheck()
 {
+    if (!GetOwner()->HasAuthority()) return;
+
     bRoundActive = false;
     CurrentAngle = 0.0f;
     SetComponentTickEnabled(false);
@@ -314,7 +324,7 @@ EZfGatherHitResult UZfGatheringComponent::EvaluateAngle(float Angle) const
     else if (IsAngleInRange(Angle, RoundGoodStart, RoundGoodSize))
         Result = EZfGatherHitResult::Good;
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent: Avaliação | Ângulo=%.3f | Resultado=%d"),
         Angle, (int32)Result);
 
@@ -365,7 +375,7 @@ void UZfGatheringComponent::Internal_SendHitEvent(EZfGatherHitResult Result)
     Payload.Instigator     = CurrentGatherer;
     Payload.EventMagnitude = 0.0f;
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent: GameplayEvent enviado | Tag=%s"),
         *ResultTag.ToString());
 
@@ -409,7 +419,7 @@ void UZfGatheringComponent::OnRep_RoundData()
         RoundData.PerfectSize,
         RoundData.NeedleRotTime);
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent [Client]: OnRep_RoundData | Round=%d | GoodStart=%.2f"),
         RoundData.RoundIndex, RoundData.GoodStart);
 }
@@ -419,7 +429,7 @@ void UZfGatheringComponent::OnRep_LastHitData()
     // O cliente recebeu o resultado do hit avaliado pelo servidor — notifica a widget.
     OnSkillCheckHitEvaluated.Broadcast(LastHitData.Result);
 
-    UE_LOG(LogTemp, Log,
+    UE_LOG(LogZfGathering, Log,
         TEXT("ZfGatherableComponent [Client]: OnRep_LastHitData | Hit=%d | Result=%d"),
         LastHitData.HitIndex, (int32)LastHitData.Result);
 }
@@ -436,6 +446,7 @@ void UZfGatheringComponent::Internal_OnRespawnTimerExpired()
     {
         CurrentHP = GatherResourceData->ResourceHP;
     }
-
-    OnResourceRespawned.Broadcast();
+    
+    OnRep_IsDepleted();
+    OnRep_CurrentHP();
 }

@@ -36,15 +36,14 @@ public:
     // IDENTIFICAÇÃO
     // ----------------------------------------------------------
 
-    // Tag que identifica o tipo deste recurso.
-    // Ex: "Resource.Ore.Iron", "Resource.Wood.Oak"
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity",
-        meta = (GameplayTagFilter = "Resource"))
-    FGameplayTag ResourceTag;
-
     // Nome legível exibido na UI ao mirar no recurso.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity")
     FText ResourceName = FText::FromString(TEXT("None"));
+    
+    // Tag que identifica o tipo deste recurso.
+    // Ex: "Resource.Ore.Iron", "Resource.Wood.Oak"
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity", meta = (GameplayTagFilter = "Resource"))
+    FGameplayTag ResourceTag;
 
     // ----------------------------------------------------------
     // HP DO RECURSO
@@ -58,9 +57,19 @@ public:
     // ----------------------------------------------------------
 
     // HP total do recurso — quantidade de dano para esgotá-lo.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity",
-        meta = (ClampMin = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity", meta = (ClampMin = "1.0", UIMin = "1.0"))
     float ResourceHP = 100.0f;
+
+    // ----------------------------------------------------------
+    // QTE
+    // ----------------------------------------------------------
+
+    // Tempo em segundos para a agulha completar uma volta (360°).
+    // Ao completar a volta sem clique, o QTE falha como Missed.
+    // Menor = agulha mais rápida = mais difícil.
+    // Ex: 2.0 = fácil | 1.5 = normal | 1.0 = difícil
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity", meta = (ClampMin = "0.5", UIMin = "0.5"))
+    float NeedleRotationTime = 1.5f;
 
     // ----------------------------------------------------------
     // FERRAMENTAS ACEITAS
@@ -91,20 +100,14 @@ public:
 
     // Tempo em segundos até o nó reaparecer. Ignorado se bCanRespawn = false.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Respawn",
-        meta = (ClampMin = "1.0", EditCondition = "bCanRespawn"))
+        meta = (ClampMin = "1.0", UIMin = "1.0", EditCondition = "bCanRespawn"))
     float RespawnTime = 300.0f;
 
-    // ----------------------------------------------------------
-    // QTE
-    // ----------------------------------------------------------
-
-    // Tempo em segundos para a agulha completar uma volta (360°).
-    // Ao completar a volta sem clique, o QTE falha como Missed.
-    // Menor = agulha mais rápida = mais difícil.
-    // Ex: 2.0 = fácil | 1.5 = normal | 1.0 = difícil
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|QTE", meta = (ClampMin = "0.5", UIMin = "0.5"))
-    float NeedleRotationTime = 2.0f;
-
+    // Offset em unidades de mundo para posicionar a widget de HP acima do recurso.
+    // Ajuste conforme o tamanho visual de cada recurso.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|UI")
+    FVector HPWidgetOffset = FVector(0.f, 0.f, 100.f);
+    
     // ----------------------------------------------------------
     // FUNÇÕES DE ACESSO
     // ----------------------------------------------------------

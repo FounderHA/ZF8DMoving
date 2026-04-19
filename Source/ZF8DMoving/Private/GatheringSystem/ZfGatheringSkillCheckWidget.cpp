@@ -13,7 +13,7 @@ void UZfGatheringSkillCheckWidget::InitSkillCheck(
 {
     if (!InGatherComponent)
     {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogZfGathering, Warning,
             TEXT("ZfGatherSkillCheckWidget::InitSkillCheck — GatherComponent nulo."));
         return;
     }

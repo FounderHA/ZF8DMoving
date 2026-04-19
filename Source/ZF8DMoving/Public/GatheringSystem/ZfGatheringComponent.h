@@ -43,8 +43,7 @@ class UZfGatheringResourceData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResourceDepleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnResourceRespawned);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceHPChanged,
-    float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceHPChanged,float, CurrentHP, float, MaxHP);
 
 // ============================================================
 // DELEGATES — Skill Check (widget faz bind aqui, só lê)
@@ -61,15 +60,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnSkillCheckRoundBegun,
     float, NeedleRotTime);
 
 // Resultado do hit avaliado pelo servidor — disparado pelo OnRep_LastHitData no cliente.
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckHitEvaluated,
-    EZfGatherHitResult, Result);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSkillCheckHitEvaluated, EZfGatherHitResult, Result);
 
 // ============================================================
 // UZfGatheringComponent
 // ============================================================
 
-UCLASS(ClassGroup = "Zf|Gathering", BlueprintType, Blueprintable,
-    meta = (BlueprintSpawnableComponent))
+UCLASS(ClassGroup = "Zf|Gathering", BlueprintType, Blueprintable,meta = (BlueprintSpawnableComponent))
 class ZF8DMOVING_API UZfGatheringComponent : public UActorComponent
 {
     GENERATED_BODY()
@@ -120,11 +117,9 @@ public:
 
     // Tick roda APENAS no servidor (HasAuthority check interno).
     // Avança CurrentAngle e detecta volta completa (Missed).
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-        FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType,FActorComponentTickFunction* ThisTickFunction) override;
 
-    virtual void GetLifetimeReplicatedProps(
-        TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // ----------------------------------------------------------
     // ESTADO DO RECURSO — leitura
