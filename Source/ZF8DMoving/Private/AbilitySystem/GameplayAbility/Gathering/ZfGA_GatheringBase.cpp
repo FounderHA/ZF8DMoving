@@ -471,8 +471,27 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         return false;
     }
 
-    const UZfFragment_GatheringTool* GatherFragment =
-        ToolInstance->GetFragment<UZfFragment_GatheringTool>();
+    TArray<FZfAppliedModifier> AppliedModifiers = ToolInstance->GetAppliedModifiers();
+    for (const FZfAppliedModifier& Modifier : AppliedModifiers)
+    {
+        if (Modifier.TargetType != EZfModifierTargetType::ItemProperty) continue;
+
+        const FGameplayTag& Tag = Modifier.ItemPropertyTag;
+
+        if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_ScoreBonus)
+            CachedScoreBonus += Modifier.FinalValue;
+        else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_DamageBonus)
+            CachedDamageBonus += Modifier.FinalValue;
+        else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_GoodSizeBonus)
+            CachedGoodSizeBonus += Modifier.FinalValue;
+        else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_PerfectSizeBonus)
+            CachedPerfectSizeBonus += Modifier.FinalValue;
+        else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_NeedleSpeedBonus)
+            CachedNeedleTimeBonus += Modifier.FinalValue;
+        
+    }
+        
+    const UZfFragment_GatheringTool* GatherFragment = ToolInstance->GetFragment<UZfFragment_GatheringTool>();
     if (!GatherFragment)
     {
         UE_LOG(LogZfGathering, Warning,
@@ -522,15 +541,15 @@ void UZfGA_GatheringBase::Internal_ExecuteNextHit()
     }
 
     K2_OnQTEStarted(
-        ResolvedToolStats.GoodSize,
-        ResolvedToolStats.PerfectSize,
-        TargetResourceData->NeedleRotationTime);
+    FMath::Clamp(ResolvedToolStats.GoodSize   + CachedGoodSizeBonus,   0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.PerfectSize + CachedPerfectSizeBonus, 0.01f, 1.0f),
+    FMath::Max(TargetResourceData->NeedleRotationTime + CachedNeedleTimeBonus, 0.1f));
 
     // Inicia o round no componente — gera zonas e replica ao cliente via RoundData
     TargetGatherableComponent->BeginSkillCheckRound(
-        ResolvedToolStats.GoodSize,
-        ResolvedToolStats.PerfectSize,
-        TargetResourceData->NeedleRotationTime);
+    FMath::Clamp(ResolvedToolStats.GoodSize   + CachedGoodSizeBonus,   0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.PerfectSize + CachedPerfectSizeBonus, 0.01f, 1.0f),
+    FMath::Max(TargetResourceData->NeedleRotationTime + CachedNeedleTimeBonus, 0.1f));
 
     // Aguarda o resultado do hit (GameplayEvent enviado por Internal_SendHitEvent)
     ActiveQTEWaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
@@ -562,10 +581,7 @@ void UZfGA_GatheringBase::Internal_OnQTEResultReceived(FGameplayEventData EventD
     const EZfGatherHitResult HitResult = Internal_TagToHitResult(EventData.EventTag);
 
     const float DamageMultiplierQTE = FZfGatherHitRecord::GetDamageMultiplierForResult(HitResult);
-    const float DamageDealt =
-        ResolvedToolStats.BaseDamage *
-        CachedResourceDamageMultiplier *
-        DamageMultiplierQTE;
+    const float DamageDealt = (ResolvedToolStats.BaseDamage + CachedDamageBonus) * CachedResourceDamageMultiplier * DamageMultiplierQTE;
 
     TargetGatherableComponent->ApplyDamage(DamageDealt);
 
@@ -613,7 +629,7 @@ float UZfGA_GatheringBase::Internal_CalculateFinalScore() const
         ScoreSum += Record.ScoreValue;
 
     const float RawScore = ScoreSum / static_cast<float>(HitRecords.Num());
-    return FMath::Clamp(RawScore + ResolvedToolStats.ScoreBonus, 0.0f, 1.0f);
+    return FMath::Clamp(RawScore + ResolvedToolStats.ScoreBonus + CachedScoreBonus, 0.0f, 1.0f);
 }
 
 // ============================================================
@@ -743,6 +759,12 @@ void UZfGA_GatheringBase::Internal_Cleanup()
     {
         TargetGatherableComponent->EndSkillCheck();
     }
+
+    CachedScoreBonus        = 0.0f;
+    CachedDamageBonus       = 0.0f;
+    CachedGoodSizeBonus     = 0.0f;
+    CachedPerfectSizeBonus  = 0.0f;
+    CachedNeedleTimeBonus   = 0.0f;
 
     TargetGatherableComponent      = nullptr;
     TargetResourceData             = nullptr;

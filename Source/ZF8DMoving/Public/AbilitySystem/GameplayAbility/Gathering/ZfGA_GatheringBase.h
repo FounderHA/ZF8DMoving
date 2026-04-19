@@ -168,6 +168,25 @@ private:
     UPROPERTY()
     TObjectPtr<UAbilityTask_WaitGameplayEvent> ActiveQTEWaitTask;
 
+
+    // ----------------------------------------------------------
+    // Tool Modifiers Bonus
+    // ----------------------------------------------------------
+    UPROPERTY()
+    float CachedScoreBonus = 0.0f;
+
+    UPROPERTY()
+    float CachedDamageBonus = 0.0f;
+
+    UPROPERTY()
+    float CachedGoodSizeBonus = 0.0f;
+
+    UPROPERTY()
+    float CachedPerfectSizeBonus = 0.0f;
+
+    UPROPERTY()
+    float CachedNeedleTimeBonus = 0.0f;
+
     // ----------------------------------------------------------
     // INPUT — Hit (cliente)
     // ----------------------------------------------------------
