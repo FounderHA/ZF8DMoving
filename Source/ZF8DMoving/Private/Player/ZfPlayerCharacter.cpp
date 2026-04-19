@@ -2,6 +2,7 @@
 
 #include "Player/ZfPlayerCharacter.h"
 #include "Player/ZfPlayerState.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AZfPlayerCharacter::AZfPlayerCharacter()
@@ -82,4 +83,10 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	// servidor (já estão em PossessedBy, que só roda com HasAuthority).
 	AbilitySystemComponent = ZfPlayerState->GetAbilitySystemComponent();
 	ZfPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(ZfPlayerState,this);
+	
+	// Registra o delegate de MoveSpeed → CMC em ambos os caminhos:
+	//   Servidor      : chamado via PossessedBy → Super → AZfCharacter::PossessedBy
+	//   Owning Client : chamado via OnRep_PlayerState
+	// Sem HasAuthority — comportamento diferente dos outros delegates de sync.
+	RegisterMovementSyncDelegate();
 }

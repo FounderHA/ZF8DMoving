@@ -141,6 +141,28 @@ protected:
 	* para garantir que atributos dependentes sejam calculados na inicialização.
 	*/
 	void InitializeDependentAttributes();
+	
+	/**
+	 * Registra o delegate que observa MoveSpeed e aplica o valor ao CMC.
+	 *
+	 * Intencionalmente SEM guard de HasAuthority — deve rodar tanto no
+	 * servidor quanto no owning client:
+	 *   Servidor      → aplica quando o GE de inicialização seta MoveSpeed
+	 *   Owning Client → aplica quando o atributo chega replicado (predição local)
+	 *
+	 * Inclui safety net: lê o valor atual e aplica imediatamente caso o
+	 * atributo já tenha chegado antes do bind (race condition de replicação).
+	 *
+	 * Simulated proxies recebem MaxWalkSpeed via replicação nativa do CMC —
+	 * nenhum código adicional necessário para eles.
+	 */
+	void RegisterMovementSyncDelegate();
+
+	/**
+	 * Callback do delegate de MoveSpeed.
+	 * Chamado sempre que MoveSpeed muda — tanto no servidor quanto no owning client.
+	 */
+	void OnMoveSpeedChanged(const FOnAttributeChangeData& Data);
 
 	/**
 	* Reaplica um GE Instant para forçar o MMC a recalcular
