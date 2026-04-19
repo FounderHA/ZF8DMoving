@@ -25,6 +25,9 @@
 #include "Inventory/ZfInventoryTypes.h"
 #include "ZfGatheringTypes.generated.h"
 
+ZF8DMOVING_API DECLARE_LOG_CATEGORY_EXTERN(LogZfGathering, Log, All);
+
+
 // ============================================================
 // EZfGatherHitResult
 // ============================================================
