@@ -17,6 +17,7 @@
 #include "GameFramework/Character.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "InteractionSystem/ZfInteractionComponent.h"
 
 // ============================================================
 // Constructor
@@ -102,6 +103,11 @@ void UZfGA_GatheringBase::CancelAbility(
 // ============================================================
 // Internal_BindHitInput
 // ============================================================
+
+void UZfGA_GatheringBase::Client_NotifyGatherEnded_Implementation()
+{
+    K2_OnGatherCancelled();
+}
 
 void UZfGA_GatheringBase::Internal_BindHitInput()
 {
@@ -741,6 +747,12 @@ EZfGatherHitResult UZfGA_GatheringBase::Internal_TagToHitResult(
 
 void UZfGA_GatheringBase::Internal_Cleanup()
 {
+    // Notifica o cliente para fechar as widgets — antes de limpar qualquer referência
+    if (HasAuthority(&CurrentActivationInfo))
+    {
+        Client_NotifyGatherEnded();
+    }
+    
     // Remove bindings de input (cliente)
     Internal_UnbindHitInput();
     Internal_UnbindClientDelegates();

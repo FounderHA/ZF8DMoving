@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AttributeSet.h"
+#include "InteractionSystem/ZfInteractionComponent.h"
 #include "ZfHelperLibrary.generated.h"
 
 
@@ -29,6 +30,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gathering")
 	static UZfGatheringComponent* FindGatheringComponent(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
+	static UZfInteractionComponent* FindInteractionComponent(AActor* Actor);
 
 	// Converte um número inteiro para algarismos romanos.
 	// @param Number — número a converter (1 a 3999)

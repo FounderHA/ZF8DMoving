@@ -168,7 +168,9 @@ private:
     UPROPERTY()
     TObjectPtr<UAbilityTask_WaitGameplayEvent> ActiveQTEWaitTask;
 
-
+    UFUNCTION(Client, Reliable)
+    void Client_NotifyGatherEnded();
+    
     // ----------------------------------------------------------
     // Tool Modifiers Bonus
     // ----------------------------------------------------------
