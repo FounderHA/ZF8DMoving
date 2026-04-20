@@ -56,6 +56,13 @@ UZfGatheringComponent* UZfHelperLibrary::FindGatheringComponent(AActor* Actor)
     return Actor->FindComponentByClass<UZfGatheringComponent>();
 }
 
+UZfInteractionComponent* UZfHelperLibrary::FindInteractionComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfInteractionComponent>();
+}
+
 FString UZfHelperLibrary::ToRomanNumeral(int32 Number)
 {
     if (Number <= 0 || Number > 3999)
