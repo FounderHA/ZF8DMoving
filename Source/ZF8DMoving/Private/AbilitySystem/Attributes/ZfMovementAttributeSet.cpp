@@ -26,20 +26,23 @@ void UZfMovementAttributeSet::OnRep_DashDistance(const FGameplayAttributeData& O
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfMovementAttributeSet, DashDistance, OldValue);
 }
 
-void UZfMovementAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+void UZfMovementAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
-	Super::PostGameplayEffectExecute(Data);
+	Super::PreAttributeChange(Attribute, NewValue);
 
-	// Clamp executado antes do delegate GetGameplayAttributeValueChangeDelegate
-	// disparar — o Character recebe sempre um valor sanitizado.
-	if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
+	if (Attribute == GetMoveSpeedAttribute())
 	{
-		SetMoveSpeed(FMath::Clamp(GetMoveSpeed(), MinMoveSpeed, MaxMoveSpeed));
+		NewValue = FMath::Clamp(NewValue, MinMoveSpeed, MaxMoveSpeed);
 		return;
 	}
 
-	if (Data.EvaluatedData.Attribute == GetDashDistanceAttribute())
+	if (Attribute == GetDashDistanceAttribute())
 	{
-		SetDashDistance(FMath::Clamp(GetDashDistance(), MinDashDistance, MaxDashDistance));
+		NewValue = FMath::Clamp(NewValue, MinDashDistance, MaxDashDistance);
 	}
+}
+
+void UZfMovementAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
 }

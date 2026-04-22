@@ -28,7 +28,7 @@ struct ZF8DMOVING_API FZfQualityAttributesEntry
 
 	// Tag que identifica este atributo
 	// Ex: Attribute.Combat.PhysicalDamage
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QualityAttributes", meta =(GameplayTagFilter = "GameplayEffect.type.AttributeSet"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QualityAttributes", meta =(GameplayTagFilter = "Attribute"))
 	FGameplayTag AttributeTag;
 
 	// Valores absolutos por qualidade — índice 0 = Quality 0

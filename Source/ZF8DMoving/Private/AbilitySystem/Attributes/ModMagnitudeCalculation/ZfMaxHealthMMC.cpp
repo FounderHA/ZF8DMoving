@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfMaxHealthMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfMainAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -54,7 +55,7 @@ float UZfMaxHealthMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag MaxHealthTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.Resource.MaxHealth"));
+		const FGameplayTag MaxHealthTag = ZfAttributeTags::ZfResourceAttributeTags::Attribute_MaxHealth;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

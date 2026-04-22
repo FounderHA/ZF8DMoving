@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfStrengthMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -46,7 +47,7 @@ float UZfStrengthMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffec
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag StrengthTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Strength"));
+		const FGameplayTag StrengthTag = ZfAttributeTags::ZfMainAttributeTags::Attribute_Strength;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

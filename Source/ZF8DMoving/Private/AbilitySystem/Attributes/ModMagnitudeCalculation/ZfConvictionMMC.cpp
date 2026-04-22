@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConvictionMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -46,7 +47,7 @@ float UZfConvictionMMC::CalculateBaseMagnitude_Implementation(const FGameplayEff
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag ConvictionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Conviction"));
+		const FGameplayTag ConvictionTag = ZfAttributeTags::ZfMainAttributeTags::Attribute_Conviction;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

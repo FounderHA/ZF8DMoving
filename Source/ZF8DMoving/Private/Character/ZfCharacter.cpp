@@ -322,6 +322,10 @@ void AZfCharacter::InitializeDependentAttributes()
 
 void AZfCharacter::RefreshEffect(TSubclassOf<UGameplayEffect> EffectClass)
 {
+	
+	UE_LOG(LogTemp, Warning, TEXT("RefreshEffect chamado: %s"),
+	*GetNameSafe(EffectClass));
+	
 	if (!HasAuthority()) return;
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();

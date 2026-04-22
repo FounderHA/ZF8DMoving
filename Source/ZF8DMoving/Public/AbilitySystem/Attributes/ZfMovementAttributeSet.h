@@ -21,6 +21,8 @@ public:
 	* Único ponto de sanitização — garante que nenhum GE coloque valores
 	* inválidos antes do delegate disparar para o CharacterMovementComponent.
 	*/
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MoveSpeed, Category = "MovementAttributes")

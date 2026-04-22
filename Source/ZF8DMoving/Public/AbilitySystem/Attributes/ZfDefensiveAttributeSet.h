@@ -4,75 +4,75 @@
 
 #include "CoreMinimal.h"
 #include "ZfAttributeSet.h"
-#include "ZfResistanceAttributeSet.generated.h"
+#include "ZfDefensiveAttributeSet.generated.h"
 
 UCLASS()
-class ZF8DMOVING_API UZfResistanceAttributeSet : public UZfAttributeSet
+class ZF8DMOVING_API UZfDefensiveAttributeSet : public UZfAttributeSet
 {
     GENERATED_BODY()
     
 public:
-    UZfResistanceAttributeSet(const FObjectInitializer& ObjectInitializer);
+    UZfDefensiveAttributeSet(const FObjectInitializer& ObjectInitializer);
     
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // Resistance
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalResistance, Category = "ResistanceAttributes")
     FGameplayAttributeData PhysicalResistance;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, PhysicalResistance)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, PhysicalResistance)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_MagicalResistance, Category = "ResistanceAttributes")
     FGameplayAttributeData MagicalResistance;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, MagicalResistance)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, MagicalResistance)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_Tenacity, Category = "ResistanceAttributes")
     FGameplayAttributeData Tenacity;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, Tenacity)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, Tenacity)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_CriticalResistance, Category = "ResistanceAttributes")
     FGameplayAttributeData CriticalResistance;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, CriticalResistance)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, CriticalResistance)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PoiseResistance, Category = "ResistanceAttributes")
     FGameplayAttributeData PoiseResistance;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, PoiseResistance)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, PoiseResistance)
 
     // Threshold
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_BurnThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData BurnThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, BurnThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, BurnThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FreezeThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData FreezeThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, FreezeThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, FreezeThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ShockThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData ShockThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, ShockThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, ShockThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_BleedThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData BleedThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, BleedThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, BleedThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PoisonThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData PoisonThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, PoisonThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, PoisonThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StunThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData StunThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, StunThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, StunThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_SlowThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData SlowThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, SlowThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, SlowThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_SleepThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData SleepThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, SleepThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, SleepThreshold)
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_RootThreshold, Category = "ResistanceAttributes")
     FGameplayAttributeData RootThreshold;
-    ATTRIBUTE_ACCESSORS(UZfResistanceAttributeSet, RootThreshold)
+    ATTRIBUTE_ACCESSORS(UZfDefensiveAttributeSet, RootThreshold)
 
 protected:
 
