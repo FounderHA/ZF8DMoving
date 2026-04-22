@@ -489,9 +489,9 @@ bool UZfGA_GatheringBase::Internal_ValidateAndSetup(const FGameplayEventData* Tr
         else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_DamageBonus)
             CachedDamageBonus += Modifier.FinalValue;
         else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_GoodSizeBonus)
-            CachedGoodSizeBonus += Modifier.FinalValue;
+            CachedGoodSizeBonus += Modifier.FinalValue / 100.f;
         else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_PerfectSizeBonus)
-            CachedPerfectSizeBonus += Modifier.FinalValue;
+            CachedPerfectSizeBonus += Modifier.FinalValue / 100.f;
         else if (Tag == ZfItemPropertyTags::ToolProperties::Item_Gathering_NeedleSpeedBonus)
             CachedNeedleTimeBonus += Modifier.FinalValue;
         
@@ -547,14 +547,14 @@ void UZfGA_GatheringBase::Internal_ExecuteNextHit()
     }
 
     K2_OnQTEStarted(
-    FMath::Clamp(ResolvedToolStats.GoodSize   + CachedGoodSizeBonus,   0.01f, 1.0f),
-    FMath::Clamp(ResolvedToolStats.PerfectSize + CachedPerfectSizeBonus, 0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.GoodSize * (1.0f + CachedGoodSizeBonus), 0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.PerfectSize * (1.0f + CachedPerfectSizeBonus), 0.01f, 1.0f),
     FMath::Max(TargetResourceData->NeedleRotationTime + CachedNeedleTimeBonus, 0.1f));
 
     // Inicia o round no componente — gera zonas e replica ao cliente via RoundData
     TargetGatherableComponent->BeginSkillCheckRound(
-    FMath::Clamp(ResolvedToolStats.GoodSize   + CachedGoodSizeBonus,   0.01f, 1.0f),
-    FMath::Clamp(ResolvedToolStats.PerfectSize + CachedPerfectSizeBonus, 0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.GoodSize * (1.0f + CachedGoodSizeBonus), 0.01f, 1.0f),
+    FMath::Clamp(ResolvedToolStats.PerfectSize * (1.0f + CachedPerfectSizeBonus), 0.01f, 1.0f),
     FMath::Max(TargetResourceData->NeedleRotationTime + CachedNeedleTimeBonus, 0.1f));
 
     // Aguarda o resultado do hit (GameplayEvent enviado por Internal_SendHitEvent)

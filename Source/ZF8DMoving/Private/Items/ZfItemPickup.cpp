@@ -40,7 +40,7 @@ AZfItemPickup::AZfItemPickup()
     // Esfera de colisão como root — define área de coleta
     CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
     SetRootComponent(CollisionSphere);
-    CollisionSphere->SetSphereRadius(100.0f);
+    CollisionSphere->SetSphereRadius(16.0f);
     
 
     // Mesh estática — exibida quando item tem StaticMesh no Definition

@@ -7,6 +7,10 @@ namespace ZfInventoryTags
 		UE_DEFINE_GAMEPLAY_TAG(Weapon, "ItemType.Weapon")
 		UE_DEFINE_GAMEPLAY_TAG(Weapon_Staff, "ItemType.Weapon.Staff")
 		UE_DEFINE_GAMEPLAY_TAG(Weapon_Sword, "ItemType.Weapon.Sword")
+		UE_DEFINE_GAMEPLAY_TAG(Weapon_Sword_Bronze, "ItemType.Weapon.Sword.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(Weapon_Sword_Iron, "ItemType.Weapon.Sword.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Weapon_Sword_Silver, "ItemType.Weapon.Sword.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(Weapon_Sword_Mithril, "ItemType.Weapon.Sword.Mithril")
 	}
 	
 	namespace ShieldTypes
@@ -95,6 +99,24 @@ namespace ZfInventoryTags
 	namespace CraftMaterialTypes
 	{
 		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial, "ItemType.CraftMaterial")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_RawOre_Bronze, "ItemType.CraftMaterial.RawOre.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_RawOre_Iron, "ItemType.CraftMaterial.RawOre.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_RawOre_Silver, "ItemType.CraftMaterial.RawOre.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_RawOre_Mithril, "ItemType.CraftMaterial.RawOre.Mithril")
+
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Ingot_Bronze, "ItemType.CraftMaterial.Ingot.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Ingot_Iron, "ItemType.CraftMaterial.Ingot.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Ingot_Silver, "ItemType.CraftMaterial.Ingot.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Ingot_Mithril, "ItemType.CraftMaterial.Ingot.Mithril")
+
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Jewel_Sapphire, "ItemType.CraftMaterial.Jewel.Sapphire")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Jewel_Ruby, "ItemType.CraftMaterial.Jewel.Ruby")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Jewel_Emerald, "ItemType.CraftMaterial.Jewel.Emerald")
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Jewel_Diamond, "ItemType.CraftMaterial.Jewel.Diamond")
+
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Wood_DarkLog, "ItemType.CraftMaterial.Wood.DarkLog")
+		
+		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Planks_DarkPlanks, "ItemType.CraftMaterial.Planks.DarkPlanks")
 	}
 	
 	namespace RecipeTypes

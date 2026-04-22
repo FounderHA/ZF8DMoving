@@ -53,7 +53,7 @@ public:
     // Deve bater com as tags listadas no AllowedTools[] dos recursos.
     // Ex: "Tool.Pickaxe.Tier1", "Tool.Axe.Tier2"
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Tool",
-        meta = (GameplayTagFilter = "Tool"))
+        meta = (GameplayTagFilter = "Gathering"))
     FGameplayTag ToolTag;
 
     // ----------------------------------------------------------

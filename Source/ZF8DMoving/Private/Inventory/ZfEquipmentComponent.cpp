@@ -864,7 +864,19 @@ void UZfEquipmentComponent::ServerTryUnequipItem_Implementation(FGameplayTag Slo
 
 EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemFromInventory, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag)
 {
-    if (SlotTag != SlotTag.EmptyTag && ItemFromInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag != SlotTag)
+    if (!ItemFromInventory)
+    {
+        return EZfItemMechanicResult::Failed_InvalidOperation;
+    }
+
+    const UZfFragment_Equippable* EquippableFragment = ItemFromInventory->GetFragment<UZfFragment_Equippable>();
+
+    if (!EquippableFragment)
+    {
+        return EZfItemMechanicResult::Failed_CannotEquip;
+    }
+    
+    if (SlotTag != SlotTag.EmptyTag && EquippableFragment->EquipmentSlotTag != SlotTag)
     {
         return EZfItemMechanicResult::Failed_CannotEquip;
     }
@@ -874,14 +886,6 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
     {
         return EZfItemMechanicResult::Failed_InvalidOperation;
     }
-    
-    if (!InventoryComponent)
-    {
-        return EZfItemMechanicResult::Failed_InvalidOperation;
-    }
-
-    // Obtém o fragment para saber a tag do slot alvo
-    const UZfFragment_Equippable* EquippableFragment = ItemFromInventory->GetFragment<UZfFragment_Equippable>();
 
     // Tenta Equipar Mochila
     if (ItemFromInventory->GetFragment<UZfFragment_InventoryExpansion>())

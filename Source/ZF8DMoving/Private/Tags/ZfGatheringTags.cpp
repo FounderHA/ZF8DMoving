@@ -18,41 +18,43 @@ namespace ZfGatheringTags
     {
         // Picaretas
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe,       "Gathering.Tool.Pickaxe")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Bronze, "Gathering.Tool.Pickaxe.Bronze")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Iron, "Gathering.Tool.Pickaxe.Iron")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Tier2, "Gathering.Tool.Pickaxe.Tier2")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Tier3, "Gathering.Tool.Pickaxe.Tier3")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Tier4, "Gathering.Tool.Pickaxe.Tier4")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Silver, "Gathering.Tool.Pickaxe.Silver")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Pickaxe_Mithril, "Gathering.Tool.Pickaxe.Mithril")
 
         // Machados
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe,       "Gathering.Tool.Axe")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Bronze, "Gathering.Tool.Axe.Bronze")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Iron, "Gathering.Tool.Axe.Iron")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Tier2, "Gathering.Tool.Axe.Tier2")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Tier3, "Gathering.Tool.Axe.Tier3")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Tier4, "Gathering.Tool.Axe.Tier4")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Silver, "Gathering.Tool.Axe.Silver")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Axe_Mithril, "Gathering.Tool.Axe.Mithril")
 
         // Pás
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel,       "Gathering.Tool.Shovel")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Bronze, "Gathering.Tool.Shovel.Bronze")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Iron, "Gathering.Tool.Shovel.Iron")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Tier2, "Gathering.Tool.Shovel.Tier2")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Tier3, "Gathering.Tool.Shovel.Tier3")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Tier4, "Gathering.Tool.Shovel.Tier4")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Silver, "Gathering.Tool.Shovel.Silver")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_Shovel_Mithril, "Gathering.Tool.Shovel.Mithril")
 
         // Varas de pesca
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod,       "Gathering.Tool.FishingRod")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Bronze, "Gathering.Tool.FishingRod.Bronze")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Iron, "Gathering.Tool.FishingRod.Iron")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Tier2, "Gathering.Tool.FishingRod.Tier2")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Tier3, "Gathering.Tool.FishingRod.Tier3")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Tier4, "Gathering.Tool.FishingRod.Tier4")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Silver, "Gathering.Tool.FishingRod.Silver")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Tool_FishingRod_Mithril, "Gathering.Tool.FishingRod.Mithril")
     }
 
     namespace ResourceTags
     {
         // Minérios
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore,         "Gathering.Resource.Ore")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Bronze,    "Gathering.Resource.Ore.Bronze")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Iron,    "Gathering.Resource.Ore.Iron")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Gold,    "Gathering.Resource.Ore.Gold")
-        UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Crystal, "Gathering.Resource.Ore.Crystal")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Silver, "Gathering.Resource.Ore.Silver")
+        UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Ore_Mithril, "Gathering.Resource.Ore.Mithril")
 
+        
         // Madeiras
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Wood,      "Gathering.Resource.Wood")
         UE_DEFINE_GAMEPLAY_TAG(Gathering_Resource_Wood_Oak,  "Gathering.Resource.Wood.Oak")
