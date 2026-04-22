@@ -426,6 +426,14 @@ void UZfInteractionComponent::HandleInputStarted(FName InteractionID, EInteracti
 
     if (Mode == EInteractionInputMode::Press)
     {
+        // Evento LOCAL (cliente) — abrir UIs, feedback local.
+        if (CurrentFocus->Implements<UZfInteractionInterface>())
+        {
+            IZfInteractionInterface::Execute_OnInteractLocal(
+                CurrentFocus, GetOwningController(), InteractionID);
+        }
+
+        // Server RPC — lógica autoritativa.
         Server_Interact(CurrentFocus, InteractionID);
     }
     else
@@ -479,6 +487,14 @@ void UZfInteractionComponent::UpdateHold(float DeltaTime)
     {
         const FName ID = ActiveHold.InteractionID;
         ActiveHold.bActive = false;
+        
+        // Evento LOCAL antes do RPC do complete.
+        if (CurrentFocus->Implements<UZfInteractionInterface>())
+        {
+            IZfInteractionInterface::Execute_OnInteractLocal(
+                CurrentFocus, GetOwningController(), ID);
+        }
+        
         Server_InteractComplete(CurrentFocus, ID);
     }
 }

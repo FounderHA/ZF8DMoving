@@ -66,6 +66,12 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
     void OnInteract(APlayerController* InstigatorController, FName InteractionID);
 
+    // Chamado APENAS no cliente que completou a interacao.
+    // Use para abrir UIs, tocar feedback local, criar widgets.
+    // NUNCA use para modificar estado — esse evento nao roda no servidor.
+    UFUNCTION(BlueprintNativeEvent, Category = "Interaction")
+    void OnInteractLocal(APlayerController* InstigatorPC, FName InteractionID);
+
     // ── Hold ──────────────────────────────────────────────────────────
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")

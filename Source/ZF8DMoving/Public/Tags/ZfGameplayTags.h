@@ -25,3 +25,5 @@
 #include "ZfItemsTags.h"
 #include "ZfMainAttributeTags.h"
 #include "ZfProgressionTags.h"
+#include "ZfAbilityTreeTags.h"
+#include "ZfCraftTags.h"

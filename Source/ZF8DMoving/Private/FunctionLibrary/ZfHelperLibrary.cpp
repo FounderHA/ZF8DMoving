@@ -4,6 +4,7 @@
 #include "FunctionLibrary/ZfHelperLibrary.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "CraftingSystem/ZfCraftingComponent.h"
 #include "Inventory/ZfInventoryComponent.h"
 #include "Inventory/ZfEquipmentComponent.h"
 #include "GameFramework/Character.h"
@@ -61,6 +62,13 @@ UZfInteractionComponent* UZfHelperLibrary::FindInteractionComponent(AActor* Acto
     if (!Actor) return nullptr;
 
     return Actor->FindComponentByClass<UZfInteractionComponent>();
+}
+
+UZfCraftingComponent* UZfHelperLibrary::FindCraftingComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfCraftingComponent>();
 }
 
 FString UZfHelperLibrary::ToRomanNumeral(int32 Number)

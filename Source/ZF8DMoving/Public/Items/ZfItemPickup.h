@@ -86,7 +86,7 @@ public:
     // detectar se o jogador está próximo o suficiente
     // para interação direta.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config", meta = (ClampMin = "10.0"))
-    float PickupRadius = 100.0f;
+    float PickupRadius = 16.0f;
 
     // Tempo em segundos antes do pickup ser destruído
     // automaticamente se não for coletado.

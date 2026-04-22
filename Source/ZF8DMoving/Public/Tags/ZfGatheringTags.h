@@ -46,31 +46,31 @@ namespace ZfGatheringTags
     {
         // Picaretas — mineração e escavação
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Bronze)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Iron)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Tier2)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Tier3)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Tier4)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Silver)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Pickaxe_Mithril)
 
         // Machados — coleta de madeira
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Bronze)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Iron)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Tier2)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Tier3)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Tier4)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Silver)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Axe_Mithril)
 
         // Pás — escavação de terra
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Bronze)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Iron)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Tier2)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Tier3)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Tier4)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Silver)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_Shovel_Mithril)
 
         // Varas de pesca
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Bronze)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Iron)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Tier2)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Tier3)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Tier4)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Silver)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Tool_FishingRod_Mithril)
     }
 
     // ----------------------------------------------------------
@@ -82,9 +82,10 @@ namespace ZfGatheringTags
     {
         // Minérios
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Bronze)
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Iron)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Gold)
-        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Crystal)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Silver)
+        ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Ore_Mithril)
 
         // Madeiras
         ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Gathering_Resource_Wood)

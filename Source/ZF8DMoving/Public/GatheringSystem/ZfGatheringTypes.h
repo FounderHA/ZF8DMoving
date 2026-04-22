@@ -116,7 +116,7 @@ struct ZF8DMOVING_API FZfGatherToolEntry
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Tool",
-        meta = (GameplayTagFilter = "Tool"))
+        meta = (GameplayTagFilter = "Gathering.Tool"))
     FGameplayTag ToolTag;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gather|Tool",
