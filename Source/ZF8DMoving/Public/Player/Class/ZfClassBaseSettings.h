@@ -69,6 +69,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resistences")
 	float CriticalResistance;
+	
+	// Max Abilitity por Class
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SkillTree", meta = (ClampMin = "1"))
+	int32 MaxActiveAbilitySlots;
 
 	// Attribute Modifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Modifiers")

@@ -32,6 +32,9 @@ namespace ZfProgressionTags
 	
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Progression_AttributePoints, "LevelProgression.Data.Progression.AttributePoints",
 		"Chave SetByCaller do GE_GrantAttributePoints. Define pontos distribuiveis a conceder no level-up.")
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(LevelProgression_Data_Progression_SkillPoints, "LevelProgression.Data.Progression.SkillPoints",
+		"Chave SetByCaller do GE_GrantSkillPoints. Define pontos de skill tree a conceder no level-up.")
 
 	// =========================================================================
 	// DATA — SetByCaller

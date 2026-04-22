@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfConstitutionMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -46,7 +47,7 @@ float UZfConstitutionMMC::CalculateBaseMagnitude_Implementation(const FGameplayE
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag ConstitutionTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Constitution"));
+		const FGameplayTag ConstitutionTag = ZfAttributeTags::ZfMainAttributeTags::Attribute_Constitution;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

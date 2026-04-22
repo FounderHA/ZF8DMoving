@@ -77,7 +77,7 @@ struct ZF8DMOVING_API FZfModifierDataTypes : public FTableRowBase
     // Tag do atributo GAS que este modifier afeta.
     // Ex: "Attribute.Movement.Speed", "Attribute.Combat.PhysicalDamage"
     // O GameplayEffect base usará esta tag para saber qual atributo modificar
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "GameplayEffect.type.AttributeSet"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Classification", meta =(GameplayTagFilter = "Attribute"))
     FGameplayTag AffectedAttributeTag;
 
     // Para onde o FinalValue é enviado ao aplicar o modifier.

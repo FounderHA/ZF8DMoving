@@ -89,4 +89,11 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	//   Owning Client : chamado via OnRep_PlayerState
 	// Sem HasAuthority — comportamento diferente dos outros delegates de sync.
 	RegisterMovementSyncDelegate();
+	
+	// Servidor   → escuta tags quando o nó é desbloqueado localmente
+	// Cliente    → escuta tags quando chegam replicadas do servidor
+	if (UZfAbilityTreeComponent* TreeComp = ZfPlayerState->GetAbilityTreeComponent())
+	{
+		TreeComp->InitializeTagListeners(ZfPlayerState->GetAbilitySystemComponent());
+	}
 }

@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfDexterityMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -46,7 +47,7 @@ float UZfDexterityMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag DexterityTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Dexterity"));
+		const FGameplayTag DexterityTag = ZfAttributeTags::ZfMainAttributeTags::Attribute_Dexterity;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

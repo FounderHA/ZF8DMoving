@@ -31,6 +31,7 @@ UZfProgressionAttributeSet::UZfProgressionAttributeSet(const FObjectInitializer&
 	InitTotalXP(0.f);
 	InitXPToNextLevel(300.f);
 	InitAttributePoints(0.f);
+	InitSkillPoints(0.f);
 	InitStrengthPoints(0.f);
 	InitDexterityPoints(0.f);
 	InitIntelligencePoints(0.f);
@@ -53,6 +54,7 @@ void UZfProgressionAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, XPToNextLevel,		COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, TotalXP,				COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, AttributePoints,		COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, SkillPoints,			COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, StrengthPoints,		COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, DexterityPoints,		COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UZfProgressionAttributeSet, IntelligencePoints,	COND_None, REPNOTIFY_Always);
@@ -84,6 +86,10 @@ void UZfProgressionAttributeSet::PreAttributeChange(const FGameplayAttribute& At
 		NewValue = FMath::Max(1.f, NewValue);
 	}
 	else if (Attribute == GetAttributePointsAttribute())
+	{
+		NewValue = FMath::Max(0.f, NewValue);
+	}
+	else if (Attribute == GetSkillPointsAttribute())
 	{
 		NewValue = FMath::Max(0.f, NewValue);
 	}
@@ -132,15 +138,15 @@ void UZfProgressionAttributeSet::PostGameplayEffectExecute(const FGameplayEffect
 	TSet<FGameplayTag> ChangedAttributes;
  
 	if (Attr == GetStrengthPointsAttribute())
-		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Strength);
+		ChangedAttributes.Add(ZfAttributeTags::ZfMainAttributeTags::Attribute_Strength);
 	if (Attr == GetDexterityPointsAttribute())
-		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Dexterity);
+		ChangedAttributes.Add(ZfAttributeTags::ZfMainAttributeTags::Attribute_Dexterity);
 	if (Attr == GetIntelligencePointsAttribute())
-		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Intelligence);
+		ChangedAttributes.Add(ZfAttributeTags::ZfMainAttributeTags::Attribute_Intelligence);
 	if (Attr == GetConstitutionPointsAttribute())
-		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Constitution);
+		ChangedAttributes.Add(ZfAttributeTags::ZfMainAttributeTags::Attribute_Constitution);
 	if (Attr == GetConvictionPointsAttribute())
-		ChangedAttributes.Add(ZfMainAttributeTags::Attribute_Conviction);
+		ChangedAttributes.Add(ZfAttributeTags::ZfMainAttributeTags::Attribute_Conviction);
  
 	if (ChangedAttributes.Num() > 0)
 	{
@@ -187,6 +193,11 @@ void UZfProgressionAttributeSet::OnRep_XPToNextLevel(const FGameplayAttributeDat
 void UZfProgressionAttributeSet::OnRep_AttributePoints(const FGameplayAttributeData& OldValue) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, AttributePoints, OldValue);
+}
+
+void UZfProgressionAttributeSet::OnRep_SkillPoints(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UZfProgressionAttributeSet, SkillPoints, OldValue);
 }
 
 void UZfProgressionAttributeSet::OnRep_StrengthPoints(const FGameplayAttributeData& OldValue) const

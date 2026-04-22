@@ -119,6 +119,14 @@ public:
 	FGameplayAttributeData AttributePoints;
 	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, AttributePoints)
 	
+	/** Pontos distribuíveis na Skill Tree. Concedidos pela GA_LevelUp via LR_SkillPoints.
+	* Separado de AttributePoints por design — são recursos independentes com
+	* propósitos distintos: AttributePoints escala atributos base, SkillPoints
+	* desbloqueia e evolui habilidades na tree. */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_SkillPoints, Category = "CharacterProgression")
+	FGameplayAttributeData SkillPoints;
+	ATTRIBUTE_ACCESSORS(UZfProgressionAttributeSet, SkillPoints)
+	
 	// -----------------------------------------------------------------------
 	// Atributos replicados — Pontos investidos por atributo
 	// Representam QUANTOS pontos o jogador colocou em cada atributo.
@@ -173,6 +181,9 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_AttributePoints(const FGameplayAttributeData& OldValue) const;
+	
+	UFUNCTION()
+	virtual void OnRep_SkillPoints(const FGameplayAttributeData& OldValue) const;
 
 	UFUNCTION()
 	virtual void OnRep_StrengthPoints(const FGameplayAttributeData& OldValue) const;

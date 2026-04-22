@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfIntelligenceMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "player/ZfPlayerState.h"
 
@@ -46,7 +47,7 @@ float UZfIntelligenceMMC::CalculateBaseMagnitude_Implementation(const FGameplayE
 
 	if (EquipmentComponent)
 	{
-		const FGameplayTag IntelligenceTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayEffect.Type.AttributeSet.MainAttribute.Intelligence"));
+		const FGameplayTag IntelligenceTag = ZfAttributeTags::ZfMainAttributeTags::Attribute_Intelligence;
 
 		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
 		{

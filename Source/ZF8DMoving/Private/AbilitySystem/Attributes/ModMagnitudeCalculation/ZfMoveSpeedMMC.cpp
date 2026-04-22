@@ -2,6 +2,7 @@
  
 #include "AbilitySystem/Attributes/ModMagnitudeCalculation/ZfMoveSpeedMMC.h"
 #include "AbilitySystemComponent.h"
+#include "Tags/ZfGameplayTags.h"
 #include "player/ZfPlayerState.h"
  
 float UZfMoveSpeedMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
@@ -34,15 +35,28 @@ float UZfMoveSpeedMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 	
 	if (EquipmentComponent)
 	{
+		const FGameplayTag MoveSpeedTag = ZfAttributeTags::ZfMovementAttributeTags::Attribute_MoveSpeed;
+		
+		for (UZfItemInstance* Item : EquipmentComponent->GetAllEquippedItems())
+		{
+			if (!Item) continue;
+			
+			for (const FZfAppliedModifier& Modifier : Item->GetAppliedModifiers())
+			{
+				if (Modifier.AffectedAttributeTag == MoveSpeedTag)
+					ItemMoveSpeed += Modifier.FinalValue;
+			}
+		}
 		
 	}
-		
-		
-		
-		
+	
 		
 	// --- Resultado ---
 	Result = BaseMoveSpeed + ItemMoveSpeed;
+	
+	UE_LOG(LogTemp, Warning, TEXT("ZfMoveSpeedMMC: Base=%.1f | Item=%.1f | Total=%.1f"),
+	BaseMoveSpeed, ItemMoveSpeed, Result);
+    
 	return Result;
 }
  

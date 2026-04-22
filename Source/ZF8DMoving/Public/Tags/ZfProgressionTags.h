@@ -46,6 +46,11 @@ namespace ZfProgressionTags
 	/** Chave SetByCaller do GE_GrantAttributePoints. * Define quantos pontos distribuíveis conceder no level-up.
 	* Usado por UZfLR_AttributePoints::GiveReward. */
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Data_Progression_AttributePoints)
+	
+	/** Chave SetByCaller do GE_GrantSkillPoints. Define quantos pontos de skill tree
+	* conceder no level-up. Usado por UZfLR_SkillPoints::GiveReward.
+	* Segue o mesmo padrão de LevelProgression_Data_Progression_AttributePoints. */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(LevelProgression_Data_Progression_SkillPoints)
 
 	// =========================================================================
 	// DATA — SetByCaller para GE_SpendAttributePoints Convenção: Data.Spend.<Atributo>
