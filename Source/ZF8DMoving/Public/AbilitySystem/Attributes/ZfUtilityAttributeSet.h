@@ -15,79 +15,79 @@ public:
     UZfUtilityAttributeSet(const FObjectInitializer& ObjectInitializer);
 
     // Flat On Hit
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatLifeStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatLifeStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData FlatLifeStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatLifeStealOnHit)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatManaStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatManaStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData FlatManaStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatManaStealOnHit)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatStaminaStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatStaminaStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData FlatStaminaStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatStaminaStealOnHit)
 
     // Percent On Hit
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentLifeStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentLifeStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData PercentLifeStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentLifeStealOnHit)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentManaStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentManaStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData PercentManaStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentManaStealOnHit)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentStaminaStealOnHit, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentStaminaStealOnHit, Category = "UtilityAttribute")
     FGameplayAttributeData PercentStaminaStealOnHit;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentStaminaStealOnHit)
 
     // Flat On Kill
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatLifeStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatLifeStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData FlatLifeStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatLifeStealOnKill)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatManaStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatManaStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData FlatManaStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatManaStealOnKill)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatStaminaStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_FlatStaminaStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData FlatStaminaStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, FlatStaminaStealOnKill)
 
     // Percent On Kill
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentLifeStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentLifeStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData PercentLifeStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentLifeStealOnKill)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentManaStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentManaStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData PercentManaStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentManaStealOnKill)
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentStaminaStealOnKill, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_PercentStaminaStealOnKill, Category = "UtilityAttribute")
     FGameplayAttributeData PercentStaminaStealOnKill;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, PercentStaminaStealOnKill)
     
     // Regen
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_HealthRegen, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_HealthRegen, Category = "UtilityAttribute")
     FGameplayAttributeData HealthRegen;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, HealthRegen)
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ManaRegen, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ManaRegen, Category = "UtilityAttribute")
     FGameplayAttributeData ManaRegen;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, ManaRegen)
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaRegen, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaRegen, Category = "UtilityAttribute")
     FGameplayAttributeData StaminaRegen;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, StaminaRegen)
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_HealthCostReduction, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_HealthCostReduction, Category = "UtilityAttribute")
     FGameplayAttributeData HealthCostReduction;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, HealthCostReduction)
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ManaCostReduction, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_ManaCostReduction, Category = "UtilityAttribute")
     FGameplayAttributeData ManaCostReduction;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, ManaCostReduction)
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaCostReduction, Category = "UtiliteAttribute")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaCostReduction, Category = "UtilityAttribute")
     FGameplayAttributeData StaminaCostReduction;
     ATTRIBUTE_ACCESSORS(UZfUtilityAttributeSet, StaminaCostReduction)
 

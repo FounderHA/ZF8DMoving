@@ -42,7 +42,7 @@ public:
     
     // Tag que identifica o tipo deste recurso.
     // Ex: "Resource.Ore.Iron", "Resource.Wood.Oak"
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity", meta = (GameplayTagFilter = "Resource"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Resource|Identity", meta = (GameplayTagFilter = "Gathering.Resource"))
     FGameplayTag ResourceTag;
 
     // ----------------------------------------------------------

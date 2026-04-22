@@ -23,7 +23,7 @@
 #include "ZfGatheringTags.h"
 #include "ZfInventoryTags.h"
 #include "ZfItemsTags.h"
-#include "ZfMainAttributeTags.h"
+#include "ZfAttributeTags.h"
 #include "ZfProgressionTags.h"
 #include "ZfAbilityTreeTags.h"
 #include "ZfCraftTags.h"
