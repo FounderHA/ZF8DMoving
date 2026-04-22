@@ -134,6 +134,6 @@ namespace ZfAbilityTreeTags
 	{
 		// Sub-efeitos adicionados aqui conforme as abilities forem criadas
 		// Exemplo:
-		//UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_Fireball_DoubleProjectile)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_SubEffect_Novice_Fireball_DoubleProjectile)
 	}
 }

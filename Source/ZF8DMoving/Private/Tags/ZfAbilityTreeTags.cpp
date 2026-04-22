@@ -90,6 +90,6 @@ namespace ZfAbilityTreeTags
 	namespace ZfSubEffectTags
 	{
 		// Sub-efeitos adicionados aqui conforme as abilities forem criadas
-		//UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_Fireball_DoubleProjectile, "SkillTree.Node.Novice.Fireball.DoubleProjectile",)
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_SubEffect_Novice_Fireball_DoubleProjectile, "SkillTree.SubEffect.Novice.Fireball.DoubleProjectile")
 	}
 }

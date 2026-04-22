@@ -102,7 +102,7 @@ namespace ZfAttributeTags
 	// -----------------------------------------------------------------------
 	// Roubo de recursos (ZfStealAttributesSet)
 	// -----------------------------------------------------------------------
-	namespace ZfUtiliteAttributeTags
+	namespace ZfUtilityAttributeTags
 	{
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attribute_FlatLifeStealOnHit)
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attribute_FlatManaStealOnHit)

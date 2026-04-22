@@ -71,39 +71,39 @@ namespace ZfAttributeTags
 	// -----------------------------------------------------------------------
 	namespace ZfDefensiveAttributeTags
 	{
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PhysicalResistance, "Attribute.Resistance.PhysicalResistance", "Resistência a dano físico do personagem.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_MagicalResistance,  "Attribute.Resistance.MagicalResistance",  "Resistência a dano mágico do personagem.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_Tenacity,           "Attribute.Resistance.Tenacity",           "Redução de duração de status negativos.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_CriticalResistance, "Attribute.Resistance.CriticalResistance", "Redução de chance de receber crítico.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PoiseResistance,    "Attribute.Resistance.PoiseResistance",    "Resistência a dano de poise.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_BurnThreshold,      "Attribute.Resistance.BurnThreshold",      "Limiar de acúmulo para infligir Burn.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FreezeThreshold,    "Attribute.Resistance.FreezeThreshold",    "Limiar de acúmulo para infligir Freeze.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_ShockThreshold,     "Attribute.Resistance.ShockThreshold",     "Limiar de acúmulo para infligir Shock.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_BleedThreshold,     "Attribute.Resistance.BleedThreshold",     "Limiar de acúmulo para infligir Bleed.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PoisonThreshold,    "Attribute.Resistance.PoisonThreshold",    "Limiar de acúmulo para infligir Poison.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_StunThreshold,      "Attribute.Resistance.StunThreshold",      "Limiar de acúmulo para infligir Stun.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_SlowThreshold,      "Attribute.Resistance.SlowThreshold",      "Limiar de acúmulo para infligir Slow.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_SleepThreshold,     "Attribute.Resistance.SleepThreshold",     "Limiar de acúmulo para infligir Sleep.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_RootThreshold,      "Attribute.Resistance.RootThreshold",      "Limiar de acúmulo para infligir Root.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PhysicalResistance, "Attribute.Defensive.PhysicalResistance", "Resistência a dano físico do personagem.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_MagicalResistance,  "Attribute.Defensive.MagicalResistance",  "Resistência a dano mágico do personagem.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_Tenacity,           "Attribute.Defensive.Tenacity",           "Redução de duração de status negativos.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_CriticalResistance, "Attribute.Defensive.CriticalResistance", "Redução de chance de receber crítico.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PoiseResistance,    "Attribute.Defensive.PoiseResistance",    "Resistência a dano de poise.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_BurnThreshold,      "Attribute.Defensive.BurnThreshold",      "Limiar de acúmulo para infligir Burn.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FreezeThreshold,    "Attribute.Defensive.FreezeThreshold",    "Limiar de acúmulo para infligir Freeze.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_ShockThreshold,     "Attribute.Defensive.ShockThreshold",     "Limiar de acúmulo para infligir Shock.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_BleedThreshold,     "Attribute.Defensive.BleedThreshold",     "Limiar de acúmulo para infligir Bleed.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PoisonThreshold,    "Attribute.Defensive.PoisonThreshold",    "Limiar de acúmulo para infligir Poison.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_StunThreshold,      "Attribute.Defensive.StunThreshold",      "Limiar de acúmulo para infligir Stun.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_SlowThreshold,      "Attribute.Defensive.SlowThreshold",      "Limiar de acúmulo para infligir Slow.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_SleepThreshold,     "Attribute.Defensive.SleepThreshold",     "Limiar de acúmulo para infligir Sleep.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_RootThreshold,      "Attribute.Defensive.RootThreshold",      "Limiar de acúmulo para infligir Root.")
 	}
 
 	// -----------------------------------------------------------------------
 	// Roubo de recursos (ZfStealAttributesSet)
 	// -----------------------------------------------------------------------
-	namespace ZfUtiliteAttributeTags
+	namespace ZfUtilityAttributeTags
 	{
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatLifeStealOnHit,        "Attribute.Steal.FlatLifeStealOnHit",        "Roubo de vida fixo por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatManaStealOnHit,        "Attribute.Steal.FlatManaStealOnHit",        "Roubo de mana fixo por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatStaminaStealOnHit,     "Attribute.Steal.FlatStaminaStealOnHit",     "Roubo de stamina fixo por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentLifeStealOnHit,     "Attribute.Steal.PercentLifeStealOnHit",     "Roubo de vida percentual por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentManaStealOnHit,     "Attribute.Steal.PercentManaStealOnHit",     "Roubo de mana percentual por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentStaminaStealOnHit,  "Attribute.Steal.PercentStaminaStealOnHit",  "Roubo de stamina percentual por acerto.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatLifeStealOnKill,       "Attribute.Steal.FlatLifeStealOnKill",       "Roubo de vida fixo por abate.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatManaStealOnKill,       "Attribute.Steal.FlatManaStealOnKill",       "Roubo de mana fixo por abate.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatStaminaStealOnKill,    "Attribute.Steal.FlatStaminaStealOnKill",    "Roubo de stamina fixo por abate.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentLifeStealOnKill,    "Attribute.Steal.PercentLifeStealOnKill",    "Roubo de vida percentual por abate.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentManaStealOnKill,    "Attribute.Steal.PercentManaStealOnKill",    "Roubo de mana percentual por abate.")
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentStaminaStealOnKill, "Attribute.Steal.PercentStaminaStealOnKill", "Roubo de stamina percentual por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatLifeStealOnHit,        "Attribute.Utility.FlatLifeStealOnHit",        "Roubo de vida fixo por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatManaStealOnHit,        "Attribute.Utility.FlatManaStealOnHit",        "Roubo de mana fixo por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatStaminaStealOnHit,     "Attribute.Utility.FlatStaminaStealOnHit",     "Roubo de stamina fixo por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentLifeStealOnHit,     "Attribute.Utility.PercentLifeStealOnHit",     "Roubo de vida percentual por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentManaStealOnHit,     "Attribute.Utility.PercentManaStealOnHit",     "Roubo de mana percentual por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentStaminaStealOnHit,  "Attribute.Utility.PercentStaminaStealOnHit",  "Roubo de stamina percentual por acerto.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatLifeStealOnKill,       "Attribute.Utility.FlatLifeStealOnKill",       "Roubo de vida fixo por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatManaStealOnKill,       "Attribute.Utility.FlatManaStealOnKill",       "Roubo de mana fixo por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_FlatStaminaStealOnKill,    "Attribute.Utility.FlatStaminaStealOnKill",    "Roubo de stamina fixo por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentLifeStealOnKill,    "Attribute.Utility.PercentLifeStealOnKill",    "Roubo de vida percentual por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentManaStealOnKill,    "Attribute.Utility.PercentManaStealOnKill",    "Roubo de mana percentual por abate.")
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Attribute_PercentStaminaStealOnKill, "Attribute.Utility.PercentStaminaStealOnKill", "Roubo de stamina percentual por abate.")
 	}
 
 }
