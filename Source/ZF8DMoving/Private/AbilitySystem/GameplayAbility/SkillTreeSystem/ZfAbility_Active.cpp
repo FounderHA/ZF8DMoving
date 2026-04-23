@@ -3,7 +3,7 @@
 #include "AbilitySystem/GameplayAbility/SkillTreeSystem/ZfAbility_Active.h"
 
 #include "AbilitySystemComponent.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
 #include "Tags/ZfGameplayTags.h"
 
 UZfAbility_Active::UZfAbility_Active()

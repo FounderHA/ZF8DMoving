@@ -8,7 +8,7 @@
 #include "GameplayTagContainer.h"
 #include "AttributeSet.h"
 #include "Abilities/GameplayAbility.h"
-#include "ZfAbilityNodeData.generated.h"
+#include "ZfSkillTreeNodeData.generated.h"
 
 // =============================================================================
 // EResourceType
@@ -201,7 +201,7 @@ struct FSubEffectData
 };
 
 // =============================================================================
-// UZfAbilityNodeData
+// UZfSkillTreeNodeData
 // =============================================================================
 
 /**
@@ -213,7 +213,7 @@ struct FSubEffectData
  *
  * Como criar no editor:
  *   Content Browser → botão direito → Miscellaneous → Data Asset
- *   → selecione UZfAbilityNodeData → nomeie como DA_Node_<NomeDaAbility>
+ *   → selecione UZfSkillTreeNodeData → nomeie como DA_Node_<NomeDaAbility>
  *   Ex: DA_Node_Fireball, DA_Node_Sprint, DA_Node_MoveSpeedBoost
  *
  * Pré-requisitos de dois tipos:
@@ -225,7 +225,7 @@ struct FSubEffectData
  *   Custo de evolução = RankUpCost * rank_atual.
  */
 UCLASS(BlueprintType)
-class ZF8DMOVING_API UZfAbilityNodeData : public UPrimaryDataAsset
+class ZF8DMOVING_API UZfSkillTreeNodeData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

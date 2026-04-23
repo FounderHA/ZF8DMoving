@@ -7,11 +7,11 @@
 #include "GameplayTagContainer.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayEffect.h"
-#include "SkillTreeSystem/ZfAbilityTreeTypes.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
-#include "ZfAbilityTreeComponent.generated.h"
+#include "SkillTreeSystem/ZfSkillTreeTypes.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
+#include "ZfSkillTreeComponent.generated.h"
 
-class UZfAbilityTreeData;
+class UZfSkillTreeData;
 class UAbilitySystemComponent;
 class APlayerState;
 
@@ -49,7 +49,7 @@ struct FAbilitySlotLoadout
 };
 
 // =============================================================================
-// UZfAbilityTreeComponent
+// UZfSkillTreeComponent
 // =============================================================================
 
 /**
@@ -78,13 +78,13 @@ struct FAbilitySlotLoadout
  *   Nunca misture os dois caminhos.
  */
 UCLASS(ClassGroup = "Zf", meta = (BlueprintSpawnableComponent))
-class ZF8DMOVING_API UZfAbilityTreeComponent : public UActorComponent
+class ZF8DMOVING_API UZfSkillTreeComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 
-	UZfAbilityTreeComponent();
+	UZfSkillTreeComponent();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -110,7 +110,7 @@ public:
 	 * Configure no CDO do PlayerState apontando para DA_AbilityTree.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree")
-	TObjectPtr<UZfAbilityTreeData> AbilityTreeData;
+	TObjectPtr<UZfSkillTreeData> AbilityTreeData;
 
 	/**
 	 * GE Instant com SetByCaller usado para gastar e devolver SkillPoints.
@@ -134,7 +134,7 @@ public:
 	 * @param Node         Nó a ser verificado
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
-	static bool CanUnlockNode(APlayerState* PlayerState, const UZfAbilityNodeData* Node);
+	static bool CanUnlockNode(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node);
 
 	/**
 	 * Verifica se o personagem pode evoluir um nó já desbloqueado.
@@ -145,7 +145,7 @@ public:
 	 * @param CurrentRank  Rank atual do nó
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
-	static bool CanUpgradeNode(APlayerState* PlayerState, const UZfAbilityNodeData* Node, int32 CurrentRank);
+	static bool CanUpgradeNode(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node, int32 CurrentRank);
 
 	/**
 	 * Verifica se o personagem pode desbloquear um sub-efeito específico.
@@ -158,7 +158,7 @@ public:
 	 * @param UnlockedIndices  Sub-efeitos já desbloqueados neste nó
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
-	static bool CanUnlockSubEffect(APlayerState* PlayerState, const UZfAbilityNodeData* Node,
+	static bool CanUnlockSubEffect(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node,
 		int32 SubEffectIndex, const TArray<int32>& UnlockedIndices);
 
 	/**
@@ -171,7 +171,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
 	static EAbilityNodeState DeriveNodeState(APlayerState* PlayerState,
-		const UZfAbilityNodeData* Node, int32 CurrentRank);
+		const UZfSkillTreeNodeData* Node, int32 CurrentRank);
 
 	// ── Operações de escrita — servidor only ──────────────────────────────
 
@@ -347,7 +347,7 @@ private:
 	void RefundSkillPoints(UAbilitySystemComponent* ASC, int32 Amount);
 
 	/** Concede a ability do nó ao ASC e armazena o handle. */
-	void GrantNodeAbility(UAbilitySystemComponent* ASC, const UZfAbilityNodeData* Node);
+	void GrantNodeAbility(UAbilitySystemComponent* ASC, const UZfSkillTreeNodeData* Node);
 
 	/** Revoga a ability do nó do ASC e remove o handle. */
 	void RevokeNodeAbility(UAbilitySystemComponent* ASC, FName NodeID);

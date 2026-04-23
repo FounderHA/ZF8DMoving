@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "SkillTreeSystem/ZfAbilityTreeTypes.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
+#include "SkillTreeSystem/ZfSkillTreeTypes.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
 #include "ZfAbilityTreeWidgetHelper.generated.h"
 
-class UZfAbilityTreeComponent;
+class UZfSkillTreeComponent;
 class APlayerState;
 
 // =============================================================================
@@ -175,7 +175,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SkillTree|Widget")
 	static void GetNodeTooltipData(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData,
+		UZfSkillTreeNodeData* NodeData,
 		FNodeTooltipData& OutData);
 
 	/**
@@ -189,7 +189,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SkillTree|Widget")
 	static void GetSubEffectTooltipData(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData,
+		UZfSkillTreeNodeData* NodeData,
 		int32 SubEffectIndex,
 		FSubEffectTooltipData& OutData);
 
@@ -197,21 +197,21 @@ public:
 
 	/**
 	 * Retorna o estado visual de um nó para a widget.
-	 * Wrapper de UZfAbilityTreeComponent::DeriveNodeState acessível no Blueprint.
+	 * Wrapper de UZfSkillTreeComponent::DeriveNodeState acessível no Blueprint.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static EAbilityNodeState GetNodeState(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData);
+		UZfSkillTreeNodeData* NodeData);
 
 	/**
 	 * Retorna o rank atual de um nó.
-	 * Wrapper de UZfAbilityTreeComponent::GetNodeRankFromASC.
+	 * Wrapper de UZfSkillTreeComponent::GetNodeRankFromASC.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static int32 GetNodeRank(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData);
+		UZfSkillTreeNodeData* NodeData);
 
 	/**
 	 * Retorna true se um sub-efeito específico está desbloqueado.
@@ -219,7 +219,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static bool IsSubEffectUnlocked(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData,
+		UZfSkillTreeNodeData* NodeData,
 		int32 SubEffectIndex);
 
 	/**
@@ -228,7 +228,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static bool CanUnlockSubEffect(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData,
+		UZfSkillTreeNodeData* NodeData,
 		int32 SubEffectIndex);
 
 	// ── Slots ─────────────────────────────────────────────────────────────
@@ -242,10 +242,10 @@ public:
 	 * @param AbilityTree  Data Asset da tree (para lookup do NodeID)
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
-	static UZfAbilityNodeData* GetNodeDataForSlot(
+	static UZfSkillTreeNodeData* GetNodeDataForSlot(
 		APlayerState* PlayerState,
 		int32 SlotIndex,
-		UZfAbilityTreeData* AbilityTree);
+		UZfSkillTreeData* AbilityTree);
 
 	/**
 	 * Retorna true se o slot está bloqueado para a classe atual.
@@ -309,7 +309,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static float GetSubEffectStateMaterialValue(
 		APlayerState* PlayerState,
-		UZfAbilityNodeData* NodeData,
+		UZfSkillTreeNodeData* NodeData,
 		int32 SubEffectIndex);
 	
 	/**
@@ -326,14 +326,14 @@ public:
 	static bool GetSlotCooldown(
 		APlayerState* PlayerState,
 		int32 SlotIndex,
-		UZfAbilityTreeData* AbilityTree,
+		UZfSkillTreeData* AbilityTree,
 		float& OutTimeRemaining,
 		float& OutDuration);
 
 private:
 
 	/** Recupera o AbilityTreeComponent do PlayerState. Retorna nullptr se inválido. */
-	static UZfAbilityTreeComponent* GetTreeComponent(APlayerState* PlayerState);
+	static UZfSkillTreeComponent* GetTreeComponent(APlayerState* PlayerState);
 
 	/** Recupera o ASC do PlayerState. Retorna nullptr se inválido. */
 	static UAbilitySystemComponent* GetASC(APlayerState* PlayerState);

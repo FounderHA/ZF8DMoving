@@ -36,8 +36,8 @@ AZfPlayerState::AZfPlayerState()
 	EquipmentComponent = CreateDefaultSubobject<UZfEquipmentComponent>(TEXT("EquipmentComponent"));
 	EquipmentComponent->SetIsReplicated(true);
 	
-	AbilityTreeComponent = CreateDefaultSubobject<UZfAbilityTreeComponent>(TEXT("AbilityTreeComponent"));
-	AbilityTreeComponent->SetIsReplicated(true);
+	SkillTreeComponent = CreateDefaultSubobject<UZfSkillTreeComponent>(TEXT("AbilityTreeComponent"));
+	SkillTreeComponent->SetIsReplicated(true);
 	
 	SetNetUpdateFrequency(100.0f);
 	
@@ -187,7 +187,7 @@ void AZfPlayerState::Server_UnlockAbilityNode_Implementation(const FName& NodeID
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->UnlockNode(ASC, NodeID);
+	SkillTreeComponent->UnlockNode(ASC, NodeID);
 }
  
 void AZfPlayerState::Server_UpgradeAbilityNode_Implementation(const FName& NodeID)
@@ -197,7 +197,7 @@ void AZfPlayerState::Server_UpgradeAbilityNode_Implementation(const FName& NodeI
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->UpgradeNode(ASC, NodeID);
+	SkillTreeComponent->UpgradeNode(ASC, NodeID);
 }
  
 void AZfPlayerState::Server_UnlockSubEffect_Implementation(const FName& NodeID, int32 SubEffectIndex)
@@ -207,7 +207,7 @@ void AZfPlayerState::Server_UnlockSubEffect_Implementation(const FName& NodeID, 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->UnlockSubEffect(ASC, NodeID, SubEffectIndex);
+	SkillTreeComponent->UnlockSubEffect(ASC, NodeID, SubEffectIndex);
 }
  
 void AZfPlayerState::Server_RespecAbilityTree_Implementation()
@@ -215,7 +215,7 @@ void AZfPlayerState::Server_RespecAbilityTree_Implementation()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->RespecTree(ASC);
+	SkillTreeComponent->RespecTree(ASC);
 }
  
 void AZfPlayerState::Server_EquipAbilityInSlot_Implementation(const FName& NodeID, int32 SlotIndex)
@@ -225,7 +225,7 @@ void AZfPlayerState::Server_EquipAbilityInSlot_Implementation(const FName& NodeI
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->EquipAbilityInSlot(ASC, NodeID, SlotIndex);
+	SkillTreeComponent->EquipAbilityInSlot(ASC, NodeID, SlotIndex);
 }
  
 void AZfPlayerState::Server_UnequipAbilityFromSlot_Implementation(int32 SlotIndex)
@@ -233,7 +233,7 @@ void AZfPlayerState::Server_UnequipAbilityFromSlot_Implementation(int32 SlotInde
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	AbilityTreeComponent->UnequipAbilityFromSlot(SlotIndex);
+	SkillTreeComponent->UnequipAbilityFromSlot(SlotIndex);
 }
 
 // =============================================================================

@@ -92,7 +92,7 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	
 	// Servidor   → escuta tags quando o nó é desbloqueado localmente
 	// Cliente    → escuta tags quando chegam replicadas do servidor
-	if (UZfAbilityTreeComponent* TreeComp = ZfPlayerState->GetAbilityTreeComponent())
+	if (UZfSkillTreeComponent* TreeComp = ZfPlayerState->GetSkillTreeComponent())
 	{
 		TreeComp->InitializeTagListeners(ZfPlayerState->GetAbilitySystemComponent());
 	}

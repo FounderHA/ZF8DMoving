@@ -5,8 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/PlayerState.h"
-#include "SkillTreeSystem/ZfAbilityTreeComponent.h"
-#include "SkillTreeSystem/ZfAbilityTreeData.h"
+#include "SkillTreeSystem/ZfSkillTreeComponent.h"
+#include "SkillTreeSystem/ZfSkillTreeData.h"
 #include "AbilitySystem/GameplayAbility/SkillTreeSystem/ZfGameplayAbilitySkill.h"
 #include "Player/ZfPlayerState.h"
 #include "Player/Class/ZfClassBaseSettings.h"
@@ -15,11 +15,11 @@
 // Privados
 // =============================================================================
 
-UZfAbilityTreeComponent* UZfAbilityTreeWidgetHelper::GetTreeComponent(APlayerState* PlayerState)
+UZfSkillTreeComponent* UZfAbilityTreeWidgetHelper::GetTreeComponent(APlayerState* PlayerState)
 {
 	if (!PlayerState) return nullptr;
 	AZfPlayerState* ZfPS = Cast<AZfPlayerState>(PlayerState);
-	return ZfPS ? ZfPS->GetAbilityTreeComponent() : nullptr;
+	return ZfPS ? ZfPS->GetSkillTreeComponent() : nullptr;
 }
 
 UAbilitySystemComponent* UZfAbilityTreeWidgetHelper::GetASC(APlayerState* PlayerState)
@@ -35,14 +35,14 @@ UAbilitySystemComponent* UZfAbilityTreeWidgetHelper::GetASC(APlayerState* Player
 
 void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData,
+	UZfSkillTreeNodeData* NodeData,
 	FNodeTooltipData& OutData)
 {
 	OutData = FNodeTooltipData();
 
 	if (!PlayerState || !NodeData) return;
 
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);
 	if (!TreeComp || !ASC) return;
 
@@ -51,7 +51,7 @@ void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 	OutData.DisplayName = NodeData->DisplayName;
 	OutData.Description = NodeData->Description;
 	OutData.CurrentRank = TreeComp->GetNodeRankFromASC(ASC, NodeData->NodeID);
-	OutData.NodeState   = UZfAbilityTreeComponent::DeriveNodeState(PlayerState, NodeData, OutData.CurrentRank);
+	OutData.NodeState   = UZfSkillTreeComponent::DeriveNodeState(PlayerState, NodeData, OutData.CurrentRank);
 
 	// ── Próximo rank para exibição do custo de ativação ───────────────────
 	// Se Maxed → mostra custo do rank atual (não tem próximo)
@@ -122,7 +122,7 @@ void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 
 void UZfAbilityTreeWidgetHelper::GetSubEffectTooltipData(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData,
+	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex,
 	FSubEffectTooltipData& OutData)
 {
@@ -175,25 +175,25 @@ void UZfAbilityTreeWidgetHelper::GetSubEffectTooltipData(
 
 EAbilityNodeState UZfAbilityTreeWidgetHelper::GetNodeState(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData)
+	UZfSkillTreeNodeData* NodeData)
 {
 	if (!PlayerState || !NodeData) return EAbilityNodeState::Locked;
 
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);
 	if (!TreeComp || !ASC) return EAbilityNodeState::Locked;
 
 	const int32 CurrentRank = TreeComp->GetNodeRankFromASC(ASC, NodeData->NodeID);
-	return UZfAbilityTreeComponent::DeriveNodeState(PlayerState, NodeData, CurrentRank);
+	return UZfSkillTreeComponent::DeriveNodeState(PlayerState, NodeData, CurrentRank);
 }
 
 int32 UZfAbilityTreeWidgetHelper::GetNodeRank(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData)
+	UZfSkillTreeNodeData* NodeData)
 {
 	if (!PlayerState || !NodeData) return 0;
 
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);
 	if (!TreeComp || !ASC) return 0;
 
@@ -202,7 +202,7 @@ int32 UZfAbilityTreeWidgetHelper::GetNodeRank(
 
 bool UZfAbilityTreeWidgetHelper::IsSubEffectUnlocked(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData,
+	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
 {
 	if (!PlayerState || !NodeData) return false;
@@ -217,16 +217,16 @@ bool UZfAbilityTreeWidgetHelper::IsSubEffectUnlocked(
 
 bool UZfAbilityTreeWidgetHelper::CanUnlockSubEffect(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData,
+	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
 {
 	if (!PlayerState || !NodeData) return false;
 
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	if (!TreeComp) return false;
 
 	const TArray<int32> UnlockedIndices = TreeComp->GetUnlockedSubEffects(NodeData->NodeID);
-	return UZfAbilityTreeComponent::CanUnlockSubEffect(PlayerState, NodeData, SubEffectIndex, UnlockedIndices);
+	return UZfSkillTreeComponent::CanUnlockSubEffect(PlayerState, NodeData, SubEffectIndex, UnlockedIndices);
 }
 
 // =============================================================================
@@ -276,7 +276,7 @@ float UZfAbilityTreeWidgetHelper::GetNodeStateMaterialValue(EAbilityNodeState No
 
 float UZfAbilityTreeWidgetHelper::GetSubEffectStateMaterialValue(
 	APlayerState* PlayerState,
-	UZfAbilityNodeData* NodeData,
+	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
 {
 	if (!PlayerState || !NodeData) return 0.f;
@@ -306,11 +306,11 @@ float UZfAbilityTreeWidgetHelper::GetSubEffectStateMaterialValue(
 	}
  
 	// Verifica se pode desbloquear agora
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	if (TreeComp)
 	{
 		const TArray<int32> UnlockedIndices = TreeComp->GetUnlockedSubEffects(NodeData->NodeID);
-		if (UZfAbilityTreeComponent::CanUnlockSubEffect(PlayerState, NodeData, SubEffectIndex, UnlockedIndices))
+		if (UZfSkillTreeComponent::CanUnlockSubEffect(PlayerState, NodeData, SubEffectIndex, UnlockedIndices))
 		{
 			return 1.f; // Available
 		}
@@ -323,14 +323,14 @@ float UZfAbilityTreeWidgetHelper::GetSubEffectStateMaterialValue(
 // Slots
 // =============================================================================
 
-UZfAbilityNodeData* UZfAbilityTreeWidgetHelper::GetNodeDataForSlot(
+UZfSkillTreeNodeData* UZfAbilityTreeWidgetHelper::GetNodeDataForSlot(
 	APlayerState* PlayerState,
 	int32 SlotIndex,
-	UZfAbilityTreeData* AbilityTree)
+	UZfSkillTreeData* AbilityTree)
 {
 	if (!PlayerState || !AbilityTree) return nullptr;
 
-	UZfAbilityTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	if (!TreeComp) return nullptr;
 
 	const FAbilitySlotLoadout& Loadout = TreeComp->GetLoadout();
@@ -358,14 +358,14 @@ bool UZfAbilityTreeWidgetHelper::IsSlotLocked(APlayerState* PlayerState, int32 S
 bool UZfAbilityTreeWidgetHelper::GetSlotCooldown(
 	APlayerState* PlayerState,
 	int32 SlotIndex,
-	UZfAbilityTreeData* AbilityTree,
+	UZfSkillTreeData* AbilityTree,
 	float& OutTimeRemaining,
 	float& OutDuration)
 {
 	OutTimeRemaining = 0.f;
 	OutDuration = 0.f;
 
-	UZfAbilityNodeData* NodeData = GetNodeDataForSlot(PlayerState, SlotIndex, AbilityTree);
+	UZfSkillTreeNodeData* NodeData = GetNodeDataForSlot(PlayerState, SlotIndex, AbilityTree);
 	if (!NodeData || !NodeData->AbilityClass) return false;
 
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);

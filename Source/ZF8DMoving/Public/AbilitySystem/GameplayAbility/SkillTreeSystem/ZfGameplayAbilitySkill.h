@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
 #include "ZfGameplayAbilitySkill.generated.h"
 
 /**
@@ -46,5 +46,5 @@ public:
 	 *   Widget           → ler Icon, DisplayName, Costs para exibir no slot
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
-	TObjectPtr<UZfAbilityNodeData> NodeData;
+	TObjectPtr<UZfSkillTreeNodeData> NodeData;
 };
