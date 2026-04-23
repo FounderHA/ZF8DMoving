@@ -37,31 +37,28 @@ AZfItemPickup::AZfItemPickup()
     // Criação dos componentes
     // ----------------------------------------------------------
 
-    // Esfera de colisão como root — define área de coleta
-    CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-    SetRootComponent(CollisionSphere);
-    CollisionSphere->SetSphereRadius(16.0f);
-    
-
-    // Mesh estática — exibida quando item tem StaticMesh no Definition
+    // Mesh visual
     StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
+    SetRootComponent(StaticMeshComponent);
     StaticMeshComponent->SetupAttachment(CollisionSphere);
-    StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     StaticMeshComponent->SetRelativeLocation(FVector::ZeroVector);
-    
-    // Mesh esquelética — alternativa para itens com SkeletalMesh
-    SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-    SkeletalMeshComponent->SetupAttachment(CollisionSphere);
-    SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    SkeletalMeshComponent->SetVisibility(false);
 
-    // Widget 3D com informações do item
-    ItemInfoWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInfoWidget"));
-    ItemInfoWidget->SetupAttachment(CollisionSphere);
-    ItemInfoWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 80.0f));
-    ItemInfoWidget->SetWidgetSpace(EWidgetSpace::World);
-    ItemInfoWidget->SetDrawSize(FVector2D(200.0f, 60.0f));
-    ItemInfoWidget->SetVisibility(false);
+    // Física na mesh
+    StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    StaticMeshComponent->SetCollisionObjectType(ECC_PhysicsBody);
+    StaticMeshComponent->SetCollisionResponseToAllChannels(ECR_Block);
+    StaticMeshComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+    StaticMeshComponent->SetSimulatePhysics(true);
+    
+    // Sphere como root (interação)
+    CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
+    CollisionSphere->SetupAttachment(StaticMeshComponent);
+    CollisionSphere->SetSphereRadius(16.0f);
+    CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    CollisionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CollisionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+    
 }
 
 void AZfItemPickup::PostInitializeComponents()
@@ -149,9 +146,6 @@ void AZfItemPickup::InitializePickup(UZfItemInstance* InItemInstance)
 
     // Armazena o ItemInstance — será replicado automaticamente
     ItemInstance = InItemInstance;
-
-    // Atualiza o widget com informações do item
-    Internal_UpdateItemInfoWidget();
 
     UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::InitializePickup — " "Pickup inicializado com item '%s'. GUID: %s"),
         *InItemInstance->GetItemName().ToString(), *InItemInstance->GetItemGuid().ToString());
@@ -250,14 +244,6 @@ void AZfItemPickup::MulticastOnItemCollected_Implementation(AActor* CollectorAct
     {
         StaticMeshComponent->SetVisibility(false);
     }
-    if (SkeletalMeshComponent)
-    {
-        SkeletalMeshComponent->SetVisibility(false);
-    }
-    if (ItemInfoWidget)
-    {
-        ItemInfoWidget->SetVisibility(false);
-    }
 }
 
 // ============================================================
@@ -273,8 +259,6 @@ void AZfItemPickup::OnRep_ItemInstance()
 
     if (ItemInstance)
     {
-        Internal_UpdateItemInfoWidget();
-
         UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::OnRep_ItemInstance — " "ItemInstance replicado: '%s'"),
             *ItemInstance->GetItemName().ToString());
     }
@@ -297,16 +281,10 @@ void AZfItemPickup::OnOverlapBegin(
         return;
     }
 
-    // Mostra o widget de interação ao entrar no raio
-    if (ItemInfoWidget)
-    {
-        ItemInfoWidget->SetVisibility(true);
-    }
-
     // Se não requer interação, coleta automaticamente no servidor
     if (!bRequiresInteractionToPickup && HasAuthority())
     {
-        //TryCollectItem(OtherActor);
+        TryCollectItem(OtherActor);
     }
 }
 
@@ -319,12 +297,6 @@ void AZfItemPickup::OnOverlapEnd(
     if (!OtherActor || OtherActor == this)
     {
         return;
-    }
-
-    // Esconde o widget ao sair do raio
-    if (ItemInfoWidget)
-    {
-        ItemInfoWidget->SetVisibility(false);
     }
 }
 
@@ -344,20 +316,6 @@ UZfItemDefinition* AZfItemPickup::GetItemDefinition() const
 // ============================================================
 // FUNÇÕES INTERNAS
 // ============================================================
-
-void AZfItemPickup::Internal_UpdateItemInfoWidget()
-{
-    // O Widget Blueprint deve bindar ao GetItemInstance()
-    // para exibir nome, ícone e raridade.
-    // A implementação visual é feita no Widget Blueprint — aqui
-    // apenas garantimos que o widget está atualizado.
-    if (ItemInfoWidget && ItemInstance)
-    {
-        // Força o widget a atualizar — o Blueprint pode bindar
-        // a GetItemInstance() diretamente
-        ItemInfoWidget->RequestRedraw();
-    }
-}
 
 void AZfItemPickup::Internal_StartAutoDestroyTimer()
 {
@@ -432,61 +390,4 @@ bool AZfItemPickup::Internal_CheckIsServer(const FString& FunctionName) const
     }
 
     return true;
-}
-
-// ============================================================
-// DEBUG
-// ============================================================
-
-void AZfItemPickup::DrawDebugPickupInfo() const
-{
-    if (!GetWorld())
-    {
-        return;
-    }
-
-    const FVector Location = GetActorLocation();
-
-    // Desenha o raio de coleta
-    DrawDebugSphere(
-        GetWorld(),
-        Location,
-        PickupRadius,
-        16,
-        FColor::Yellow,
-        false,
-        3.0f);
-
-    // Exibe informações do item acima do pickup
-    if (ItemInstance)
-    {
-        const FString InfoText = FString::Printf(
-            TEXT("[Pickup]\n%s\nTier: %d | Quality: %d\nGUID: %s"),
-            *ItemInstance->GetItemName().ToString(),
-            ItemInstance->GetItemTier(),
-            ItemInstance->GetItemQuality(),
-            *ItemInstance->GetItemGuid().ToString());
-
-        DrawDebugString(
-            GetWorld(),
-            Location + FVector(0.0f, 0.0f, 120.0f),
-            InfoText,
-            nullptr,
-            FColor::Yellow,
-            3.0f,
-            false,
-            1.0f);
-    }
-    else
-    {
-        DrawDebugString(
-            GetWorld(),
-            Location + FVector(0.0f, 0.0f, 80.0f),
-            TEXT("[Pickup] Sem item"),
-            nullptr,
-            FColor::Red,
-            3.0f,
-            false,
-            1.0f);
-    }
 }

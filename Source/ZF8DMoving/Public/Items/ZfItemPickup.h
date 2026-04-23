@@ -44,8 +44,6 @@
 class UZfInventoryComponent;
 class USphereComponent;
 class UStaticMeshComponent;
-class USkeletalMeshComponent;
-class UWidgetComponent;
 class URotatingMovementComponent;
 
 // ============================================================
@@ -79,7 +77,7 @@ public:
     // Se falso, o item é coletado automaticamente ao entrar
     // na área de coleta (overlap).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config")
-    bool bRequiresInteractionToPickup = false;
+    bool bRequiresInteractionToPickup = true;
 
     // Raio da área de coleta (SphereComponent).
     // Usado tanto para overlap automático quanto para
@@ -93,11 +91,6 @@ public:
     // 0.0 = nunca destroi automaticamente.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config", meta = (ClampMin = "0.0"))
     float AutoDestroyAfterSeconds = 300.0f;
-
-    // Se verdadeiro, o pickup rotaciona suavemente no eixo Z
-    // para dar destaque visual ao item no mundo.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Config")
-    bool bRotateInWorld = true;
 
     // ----------------------------------------------------------
     // DELEGATES
@@ -176,12 +169,6 @@ public:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-    // ----------------------------------------------------------
-    // DEBUG
-    // ----------------------------------------------------------
-
-    UFUNCTION(BlueprintCallable, Category = "Zf|Pickup|Debug")
-    void DrawDebugPickupInfo() const;
 
 protected:
 
@@ -197,15 +184,6 @@ protected:
     // Carregado assincronamente via AssetManager
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup|Components")
     TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
-
-    // Mesh esquelética (alternativa ao StaticMesh para alguns itens)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup|Components")
-    TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
-
-    // Widget 3D exibido sobre o item com nome e raridade
-    // Visível apenas quando o jogador está próximo
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup|Components")
-    TObjectPtr<UWidgetComponent> ItemInfoWidget;
     
     virtual void PostInitializeComponents() override;
 
@@ -248,9 +226,6 @@ private:
     // ----------------------------------------------------------
     // FUNÇÕES INTERNAS
     // ----------------------------------------------------------
-
-    // Configura o widget com nome e raridade do item.
-    void Internal_UpdateItemInfoWidget();
 
     // Inicia o timer de auto-destruição se configurado.
     void Internal_StartAutoDestroyTimer();
