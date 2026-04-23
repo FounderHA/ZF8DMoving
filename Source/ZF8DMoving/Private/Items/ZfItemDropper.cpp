@@ -9,35 +9,46 @@ AZfItemDropper::AZfItemDropper()
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 
-    TriggerSphere = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerSphere"));
-    SetRootComponent(TriggerSphere);
-    TriggerSphere->SetSphereRadius(100.f);
-    TriggerSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerSphere"));
+    SetRootComponent(SphereComponent);
+    SphereComponent->SetSphereRadius(100.f);
+    SphereComponent->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 }
 
 void AZfItemDropper::BeginPlay()
 {
     Super::BeginPlay();
 
-    TriggerSphere->OnComponentBeginOverlap.AddDynamic(
-        this, &AZfItemDropper::OnOverlapBegin);
-}
-
-void AZfItemDropper::OnOverlapBegin(
-    UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult& SweepResult)
-{
     if (!HasAuthority()) return;
-    if (!OtherActor || OtherActor == this) return;
     if (bAlreadyDropped) return;
 
-    // Ignora se o ator que entrou for um pickup
-    if (OtherActor->IsA<AZfItemPickup>()) return;
-
     bAlreadyDropped = true;
-    DropItem();
+
+    RemainingDrops = AmountToDrop;
+
+    HandleDropTick(); // dropa 1 imediatamente
+
+    GetWorldTimerManager().SetTimer(
+        DropTimerHandle,
+        this,
+        &AZfItemDropper::HandleDropTick,
+        DropTime,
+        true
+    );
+}
+
+void AZfItemDropper::HandleDropTick()
+{
+    if (RemainingDrops <= 0)
+    {
+        GetWorldTimerManager().ClearTimer(DropTimerHandle);
+        return;
+    }
+
+    if (HasAuthority())
+    {
+        DropItem(); // chama o Blueprint
+    } 
+
+    RemainingDrops--;
 }
