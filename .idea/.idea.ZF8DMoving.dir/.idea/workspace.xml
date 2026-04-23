@@ -9,18 +9,36 @@
   <component name="ChangeListManager">
     <list default="true" id="de09cd41-f0d7-49b7-ab53-48d2d590b0d5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ZF8DMoving.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/AbilitySystem/GameplayEffects/LevelProgression/GE_GiveXP.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/AbilitySystem/GameplayEffects/LevelProgression/GE_GiveXP.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Items/BP_Anvil.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/BP_Anvil.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Items/DA_Resource_IronOre.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Items/DA_Resource_IronOre.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/AbilitySystem/GameplayAbility/SkillTreeSystem/GA_MoveSpeedBoost.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Player/BP_GameplayHud.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Player/BP_GameplayHud.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Player/BP_PlayerState.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Player/BP_PlayerState.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Player/LevelProgression/A_XPTEste.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Player/LevelProgression/A_XPTEste.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/SkillTreeSystem/DA_AbilityTree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SkillTreeSystem/DA_AbilityTree.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/SkillTreeSystem/Novice/DA_Node_MoveSpeedBoost.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/SkillTreeSystem/Novice/DA_Node_MoveSpeedBoost.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_ExclusedEntry.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_RequirementEntry.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_SkillTree_Node.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_SkillTree_Node.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_SubEffect_Node.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_Tooltip_Node.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/SkillTree/WBP_Tooltip_SubEffect.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widgets/WBP_GameplayHud.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widgets/WBP_GameplayHud.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/GameplayAbility/SkillTreeSystem/ZfAbility_Active.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/GameplayAbility/SkillTreeSystem/ZfAbility_Active.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/FunctionLibrary/ZfAbilityTreeWidgetHelper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/FunctionLibrary/ZfAbilityTreeWidgetHelper.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerState.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Player/ZfPlayerState.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfAbilityNodeData.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfSkillTreeNodeData.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfAbilityTreeComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfSkillTreeComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfAbilityTreeData.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/SkillTreeSystem/ZfSkillTreeData.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfAbilityTreeTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfAbilityTreeTags.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfAttributeTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Private/Tags/ZfAttributeTags.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfUtilityAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/Attributes/ZfUtilityAttributeSet.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/GatheringSystem/ZfGatheringResourceData.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/GatheringSystem/ZfGatheringResourceData.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/GameplayAbility/SkillTreeSystem/ZfGameplayAbilitySkill.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/AbilitySystem/GameplayAbility/SkillTreeSystem/ZfGameplayAbilitySkill.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/FunctionLibrary/ZfAbilityTreeWidgetHelper.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/FunctionLibrary/ZfAbilityTreeWidgetHelper.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPlayerState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Player/ZfPlayerState.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfAbilityNodeData.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfSkillTreeNodeData.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfAbilityTreeComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfSkillTreeComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfAbilityTreeData.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfSkillTreeData.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfAbilityTreeTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/SkillTreeSystem/ZfSkillTreeTypes.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfAbilityTreeTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfAbilityTreeTags.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfAttributeTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfAttributeTags.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfGameplayTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/ZF8DMoving/Public/Tags/ZfGameplayTags.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,17 +52,17 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Editor/UnrealEd/Private/PlayLevel.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/GameInstance.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/GameModeBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Private/PlayerController.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/GameplayTags/Private/GameplayTagContainer.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/GameplayTags/Private/GameplayTagsManager.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/UMG/Private/UserWidget.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfEquipmentComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfInventoryComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/ZF8DMoving/UHT/ZfModifierRule.gen.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/x64/UnrealEditor/DebugGame/ZF8DMoving/Module.ZF8DMoving.7.cpp.lc.dep.json" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfMainAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/Attributes/ZfResourceAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/ZF8DMoving/Private/AbilitySystem/GameplayAbility/LevelProgression/ZfGA_RefundAttributePoint.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -326,6 +344,8 @@
       <workItem from="1776524321980" duration="1107000" />
       <workItem from="1776526489241" duration="1950000" />
       <workItem from="1776875461424" duration="3322000" />
+      <workItem from="1776879431720" duration="5138000" />
+      <workItem from="1776906378378" duration="1970000" />
     </task>
     <servers />
   </component>

@@ -11,7 +11,7 @@
 #include "Inventory/ZfEquipmentComponent.h"
 #include "Player/Class/ZfClassBaseSettings.h"
 #include "CraftingSystem/ZfCraftTypes.h"
-#include "SkillTreeSystem/ZfAbilityTreeComponent.h"
+#include "SkillTreeSystem/ZfSkillTreeComponent.h"
 #include "ZfPlayerState.generated.h"
 
 class UZfMainAttributeSet;
@@ -74,7 +74,7 @@ protected:
 	TObjectPtr<UZfInventoryComponent> InventoryComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree")
-	TObjectPtr<UZfAbilityTreeComponent> AbilityTreeComponent;
+	TObjectPtr<UZfSkillTreeComponent> SkillTreeComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -117,7 +117,7 @@ private:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	UZfAbilityTreeComponent* GetAbilityTreeComponent() const { return AbilityTreeComponent; }
+	UZfSkillTreeComponent* GetSkillTreeComponent() const { return SkillTreeComponent; }
 
 	/** Retorna true se o personagem está sendo criado pela primeira vez.
 	*/

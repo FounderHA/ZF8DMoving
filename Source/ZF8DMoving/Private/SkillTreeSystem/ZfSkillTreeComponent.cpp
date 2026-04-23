@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SkillTreeSystem/ZfAbilityTreeComponent.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
+#include "SkillTreeSystem/ZfSkillTreeComponent.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
 
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "SkillTreeSystem/ZfAbilityTreeData.h"
+#include "SkillTreeSystem/ZfSkillTreeData.h"
 #include "AbilitySystem/Attributes/ZfProgressionAttributeSet.h"
 #include "Player/ZfPlayerState.h"
 #include "Player/Class/ZfClassBaseSettings.h"
@@ -15,13 +15,13 @@
 // Construtor e replicação
 // =============================================================================
 
-UZfAbilityTreeComponent::UZfAbilityTreeComponent()
+UZfSkillTreeComponent::UZfSkillTreeComponent()
 {
 	SetIsReplicatedByDefault(true);
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UZfAbilityTreeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UZfSkillTreeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -29,14 +29,14 @@ void UZfAbilityTreeComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	// para exibir as abilities equipadas do personagem.
 	// O estado completo da tree (nós, ranks, sub-efeitos) é derivável pelas
 	// GameplayTags do ASC, que já replicam via Mixed mode do PlayerState.
-	DOREPLIFETIME(UZfAbilityTreeComponent, Loadout);
+	DOREPLIFETIME(UZfSkillTreeComponent, Loadout);
 }
 
 // =============================================================================
 // Validação — acessível no servidor e no cliente
 // =============================================================================
 
-bool UZfAbilityTreeComponent::CanUnlockNode(APlayerState* PlayerState, const UZfAbilityNodeData* Node)
+bool UZfSkillTreeComponent::CanUnlockNode(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node)
 {
 	if (!PlayerState) return false;
 
@@ -87,7 +87,7 @@ bool UZfAbilityTreeComponent::CanUnlockNode(APlayerState* PlayerState, const UZf
 	return true;
 }
 
-bool UZfAbilityTreeComponent::CanUpgradeNode(APlayerState* PlayerState, const UZfAbilityNodeData* Node, int32 CurrentRank)
+bool UZfSkillTreeComponent::CanUpgradeNode(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node, int32 CurrentRank)
 {
 	if (!PlayerState) return false;
 
@@ -118,7 +118,7 @@ bool UZfAbilityTreeComponent::CanUpgradeNode(APlayerState* PlayerState, const UZ
 	return ProgSet->GetSkillPoints() >= static_cast<float>(Cost);
 }
 
-bool UZfAbilityTreeComponent::CanUnlockSubEffect(APlayerState* PlayerState, const UZfAbilityNodeData* Node,
+bool UZfSkillTreeComponent::CanUnlockSubEffect(APlayerState* PlayerState, const UZfSkillTreeNodeData* Node,
 	int32 SubEffectIndex, const TArray<int32>& UnlockedIndices)
 {
 	if (!PlayerState) return false;
@@ -169,8 +169,8 @@ bool UZfAbilityTreeComponent::CanUnlockSubEffect(APlayerState* PlayerState, cons
 	return ProgSet->GetSkillPoints() >= static_cast<float>(SubEffect.UnlockCost);
 }
 
-EAbilityNodeState UZfAbilityTreeComponent::DeriveNodeState(APlayerState* PlayerState,
-	const UZfAbilityNodeData* Node, int32 CurrentRank)
+EAbilityNodeState UZfSkillTreeComponent::DeriveNodeState(APlayerState* PlayerState,
+	const UZfSkillTreeNodeData* Node, int32 CurrentRank)
 {
 	if (!PlayerState) return EAbilityNodeState::Locked;
 
@@ -241,21 +241,21 @@ EAbilityNodeState UZfAbilityTreeComponent::DeriveNodeState(APlayerState* PlayerS
 // Operações de escrita — servidor only
 // =============================================================================
 
-bool UZfAbilityTreeComponent::UnlockNode(UAbilitySystemComponent* ASC, FName NodeID)
+bool UZfSkillTreeComponent::UnlockNode(UAbilitySystemComponent* ASC, FName NodeID)
 {
 	if (!ASC || NodeID.IsNone() || !AbilityTreeData) return false;
 
 	if (!GetOwner()->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UZfAbilityTreeComponent::UnlockNode: chamado fora do servidor."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfSkillTreeComponent::UnlockNode: chamado fora do servidor."));
 		return false;
 	}
 
-	UZfAbilityNodeData* Node = AbilityTreeData->FindNode(NodeID);
+	UZfSkillTreeNodeData* Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node)
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::UnlockNode: NodeID '%s' não encontrado."), *NodeID.ToString());
+			TEXT("UZfSkillTreeComponent::UnlockNode: NodeID '%s' não encontrado."), *NodeID.ToString());
 		return false;
 	}
 
@@ -263,7 +263,7 @@ bool UZfAbilityTreeComponent::UnlockNode(UAbilitySystemComponent* ASC, FName Nod
 	if (!CanUnlockNode(PS, Node))
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::UnlockNode: pré-requisitos não atendidos para '%s'."),
+			TEXT("UZfSkillTreeComponent::UnlockNode: pré-requisitos não atendidos para '%s'."),
 			*NodeID.ToString());
 		return false;
 	}
@@ -286,17 +286,17 @@ bool UZfAbilityTreeComponent::UnlockNode(UAbilitySystemComponent* ASC, FName Nod
 	return true;
 }
 
-bool UZfAbilityTreeComponent::UpgradeNode(UAbilitySystemComponent* ASC, FName NodeID)
+bool UZfSkillTreeComponent::UpgradeNode(UAbilitySystemComponent* ASC, FName NodeID)
 {
 	if (!ASC || NodeID.IsNone() || !AbilityTreeData) return false;
 
 	if (!GetOwner()->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UZfAbilityTreeComponent::UpgradeNode: chamado fora do servidor."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfSkillTreeComponent::UpgradeNode: chamado fora do servidor."));
 		return false;
 	}
 
-	UZfAbilityNodeData* Node = AbilityTreeData->FindNode(NodeID);
+	UZfSkillTreeNodeData* Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node) return false;
 
 	const int32 CurrentRank = GetNodeRank(NodeID);
@@ -323,17 +323,17 @@ bool UZfAbilityTreeComponent::UpgradeNode(UAbilitySystemComponent* ASC, FName No
 	return true;
 }
 
-bool UZfAbilityTreeComponent::UnlockSubEffect(UAbilitySystemComponent* ASC, FName NodeID, int32 SubEffectIndex)
+bool UZfSkillTreeComponent::UnlockSubEffect(UAbilitySystemComponent* ASC, FName NodeID, int32 SubEffectIndex)
 {
 	if (!ASC || NodeID.IsNone() || !AbilityTreeData) return false;
 
 	if (!GetOwner()->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UZfAbilityTreeComponent::UnlockSubEffect: chamado fora do servidor."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfSkillTreeComponent::UnlockSubEffect: chamado fora do servidor."));
 		return false;
 	}
 
-	UZfAbilityNodeData* Node = AbilityTreeData->FindNode(NodeID);
+	UZfSkillTreeNodeData* Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node) return false;
 
 	const TArray<int32> CurrentUnlocked = GetUnlockedSubEffects(NodeID);
@@ -356,13 +356,13 @@ bool UZfAbilityTreeComponent::UnlockSubEffect(UAbilitySystemComponent* ASC, FNam
 	return true;
 }
 
-bool UZfAbilityTreeComponent::RespecTree(UAbilitySystemComponent* ASC)
+bool UZfSkillTreeComponent::RespecTree(UAbilitySystemComponent* ASC)
 {
 	if (!ASC || !AbilityTreeData) return false;
 
 	if (!GetOwner()->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UZfAbilityTreeComponent::RespecTree: chamado fora do servidor."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfSkillTreeComponent::RespecTree: chamado fora do servidor."));
 		return false;
 	}
 
@@ -370,7 +370,7 @@ bool UZfAbilityTreeComponent::RespecTree(UAbilitySystemComponent* ASC)
 
 	for (const FName& NodeID : UnlockedNodes)
 	{
-		UZfAbilityNodeData* Node = nullptr;
+		UZfSkillTreeNodeData* Node = nullptr;
 		Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node) continue;
 
@@ -440,7 +440,7 @@ bool UZfAbilityTreeComponent::RespecTree(UAbilitySystemComponent* ASC)
 // Loadout de slots
 // =============================================================================
 
-bool UZfAbilityTreeComponent::EquipAbilityInSlot(UAbilitySystemComponent* ASC, FName NodeID, int32 SlotIndex)
+bool UZfSkillTreeComponent::EquipAbilityInSlot(UAbilitySystemComponent* ASC, FName NodeID, int32 SlotIndex)
 {
 	if (!ASC || NodeID.IsNone()) return false;
 
@@ -449,7 +449,7 @@ bool UZfAbilityTreeComponent::EquipAbilityInSlot(UAbilitySystemComponent* ASC, F
 	if (!Loadout.Slots.IsValidIndex(SlotIndex))
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::EquipAbilityInSlot: SlotIndex %d inválido (total: %d)."),
+			TEXT("UZfSkillTreeComponent::EquipAbilityInSlot: SlotIndex %d inválido (total: %d)."),
 			SlotIndex, Loadout.Slots.Num());
 		return false;
 	}
@@ -457,7 +457,7 @@ bool UZfAbilityTreeComponent::EquipAbilityInSlot(UAbilitySystemComponent* ASC, F
 	if (!UnlockedNodes.Contains(NodeID))
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::EquipAbilityInSlot: NodeID '%s' não está desbloqueado."),
+			TEXT("UZfSkillTreeComponent::EquipAbilityInSlot: NodeID '%s' não está desbloqueado."),
 			*NodeID.ToString());
 		return false;
 	}
@@ -466,7 +466,7 @@ bool UZfAbilityTreeComponent::EquipAbilityInSlot(UAbilitySystemComponent* ASC, F
 	return true;
 }
 
-bool UZfAbilityTreeComponent::UnequipAbilityFromSlot(int32 SlotIndex)
+bool UZfSkillTreeComponent::UnequipAbilityFromSlot(int32 SlotIndex)
 {
 	if (!GetOwner()->HasAuthority()) return false;
 
@@ -480,7 +480,7 @@ bool UZfAbilityTreeComponent::UnequipAbilityFromSlot(int32 SlotIndex)
 // Save e Restore
 // =============================================================================
 
-void UZfAbilityTreeComponent::RestoreFromSaveData(UAbilitySystemComponent* ASC, const FCharacterTreeSaveData& SaveData)
+void UZfSkillTreeComponent::RestoreFromSaveData(UAbilitySystemComponent* ASC, const FCharacterTreeSaveData& SaveData)
 {
 	if (!ASC || !AbilityTreeData) return;
 
@@ -492,12 +492,12 @@ void UZfAbilityTreeComponent::RestoreFromSaveData(UAbilitySystemComponent* ASC, 
 
 	for (const FName& NodeID : SaveData.UnlockedNodes)
 	{
-		UZfAbilityNodeData* Node = nullptr;
+		UZfSkillTreeNodeData* Node = nullptr;
 		Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node)
 		{
 			UE_LOG(LogTemp, Warning,
-				TEXT("UZfAbilityTreeComponent::RestoreFromSaveData: NodeID '%s' não encontrado no Data Asset — ignorado."),
+				TEXT("UZfSkillTreeComponent::RestoreFromSaveData: NodeID '%s' não encontrado no Data Asset — ignorado."),
 				*NodeID.ToString());
 			continue;
 		}
@@ -550,7 +550,7 @@ void UZfAbilityTreeComponent::RestoreFromSaveData(UAbilitySystemComponent* ASC, 
 	}
 }
 
-FCharacterTreeSaveData UZfAbilityTreeComponent::BuildSaveData() const
+FCharacterTreeSaveData UZfSkillTreeComponent::BuildSaveData() const
 {
 	FCharacterTreeSaveData SaveData;
 	SaveData.UnlockedNodes      = UnlockedNodes;
@@ -563,12 +563,12 @@ FCharacterTreeSaveData UZfAbilityTreeComponent::BuildSaveData() const
 // Consulta de estado runtime
 // =============================================================================
 
-bool UZfAbilityTreeComponent::IsNodeUnlocked(FName NodeID) const
+bool UZfSkillTreeComponent::IsNodeUnlocked(FName NodeID) const
 {
 	return UnlockedNodes.Contains(NodeID);
 }
 
-int32 UZfAbilityTreeComponent::GetNodeRank(FName NodeID) const
+int32 UZfSkillTreeComponent::GetNodeRank(FName NodeID) const
 {
 	if (const int32* Rank = NodeRanks.Find(NodeID))
 	{
@@ -577,7 +577,7 @@ int32 UZfAbilityTreeComponent::GetNodeRank(FName NodeID) const
 	return 0;
 }
 
-TArray<int32> UZfAbilityTreeComponent::GetUnlockedSubEffects(FName NodeID) const
+TArray<int32> UZfSkillTreeComponent::GetUnlockedSubEffects(FName NodeID) const
 {
 	if (const FSubEffectIndexList* List = UnlockedSubEffects.Find(NodeID))
 	{
@@ -586,11 +586,11 @@ TArray<int32> UZfAbilityTreeComponent::GetUnlockedSubEffects(FName NodeID) const
 	return TArray<int32>();
 }
 
-int32 UZfAbilityTreeComponent::GetNodeRankFromASC(UAbilitySystemComponent* ASC, FName NodeID) const
+int32 UZfSkillTreeComponent::GetNodeRankFromASC(UAbilitySystemComponent* ASC, FName NodeID) const
 {
 	if (!ASC || NodeID.IsNone() || !AbilityTreeData) return 0;
 
-	UZfAbilityNodeData* Node = AbilityTreeData->FindNode(NodeID);
+	UZfSkillTreeNodeData* Node = AbilityTreeData->FindNode(NodeID);
 	if (!Node || !Node->AbilityClass) return 0;
 
 	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromClass(Node->AbilityClass);
@@ -603,7 +603,7 @@ int32 UZfAbilityTreeComponent::GetNodeRankFromASC(UAbilitySystemComponent* ASC, 
 // RepNotify
 // =============================================================================
 
-void UZfAbilityTreeComponent::OnRep_Loadout()
+void UZfSkillTreeComponent::OnRep_Loadout()
 {
 	// Notifica as widgets que o loadout mudou
 	OnTreeStateChanged.Broadcast();
@@ -613,7 +613,7 @@ void UZfAbilityTreeComponent::OnRep_Loadout()
 // Tag listeners — notificação de mudanças da tree para as widgets
 // =============================================================================
 
-void UZfAbilityTreeComponent::InitializeTagListeners(UAbilitySystemComponent* ASC)
+void UZfSkillTreeComponent::InitializeTagListeners(UAbilitySystemComponent* ASC)
 {
 	if (!ASC) return;
 
@@ -621,16 +621,16 @@ void UZfAbilityTreeComponent::InitializeTagListeners(UAbilitySystemComponent* AS
 	ASC->RegisterGameplayTagEvent(
 		FGameplayTag::RequestGameplayTag(FName("SkillTree.Node")),
 		EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &UZfAbilityTreeComponent::OnSkillTreeTagChanged);
+		.AddUObject(this, &UZfSkillTreeComponent::OnSkillTreeTagChanged);
 
 	// Escuta qualquer tag filha de SkillTree.SubEffect — cobre desbloqueio de sub-efeitos
 	ASC->RegisterGameplayTagEvent(
 		FGameplayTag::RequestGameplayTag(FName("SkillTree.SubEffect")),
 		EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &UZfAbilityTreeComponent::OnSkillTreeTagChanged);
+		.AddUObject(this, &UZfSkillTreeComponent::OnSkillTreeTagChanged);
 }
 
-void UZfAbilityTreeComponent::OnSkillTreeTagChanged(const FGameplayTag Tag, int32 NewCount)
+void UZfSkillTreeComponent::OnSkillTreeTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	// Propaga para as widgets independente de servidor ou cliente
 	OnTreeStateChanged.Broadcast();
@@ -640,14 +640,14 @@ void UZfAbilityTreeComponent::OnSkillTreeTagChanged(const FGameplayTag Tag, int3
 // Helpers privados
 // =============================================================================
 
-bool UZfAbilityTreeComponent::SpendSkillPoints(UAbilitySystemComponent* ASC, int32 Amount)
+bool UZfSkillTreeComponent::SpendSkillPoints(UAbilitySystemComponent* ASC, int32 Amount)
 {
 	if (!ASC || Amount <= 0) return false;
 
 	if (!SpendSkillPointsEffectClass)
 	{
 		UE_LOG(LogTemp, Error,
-			TEXT("UZfAbilityTreeComponent: SpendSkillPointsEffectClass não configurado. "
+			TEXT("UZfSkillTreeComponent: SpendSkillPointsEffectClass não configurado. "
 				 "Configure no PlayerState Blueprint."));
 		return false;
 	}
@@ -672,14 +672,14 @@ bool UZfAbilityTreeComponent::SpendSkillPoints(UAbilitySystemComponent* ASC, int
 	return true;
 }
 
-void UZfAbilityTreeComponent::RefundSkillPoints(UAbilitySystemComponent* ASC, int32 Amount)
+void UZfSkillTreeComponent::RefundSkillPoints(UAbilitySystemComponent* ASC, int32 Amount)
 {
 	if (!ASC || Amount <= 0) return;
 
 	if (!SpendSkillPointsEffectClass)
 	{
 		UE_LOG(LogTemp, Error,
-			TEXT("UZfAbilityTreeComponent: SpendSkillPointsEffectClass não configurado."));
+			TEXT("UZfSkillTreeComponent: SpendSkillPointsEffectClass não configurado."));
 		return;
 	}
 
@@ -695,7 +695,7 @@ void UZfAbilityTreeComponent::RefundSkillPoints(UAbilitySystemComponent* ASC, in
 	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 }
 
-void UZfAbilityTreeComponent::GrantNodeAbility(UAbilitySystemComponent* ASC, const UZfAbilityNodeData* Node)
+void UZfSkillTreeComponent::GrantNodeAbility(UAbilitySystemComponent* ASC, const UZfSkillTreeNodeData* Node)
 {
 	if (!ASC || !Node->AbilityClass) return;
 
@@ -712,12 +712,12 @@ void UZfAbilityTreeComponent::GrantNodeAbility(UAbilitySystemComponent* ASC, con
 	else
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::GrantNodeAbility: falha ao conceder ability do nó '%s'."),
+			TEXT("UZfSkillTreeComponent::GrantNodeAbility: falha ao conceder ability do nó '%s'."),
 			*Node->NodeID.ToString());
 	}
 }
 
-void UZfAbilityTreeComponent::RevokeNodeAbility(UAbilitySystemComponent* ASC, FName NodeID)
+void UZfSkillTreeComponent::RevokeNodeAbility(UAbilitySystemComponent* ASC, FName NodeID)
 {
 	if (!ASC) return;
 
@@ -728,7 +728,7 @@ void UZfAbilityTreeComponent::RevokeNodeAbility(UAbilitySystemComponent* ASC, FN
 	GrantedAbilityHandles.Remove(NodeID);
 }
 
-float UZfAbilityTreeComponent::GetAvailableSkillPoints(UAbilitySystemComponent* ASC) const
+float UZfSkillTreeComponent::GetAvailableSkillPoints(UAbilitySystemComponent* ASC) const
 {
 	if (!ASC) return 0.f;
 
@@ -736,12 +736,12 @@ float UZfAbilityTreeComponent::GetAvailableSkillPoints(UAbilitySystemComponent* 
 	return ProgSet ? ProgSet->GetSkillPoints() : 0.f;
 }
 
-void UZfAbilityTreeComponent::InitializeSlots(APlayerState* PlayerState)
+void UZfSkillTreeComponent::InitializeSlots(APlayerState* PlayerState)
 {
 	AZfPlayerState* ZfPS = Cast<AZfPlayerState>(PlayerState);
 	if (!ZfPS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UZfAbilityTreeComponent::InitializeSlots: PlayerState inválido."));
+		UE_LOG(LogTemp, Warning, TEXT("UZfSkillTreeComponent::InitializeSlots: PlayerState inválido."));
 		return;
 	}
 
@@ -749,7 +749,7 @@ void UZfAbilityTreeComponent::InitializeSlots(APlayerState* PlayerState)
 	if (!ClassData)
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("UZfAbilityTreeComponent::InitializeSlots: CharacterClassData não configurado."));
+			TEXT("UZfSkillTreeComponent::InitializeSlots: CharacterClassData não configurado."));
 		return;
 	}
 

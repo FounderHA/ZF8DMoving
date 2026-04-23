@@ -67,12 +67,14 @@ namespace ZfAbilityTreeTags
 	
 	namespace ZfAbilityActiveTags
 	{
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Active_Exemplo, "SkillTree.Ability.Active.Exemplo")
 	}
 	
 	namespace ZfAbilityPassiveTags
 	{
-		UE_DEFINE_GAMEPLAY_TAG_COMMENT(SkillTree_Ability_Passive_MoveSpeedBoost, "SkillTree.Ability.Passive.MoveSpeedBoost",
-			"Tag de identificacao da ability passiva que aumenta MoveSpeed.")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoost, "SkillTree.Ability.Passive.MoveSpeedBoost")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoostTurbo, "SkillTree.Ability.Passive.MoveSpeedBoostTurbo")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoostTurboMaster, "SkillTree.Ability.Passive.MoveSpeedBoostTurboMaster")
 	}
 	
 	// =========================================================================
@@ -82,6 +84,8 @@ namespace ZfAbilityTreeTags
 	{
 		// ── Novice ────────────────────────────────────────────────────────
 		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoost, "SkillTree.Node.Novice.MoveSpeedBoost")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoostTurbo, "SkillTree.Node.Novice.MoveSpeedBoostTurbo")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoostTurboMaster, "SkillTree.Node.Novice.MoveSpeedBoostTurboMaster")
 	}
 
 	// =========================================================================

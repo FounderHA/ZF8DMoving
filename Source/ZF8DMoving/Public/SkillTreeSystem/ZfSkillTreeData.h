@@ -4,21 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "SkillTreeSystem/ZfAbilityTreeTypes.h"
-#include "ZfAbilityTreeData.generated.h"
+#include "SkillTreeSystem/ZfSkillTreeTypes.h"
+#include "ZfSkillTreeData.generated.h"
 
 /**
  * Data Asset da Skill Tree universal do projeto Zf.
  *
  * Contém a estrutura de regiões da tree. Cada nó é um asset individual
- * do tipo UZfAbilityNodeData — referenciado pelo array Nodes de cada região.
+ * do tipo UZfSkillTreeNodeData — referenciado pelo array Nodes de cada região.
  *
  * Como criar no editor:
  *   Content Browser → botão direito → Miscellaneous → Data Asset
- *   → selecione UZfAbilityTreeData → nomeie como DA_AbilityTree
+ *   → selecione UZfSkillTreeData → nomeie como DA_AbilityTree
  */
 UCLASS(BlueprintType)
-class ZF8DMOVING_API UZfAbilityTreeData : public UPrimaryDataAsset
+class ZF8DMOVING_API UZfSkillTreeData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
@@ -50,17 +50,17 @@ public:
 	 * @param NodeID  Identificador do nó buscado
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
-	UZfAbilityNodeData* FindNode(FName NodeID) const;
+	UZfSkillTreeNodeData* FindNode(FName NodeID) const;
 
 	/**
 	 * Retorna todos os nós de todas as regiões em um único array.
 	 * Útil para a widget iterar todos os nós disponíveis.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SkillTree")
-	TArray<UZfAbilityNodeData*> GetAllNodes() const;
+	TArray<UZfSkillTreeNodeData*> GetAllNodes() const;
 
 private:
 
 	/** Busca um nó dentro de uma região específica. */
-	UZfAbilityNodeData* FindNodeInRegion(const FAbilityTreeRegion& Region, FName NodeID) const;
+	UZfSkillTreeNodeData* FindNodeInRegion(const FAbilityTreeRegion& Region, FName NodeID) const;
 };

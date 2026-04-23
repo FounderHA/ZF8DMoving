@@ -102,12 +102,15 @@ namespace ZfAbilityTreeTags
 
 	namespace ZfAbilityActiveTags
 	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Active_Exemplo)
 	}
 	
 	// ZfAbilityTreeTags.h
 	namespace ZfAbilityPassiveTags
 	{
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Passive_MoveSpeedBoost)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Passive_MoveSpeedBoostTurbo)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Passive_MoveSpeedBoostTurboMaster)
 	}
 	
 	
@@ -121,6 +124,8 @@ namespace ZfAbilityTreeTags
 	{
 		// ── Novice ────────────────────────────────────────────────────────
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_MoveSpeedBoost)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_MoveSpeedBoostTurbo)
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_MoveSpeedBoostTurboMaster)
 	}
 
 	

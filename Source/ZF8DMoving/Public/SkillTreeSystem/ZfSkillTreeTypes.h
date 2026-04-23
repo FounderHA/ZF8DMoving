@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "SkillTreeSystem/ZfAbilityNodeData.h"
-#include "ZfAbilityTreeTypes.generated.h"
+#include "SkillTreeSystem/ZfSkillTreeNodeData.h"
+#include "ZfSkillTreeTypes.generated.h"
 
 // =============================================================================
 // EAbilityNodeState
@@ -13,7 +13,7 @@
 
 /**
  * Estado visual de um nó na skill tree.
- * Nunca armazenado — sempre derivado em runtime por UZfAbilityTreeComponent::DeriveNodeState.
+ * Nunca armazenado — sempre derivado em runtime por UZfSkillTreeComponent::DeriveNodeState.
  */
 UENUM(BlueprintType)
 enum class EAbilityNodeState : uint8
@@ -75,7 +75,7 @@ struct FAbilityTreeRegion
 	 * O editor exibe o nome do asset automaticamente.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Region")
-	TArray<TObjectPtr<UZfAbilityNodeData>> Nodes;
+	TArray<TObjectPtr<UZfSkillTreeNodeData>> Nodes;
 };
 
 // =============================================================================
@@ -131,7 +131,7 @@ struct FCharacterTreeSaveData
 
 	/**
 	 * Índices dos sub-efeitos desbloqueados por nó.
-	 * Índice corresponde à posição em UZfAbilityNodeData::SubEffects.
+	 * Índice corresponde à posição em UZfSkillTreeNodeData::SubEffects.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "SkillTree|Save")
 	TMap<FName, FSubEffectIndexList> UnlockedSubEffects;
