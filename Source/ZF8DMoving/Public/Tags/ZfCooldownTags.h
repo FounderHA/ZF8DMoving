@@ -29,14 +29,6 @@
 namespace ZfCooldownTags
 {
 	// ----------------------------------------------------------
-	// GLOBAL
-	// Aplicado apos QUALQUER consumo. Impede usar outro item
-	// consumivel enquanto ativo.
-	// Duracao configurada no GE_Cooldown_ItemGlobal.
-	// ----------------------------------------------------------
-	ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Item_Global)
-
-	// ----------------------------------------------------------
 	// PER ITEM
 	// Aplicado apos consumir um item especifico. Impede reusar
 	// o mesmo tipo de item enquanto ativo.
