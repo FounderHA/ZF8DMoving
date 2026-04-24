@@ -82,6 +82,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInst
 // @param ActivePieceCount — quantidade de peças atualmente equipadas
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
 
+// Disparado quando Stack Muda
+// @param ItemInstance — Item que Mudou
+// @param SlotType — slot de onde foi removido
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStackChanged, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
+
 
 
 // ============================================================
@@ -232,6 +237,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
     FOnSetBonusChanged OnSetBonusChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
+    FOnStackChanged OnStackChanged;
     
     // ----------------------------------------------------------
     // FUNÇÕES PRINCIPAIS — DESEQUIPAR
@@ -501,7 +509,7 @@ public:
     // @param ItemInstance — item a equipar
     // @param FromInventorySlot — slot de origem no inventário
     // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment|RPC")
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
     void ServerTryUnequipItem(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
 
     // Tags dos 3 slots de consumivel rapido.

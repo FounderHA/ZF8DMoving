@@ -832,7 +832,10 @@ void FZfEquipmentSlotEntry::PostReplicatedAdd(const FZfEquipmentList& InArraySer
 
 void FZfEquipmentSlotEntry::PostReplicatedChange(const FZfEquipmentList& InArraySerializer)
 {
-   
+    if (InArraySerializer.OwnerComponent && ItemInstance)
+    {
+        InArraySerializer.OwnerComponent->OnStackChanged.Broadcast(ItemInstance, ItemInstance->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag, SlotPosition);
+    }
 }
 
 // Definição central da categoria de log do sistema de inventário.
@@ -1244,7 +1247,7 @@ void UZfEquipmentComponent::TryUseQuickSlot(int32 SlotPosition)
     FGameplayEventData EventData;
     EventData.OptionalObject = Item;
     EventData.EventTag = ZfUniqueItemTags::ItemEvents::Item_Event_Use;
-
+    
     ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 }
 
@@ -1265,6 +1268,7 @@ void UZfEquipmentComponent::TryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag,
         {
             // Stack ainda tem unidades — notifica dirty para replicar.
             EquipmentList.MarkArrayDirty();
+            OnStackChanged.Broadcast(Item, SlotTag, SlotPosition);
             return;
         }
         // Stack zerou — cai no InternalUnequipItem abaixo.

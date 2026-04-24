@@ -47,8 +47,7 @@ public:
 
 	// Tag da receita que este pergaminho libera ao ser consumido.
 	// Deve bater com a RecipeTag de uma UZfCraftRecipe existente no catalogo.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragment|RecipeScroll",
-		meta = (GameplayTagFilter = "Recipe"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragment|RecipeScroll", meta = (GameplayTagFilter = "Crafting.Recipe"))
 	FGameplayTag RecipeTag;
 
 	// Se true, o pergaminho pode ser consumido mesmo quando o jogador

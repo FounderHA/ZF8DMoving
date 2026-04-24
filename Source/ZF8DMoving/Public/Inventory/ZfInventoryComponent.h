@@ -70,6 +70,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventorySizeChanged);
 // (reorganização, ordenação, etc.)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryRefreshed);
 
+// Disparado quando Stack Muda
+// @param ItemInstance — o item que Stack Mudou
+// @param SlotIndex — índice do slot de onde Stack Mudou
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemStackChanged, UZfItemInstance*, ItemInstance, int32, SlotIndex);
+
+
 // ============================================================
 // UZfInventoryComponent
 // ============================================================
@@ -217,6 +223,10 @@ public:
     // Chamado após reorganização ou ordenação completa
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnInventoryRefreshed OnInventoryRefreshed;
+
+    // Chamado Quando Stack Muda
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemStackChanged OnItemStackChanged;
 
     // ============================================================
     // FUNÇÕES SERVER - GERENCIAMENTO
