@@ -270,6 +270,26 @@ public:
 	/** Delegate disparada no cliente ao receber o resultado de um craft. */
 	UPROPERTY(BlueprintAssignable, Category = "Player|Craft")
 	FOnCraftResultReceived OnCraftResultReceived;
+
+	// =====================================================================
+	// UNIQUE ITEMS
+	// =====================================================================
+
+	// Container de tags de itens unicos ja usados por este player.
+	// Replicado — cliente precisa saber pra UI desabilitar o botao "Usar".
+	UPROPERTY(ReplicatedUsing = OnRep_UsedUniqueItemTags)
+	FGameplayTagContainer UsedUniqueItemTags;
+
+	UFUNCTION()
+	void OnRep_UsedUniqueItemTags();
+
+	// Checa se o player ja usou este item unico.
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Player|Items")
+	bool HasUsedUniqueItem(FGameplayTag UniqueItemTag) const;
+
+	// RPC — registra o uso de um item unico (chamado pela ZfGA_UseItem).
+	UFUNCTION(Server, Reliable)
+	void Server_RegisterUniqueItemUsed(FGameplayTag UniqueItemTag);
 	
 
 protected:
