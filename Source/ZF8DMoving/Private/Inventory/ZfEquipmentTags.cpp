@@ -21,5 +21,6 @@ namespace ZfEquipmentTags
 		UE_DEFINE_GAMEPLAY_TAG(Slot_Axe, "EquipmentSlot.Slot.Axe")
 		UE_DEFINE_GAMEPLAY_TAG(Slot_Shovel, "EquipmentSlot.Slot.Shovel")
 		UE_DEFINE_GAMEPLAY_TAG(Slot_FishingRod, "EquipmentSlot.Slot.FishingRod")
+		UE_DEFINE_GAMEPLAY_TAG(Slot_Consumable, "EquipmentSlot.Slot.Consumable")
 	}
 }

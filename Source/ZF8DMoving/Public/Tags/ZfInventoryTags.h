@@ -160,4 +160,6 @@ namespace ZfInventoryTags
 	{
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Collectible)
 	}
+
+	
 }
