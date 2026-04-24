@@ -125,6 +125,7 @@ void FZfInventorySlot::PostReplicatedChange(const FZfInventoryList& InArraySeria
         InArraySerializer.OwnerComponent->OnInventoryRefreshed.Broadcast();
         InArraySerializer.OwnerComponent->OnItemMoved.Broadcast();
         InArraySerializer.OwnerComponent->OnInventorySizeChanged.Broadcast();
+        InArraySerializer.OwnerComponent->OnItemStackChanged.Broadcast(ItemInstance, SlotIndex);
     }
 }
         
@@ -367,6 +368,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
     }
 
     InventoryList.MarkArrayDirty();
+    OnItemStackChanged.Broadcast(ItemInstance, GetSlotIndexOfItem(ItemInstance));
     return EZfItemMechanicResult::Success;
 }
 
