@@ -503,7 +503,19 @@ public:
     // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment|RPC")
     void ServerTryUnequipItem(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
-        
+
+    // Tags dos 3 slots de consumivel rapido.
+    // Declare em ZfEquipmentTags.h:
+    //   Slot_Consumable_1, Slot_Consumable_2, Slot_Consumable_3
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryUseQuickSlot(int32 SlotPosition); // SlotNumber: 1, 2 ou 3
+
+    // Remove item do slot e descarta — sem devolver ao inventario.
+    // Se o item for stackavel, reduz o stack em 1.
+    // So remove o item do slot quando o stack zerar.
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
+    
     // ============================================================
     // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
     // ============================================================
@@ -543,6 +555,17 @@ public:
     UFUNCTION(Category = "Zf|Equipment")
     EZfItemMechanicResult TryUnequipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
 
+    // Tags dos 3 slots de consumivel rapido.
+    // Declare em ZfEquipmentTags.h:
+    //   Slot_Consumable_1, Slot_Consumable_2, Slot_Consumable_3
+    UFUNCTION(Category = "Zf|Equipment")
+    void TryUseQuickSlot(int32 SlotPosition); // SlotNumber: 1, 2 ou 3
+
+    // Remove item do slot e descarta — sem devolver ao inventario.
+    // Se o item for stackavel, reduz o stack em 1.
+    // So remove o item do slot quando o stack zerar.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
+    void TryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
     
     // ============================================================
     // FUNÇÕES DE CONSULTA
@@ -566,7 +589,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     UZfItemInstance* GetItemAtSlotTag(FGameplayTag SlotTag, int32 SlotPosition = 0) const;
 
-    
+    // Retorna todas as entradas de slot (com SlotTag, SlotPosition e ItemInstance).
+    // Usado pelo sistema de consumo para achar o slot exato de um item.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
+    const TArray<FZfEquipmentSlotEntry>& GetAllEquipmentSlots() const;
+
 private:
 
     // ============================================================

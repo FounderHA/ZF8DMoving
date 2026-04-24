@@ -2,6 +2,8 @@
 // ZfInventoryComponent.cpp
 
 #include "Inventory/ZfInventoryComponent.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "Inventory/ZfEquipmentComponent.h"
 #include "Inventory/ZfItemInstance.h"
 #include "Inventory/ZfItemDefinition.h"
@@ -188,6 +190,14 @@ void UZfInventoryComponent::ServerTrySortInventory_Implementation(EZfInventorySo
     }
 }
 
+void UZfInventoryComponent::ServerTryUseItemAtSlot_Implementation(int32 SlotIndex)
+{
+    if (InternalCheckIsServer(TEXT("ServerTryUseItemAtSlot")))
+    {
+        TryUseItemAtSlot(SlotIndex);
+    }
+}
+
 void UZfInventoryComponent::ServerTrySplitStack_Implementation(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount)
 {
     if (InternalCheckIsServer(TEXT("ServerTrySplitStack")))
@@ -199,7 +209,6 @@ void UZfInventoryComponent::ServerTrySplitStack_Implementation(int32 FromSlotInd
 // ============================================================
 // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
 // ============================================================
-
 
 EZfItemMechanicResult UZfInventoryComponent::TryPickupItem(UZfItemInstance* ItemInstance)
 {
@@ -447,6 +456,22 @@ void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) co
                 *ItemInstance->GetItemName().ToString(), *DropLocation.ToString());
         }
     }
+}
+
+void UZfInventoryComponent::TryUseItemAtSlot(int32 SlotIndex)
+{
+    UZfItemInstance* Item = GetItemAtSlot(SlotIndex);
+    if (!Item) return;
+
+    AActor* Owner = GetOwner();
+    UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Owner);
+    if (!ASC) return;
+
+    FGameplayEventData EventData;
+    EventData.OptionalObject = Item;
+    EventData.EventTag = ZfUniqueItemTags::ItemEvents::Item_Event_Use;
+
+    ASC->HandleGameplayEvent(ZfUniqueItemTags::ItemEvents::Item_Event_Use, &EventData);
 }
 
 void UZfInventoryComponent::UpdateSlotCountFromEquippedBackpack()

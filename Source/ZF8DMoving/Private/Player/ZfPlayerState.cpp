@@ -61,6 +61,7 @@ void AZfPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	
 	DOREPLIFETIME(AZfPlayerState, CharacterClassData);
 	DOREPLIFETIME(AZfPlayerState, KnownRecipeTags);
+	DOREPLIFETIME(AZfPlayerState, UsedUniqueItemTags);
 }
 
 UZfResourceAttributeSet* AZfPlayerState::GetResourceAttributeSet() const
@@ -414,4 +415,25 @@ void AZfPlayerState::Client_ReceiveCraftResult_Implementation(const FZfCraftResu
 		*UEnum::GetValueAsString(Result.ResultCode));
 
 	OnCraftResultReceived.Broadcast(Result);
+}
+
+
+// =====================================================================
+// UNIQUE ITEMS
+// =====================================================================
+
+bool AZfPlayerState::HasUsedUniqueItem(FGameplayTag UniqueItemTag) const
+{
+	return UsedUniqueItemTags.HasTag(UniqueItemTag);
+}
+
+void AZfPlayerState::Server_RegisterUniqueItemUsed_Implementation(FGameplayTag UniqueItemTag)
+{
+	if (!HasAuthority() || !UniqueItemTag.IsValid()) return;
+	UsedUniqueItemTags.AddTag(UniqueItemTag);
+}
+
+void AZfPlayerState::OnRep_UsedUniqueItemTags()
+{
+	// UI pode fazer bind aqui se precisar atualizar botoes.
 }

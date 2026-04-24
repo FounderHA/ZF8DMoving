@@ -1,63 +1,112 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 // ZfFragment_Consumable.h
 // Fragment que define o comportamento ao consumir o item.
-// Ao consumir, aplica um GameplayEffect no ator consumidor
-// e reduz o stack (ou remove o item se stack = 1).
+//
+// CONCEITO:
+// Qualquer item com este fragment pode ser "usado" pelo player.
+// O uso e processado pela ZfGA_UseItem (GameplayAbility), que:
+//   1. Checa cooldowns (global e por item)
+//   2. Checa single use (bIsSingleUsePerGame)
+//   3. Aplica o ConsumptionGameplayEffect no ASC do player
+//   4. Verifica UZfFragment_RecipeScroll (aprende receita se for scroll)
+//   5. Consome o item (reduz stack ou remove) se bConsumeOnUse = true
+//
+// COOLDOWNS:
+// - Global: configurado no GE_Cooldown_ItemGlobal (asset Blueprint).
+//           Duração fixa, bloqueia qualquer consumivel por X segundos.
+// - Por item: configurado via ItemCooldownSeconds aqui no fragment.
+//             A GA cria um GE dinamico com a duracao deste campo.
+//
+// SINGLE USE:
+// Se bIsSingleUsePerGame = true, o item so pode ser usado uma vez
+// por personagem, para sempre. A tag UniqueItemTag e salva em
+// AZfPlayerState::UsedUniqueItemTags ao usar.
+// Na proxima tentativa, a GA checa essa tag e bloqueia.
+// Persiste via Profile Save junto com KnownRecipeTags.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Inventory/Fragments/ZfItemFragment.h"
 #include "ZfFragment_Consumable.generated.h"
 
 class UGameplayEffect;
-class UGameplayAbility;
+
 
 UCLASS(DisplayName = "Fragment: Consumable")
 class ZF8DMOVING_API UZfFragment_Consumable : public UZfItemFragment
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
 
-    // GameplayEffect aplicado ao consumir o item.
-    // Ex: Poção de vida → GE_RestoreHealth
-    // Soft reference para carregamento assíncrono.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable")
-    TSoftClassPtr<UGameplayEffect> ConsumptionGameplayEffect;
+	// ----------------------------------------------------------
+	// EFEITO
+	// ----------------------------------------------------------
 
-    // Nível do GameplayEffect ao aplicar.
-    // Permite escalamento de efeitos por nível.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable",
-        meta = (ClampMin = "1"))
-    int32 EffectLevel = 1;
+	// GameplayEffect aplicado ao consumir o item.
+	// Ex: Pocao de vida → GE_RestoreHealth
+	// Soft reference para carregamento assincrono.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|Effect")
+	TSoftClassPtr<UGameplayEffect> ConsumptionGameplayEffect;
 
-    // Se verdadeiro, o item é destruído ao consumir
-    // (reduz stack em 1, remove o item se chegar a 0).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable")
-    bool bConsumeOnUse = true;
+	// Nivel do GameplayEffect ao aplicar.
+	// Permite escalamento de efeitos por nivel.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|Effect",
+		meta = (ClampMin = "1"))
+	int32 EffectLevel = 1;
 
-    // Se verdadeiro, só pode ser usado uma única vez no jogo inteiro
-    // (pergaminhos únicos, itens de progressão, etc.)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable")
-    bool bIsSingleUsePerGame = false;
+	// ----------------------------------------------------------
+	// CONSUMO
+	// ----------------------------------------------------------
 
-    // Cooldown em segundos antes de poder consumir novamente.
-    // 0.0 = sem cooldown.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable",
-        meta = (ClampMin = "0.0"))
-    float ConsumptionCooldownSeconds = 0.0f;
+	// Se verdadeiro, o item e destruido ao consumir
+	// (reduz stack em 1, remove o item se chegar a 0).
+	// False = item e "usado" mas nao desaparece (ex: item de quest reutilizavel).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|Consume")
+	bool bConsumeOnUse = true;
 
-// ----------------------------------------------------------
-// DEBUG
-// ----------------------------------------------------------	
-    
-    virtual FString GetDebugString() const override
-    {
-        return FString::Printf(
-            TEXT("[Fragment_Consumable] Effect: %s | ConsumeOnUse: %s | Cooldown: %.1fs"),
-            *ConsumptionGameplayEffect.ToString(),
-            bConsumeOnUse ? TEXT("Yes") : TEXT("No"),
-            ConsumptionCooldownSeconds);
-    }
+	// ----------------------------------------------------------
+	// SINGLE USE
+	// ----------------------------------------------------------
+
+	// Se verdadeiro, so pode ser usado uma unica vez no jogo inteiro.
+	// Requer UniqueItemTag configurada abaixo.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|SingleUse")
+	bool bIsSingleUsePerGame = false;
+
+	// Tag unica que identifica este item para fins de single use.
+	// Deve ser uma tag do namespace Item.Unique.* (declarada em ZfInventoryTags.h).
+	// Quando o player usa o item, essa tag e salva em PlayerState::UsedUniqueItemTags.
+	// Deixe vazia se bIsSingleUsePerGame = false.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|SingleUse",
+		meta = (EditCondition = "bIsSingleUsePerGame", GameplayTagFilter = "Item.Unique"))
+	FGameplayTag UniqueItemTag;
+
+	// ----------------------------------------------------------
+	// COOLDOWN
+	// ----------------------------------------------------------
+
+	// Cooldown em segundos especifico para ESTE item.
+	// Impede reusar este item enquanto o cooldown estiver ativo.
+	// 0.0 = sem cooldown por item (apenas o global se aplica).
+	// Configurado separado do cooldown global (que vive no GE_Cooldown_ItemGlobal).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|Cooldown",
+		meta = (ClampMin = "0.0"))
+	float ItemCooldownSeconds = 0.0f;
+
+	// ----------------------------------------------------------
+	// DEBUG
+	// ----------------------------------------------------------
+
+	virtual FString GetDebugString() const override
+	{
+		return FString::Printf(
+			TEXT("[Fragment_Consumable] Effect: %s | ConsumeOnUse: %s | SingleUse: %s | ItemCD: %.1fs"),
+			*ConsumptionGameplayEffect.ToString(),
+			bConsumeOnUse ? TEXT("Yes") : TEXT("No"),
+			bIsSingleUsePerGame ? TEXT("Yes") : TEXT("No"),
+			ItemCooldownSeconds);
+	}
 };

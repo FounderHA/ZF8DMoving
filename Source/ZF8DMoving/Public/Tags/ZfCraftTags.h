@@ -39,9 +39,10 @@ namespace ZfCraftTags
 	// ----------------------------------------------------------
 	namespace RecipeId
 	{
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_IronSword)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_IronPickaxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_MithrilPickaxe)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_Sword_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_Sword_Mithril)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_Pickaxe_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Recipe_Pickaxe_Mithril)
 	}
 
 	// ----------------------------------------------------------
@@ -61,7 +62,8 @@ namespace ZfCraftTags
 		// ── Weapon ────────────────────────────────────────────────
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Weapon)
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Weapon_Sword)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Weapon_Sword_IronSword)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Weapon_Sword_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Weapon_Sword_Mithril)
 
 		// ── Armor ─────────────────────────────────────────────────
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Armor)
@@ -78,20 +80,20 @@ namespace ZfCraftTags
 		// ── Tool ──────────────────────────────────────────────────
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool)
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_BronzePickaxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_IronPickaxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_SilverPickaxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_MithrilPickaxe)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_Bronze)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_Silver)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Pickaxe_Mithril)
 
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_BronzeAxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_IronAxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_SilverAxe)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_MithrilAxe)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_Bronze)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_Silver)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Axe_Mithril)
 
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_BronzeShovel)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_IronShovel)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_SilverShovel)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_MithrilShovel)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_Bronze)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_Iron)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_Silver)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Tool_Shovel_Mithril)
 
 		// ── Material ──────────────────────────────────────────────
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Crafting_Category_Material)

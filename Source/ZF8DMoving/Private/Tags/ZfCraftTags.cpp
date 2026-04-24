@@ -10,9 +10,10 @@ namespace ZfCraftTags
 
 	namespace RecipeId
 	{
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_IronSword, "Crafting.Recipe.IronSword")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_IronPickaxe, "Crafting.Recipe.IronPickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_MithrilPickaxe, "Crafting.Recipe.MithrilPickaxe")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_Sword_Iron, "Crafting.Recipe.Sword.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_Sword_Mithril, "Crafting.Recipe.Sword.Mithril")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_Pickaxe_Iron, "Crafting.Recipe.Pickaxe.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Recipe_Pickaxe_Mithril, "Crafting.Recipe.Pickaxe.Mithril")
 	}
 
 	// =========================================================================
@@ -23,7 +24,8 @@ namespace ZfCraftTags
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Weapon, "Crafting.Category.Weapon")
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Weapon_Sword, "Crafting.Category.Weapon.Sword")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Weapon_Sword_IronSword, "Crafting.Category.Weapon.Sword.IronSword")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Weapon_Sword_Iron, "Crafting.Category.Weapon.Sword.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Weapon_Sword_Mithril, "Crafting.Category.Weapon.Sword.Mithril")
 
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Armor, "Crafting.Category.Armor")
 		
@@ -35,20 +37,20 @@ namespace ZfCraftTags
 
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool, "Crafting.Category.Tool")
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe, "Crafting.Category.Tool.Pickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_BronzePickaxe, "Crafting.Category.Tool.Pickaxe.BronzePickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_IronPickaxe, "Crafting.Category.Tool.Pickaxe.IronPickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_SilverPickaxe, "Crafting.Category.Tool.Pickaxe.SilverPickaxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_MithrilPickaxe, "Crafting.Category.Tool.Pickaxe.MithrilPickaxe")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_Bronze, "Crafting.Category.Tool.Pickaxe.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_Iron, "Crafting.Category.Tool.Pickaxe.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_Silver, "Crafting.Category.Tool.Pickaxe.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Pickaxe_Mithril, "Crafting.Category.Tool.Pickaxe.Mithril")
 
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_BronzeAxe, "Crafting.Category.Tool.Axe.BronzeAxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_IronAxe, "Crafting.Category.Tool.Axe.IronAxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_SilverAxe, "Crafting.Category.Tool.Axe.SilverAxe")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_MithrilAxe, "Crafting.Category.Tool.Axe.MithrilAxe")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_Bronze, "Crafting.Category.Tool.Axe.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_Iron, "Crafting.Category.Tool.Axe.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_Silver, "Crafting.Category.Tool.Axe.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Axe_Mithril, "Crafting.Category.Tool.Axe.Mithril")
 
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_BronzeShovel, "Crafting.Category.Tool.Shovel.BronzeShovel")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_IronShovel, "Crafting.Category.Tool.Shovel.IronShovel")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_SilverShovel, "Crafting.Category.Tool.Shovel.SilverShovel")
-		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_MithrilShovel, "Crafting.Category.Tool.Shovel.MithrilShovel")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_Bronze, "Crafting.Category.Tool.Shovel.Bronze")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_Iron, "Crafting.Category.Tool.Shovel.Iron")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_Silver, "Crafting.Category.Tool.Shovel.Silver")
+		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Tool_Shovel_Mithril, "Crafting.Category.Tool.Shovel.Mithril")
 
 		UE_DEFINE_GAMEPLAY_TAG(Crafting_Category_Material, "Crafting.Category.Material")
 	}

@@ -10,11 +10,13 @@
 #include "Inventory/Fragments/ZfFragment_InventoryExpansion.h"
 #include "Inventory/ZfModifierDataTypes.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffect.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Inventory/Fragments/ZfFragment_Stackable.h"
 #include "Player/ZfPlayerState.h"
 
 void UZfEquipmentComponent::UnequipAllItems()
@@ -858,9 +860,27 @@ void UZfEquipmentComponent::ServerTryUnequipItem_Implementation(FGameplayTag Slo
     }
 }
 
+void UZfEquipmentComponent::ServerTryUseQuickSlot_Implementation(int32 SlotPosition)
+{
+    if (InternalCheckIsServer(TEXT("ServerTryUseQuickSlot")))
+    {
+        TryUseQuickSlot(SlotPosition);
+    }
+}
+
+void UZfEquipmentComponent::ServerTryRemoveItemFromEquipmentSlot_Implementation(FGameplayTag SlotTag, int32 SlotPosition)
+{
+    if (InternalCheckIsServer(TEXT("TryRemoveItemFromEquipmentSlot")))
+    {
+        TryRemoveItemFromEquipmentSlot(SlotTag,SlotPosition);
+    }
+}
+
 // ============================================================
 // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
 // ============================================================
+
+
 
 EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemFromInventory, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag)
 {
@@ -1209,6 +1229,53 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
     }
 }
 
+void UZfEquipmentComponent::TryUseQuickSlot(int32 SlotPosition)
+{
+    if (SlotPosition < 0 || SlotPosition > 2) return;
+
+    const FGameplayTag SlotTag = ZfEquipmentTags::EquipmentSlots::Slot_Consumable;
+
+    UZfItemInstance* Item = GetItemAtEquipmentSlot(SlotTag, SlotPosition);
+    if (!Item) return;
+
+    UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    FGameplayEventData EventData;
+    EventData.OptionalObject = Item;
+    EventData.EventTag = ZfUniqueItemTags::ItemEvents::Item_Event_Use;
+
+    ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+}
+
+void UZfEquipmentComponent::TryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition)
+{
+    if (!InternalCheckIsServer(TEXT("RemoveItemFromEquipmentSlot"))) return;
+
+    UZfItemInstance* Item = GetItemAtEquipmentSlot(SlotTag, SlotPosition);
+    if (!Item) return;
+
+    const bool bStackable = Item->HasFragment<UZfFragment_Stackable>();
+
+    if (bStackable)
+    {
+        // Reduz 1 do stack. So remove o item se o stack zerar.
+        const bool bStackEmpty = Item->RemoveFromStack(1);
+        if (!bStackEmpty)
+        {
+            // Stack ainda tem unidades — notifica dirty para replicar.
+            EquipmentList.MarkArrayDirty();
+            return;
+        }
+        // Stack zerou — cai no InternalUnequipItem abaixo.
+    }
+
+    // Nao stackavel OU stack zerou — remove o item do slot.
+    InternalUnequipItem(Item, SlotPosition);
+    EquipmentList.MarkArrayDirty();
+    OnItemUnequipped.Broadcast(Item, SlotTag, SlotPosition);
+}
+
 
 // ============================================================
 // FUNÇÕES DE CONSULTA
@@ -1279,6 +1346,11 @@ UZfItemInstance* UZfEquipmentComponent::GetItemAtSlotTag(FGameplayTag SlotTag, i
     }
 
     return nullptr;
+}
+
+const TArray<FZfEquipmentSlotEntry>& UZfEquipmentComponent::GetAllEquipmentSlots() const
+{
+    return EquipmentList.EquippedItems;
 }
 
 // ============================================================

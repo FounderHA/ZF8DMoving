@@ -345,6 +345,12 @@ public:
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTrySortInventory(EZfInventorySortType SortType);
 
+    // Dispara o evento Item.Event.Use para o item no slot dado.
+    // A ZfGA_UseItem sera ativada automaticamente via trigger.
+    // Chamado pelo context action do menu de inventario.
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryUseItemAtSlot(int32 SlotIndex);
+
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryPickupItem(UZfItemInstance* ItemInstance);
     
@@ -393,6 +399,12 @@ private:
     UFUNCTION(Category = "Zf|Inventory")
     void TrySpawnPickupItem(UZfItemInstance* ItemInstance) const;
 
+    // Dispara o evento Item.Event.Use para o item no slot dado.
+    // A ZfGA_UseItem sera ativada automaticamente via trigger.
+    // Chamado pelo context action do menu de inventario.
+    UFUNCTION(Category = "Zf|Inventory")
+    void TryUseItemAtSlot(int32 SlotIndex);
+    
     // Atualiza o CurrentSlotCount baseado na mochila atualmente equipada.
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
     void UpdateSlotCountFromEquippedBackpack();
