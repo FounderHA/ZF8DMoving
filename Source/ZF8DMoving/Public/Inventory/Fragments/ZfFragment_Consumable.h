@@ -85,28 +85,15 @@ public:
 	FGameplayTag UniqueItemTag;
 
 	// ----------------------------------------------------------
-	// COOLDOWN
-	// ----------------------------------------------------------
-
-	// Cooldown em segundos especifico para ESTE item.
-	// Impede reusar este item enquanto o cooldown estiver ativo.
-	// 0.0 = sem cooldown por item (apenas o global se aplica).
-	// Configurado separado do cooldown global (que vive no GE_Cooldown_ItemGlobal).
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Consumable|Cooldown",
-		meta = (ClampMin = "0.0"))
-	float ItemCooldownSeconds = 0.0f;
-
-	// ----------------------------------------------------------
 	// DEBUG
 	// ----------------------------------------------------------
 
 	virtual FString GetDebugString() const override
 	{
 		return FString::Printf(
-			TEXT("[Fragment_Consumable] Effect: %s | ConsumeOnUse: %s | SingleUse: %s | ItemCD: %.1fs"),
+			TEXT("[Fragment_Consumable] Effect: %s | ConsumeOnUse: %s | SingleUse: %s"),
 			*ConsumptionGameplayEffect.ToString(),
 			bConsumeOnUse ? TEXT("Yes") : TEXT("No"),
-			bIsSingleUsePerGame ? TEXT("Yes") : TEXT("No"),
-			ItemCooldownSeconds);
+			bIsSingleUsePerGame ? TEXT("Yes") : TEXT("No"));
 	}
 };

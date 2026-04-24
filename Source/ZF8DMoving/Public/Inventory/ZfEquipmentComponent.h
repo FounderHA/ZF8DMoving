@@ -522,7 +522,7 @@ public:
     // Se o item for stackavel, reduz o stack em 1.
     // So remove o item do slot quando o stack zerar.
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
+    void ServerTryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
     
     // ============================================================
     // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
@@ -573,7 +573,7 @@ public:
     // Se o item for stackavel, reduz o stack em 1.
     // So remove o item do slot quando o stack zerar.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    void TryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
+    void TryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
     
     // ============================================================
     // FUNÇÕES DE CONSULTA
@@ -602,6 +602,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     const TArray<FZfEquipmentSlotEntry>& GetAllEquipmentSlots() const;
 
+    // Acha o entry do slot pelo ItemInstance.
+    // Util para MarkItemDirty e OnStackChanged sem precisar saber SlotTag/SlotPosition.
+    // Retorna nullptr se o item nao estiver equipado.
+    FZfEquipmentSlotEntry* FindSlotEntryByItem(UZfItemInstance* Item);
+    
 private:
 
     // ============================================================

@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/ActorChannel.h"
+#include "Inventory/Fragments/ZfFragment_Consumable.h"
 #include "Items/ZfItemPickup.h"
 #include "Player/ZfPlayerState.h"
 
@@ -367,7 +368,11 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveAmountFromStack( UZfItemIn
         return EZfItemMechanicResult::Success;
     }
 
-    InventoryList.MarkArrayDirty();
+    FZfInventorySlot* Slot = FindSlotByIndex(GetSlotIndexOfItem(ItemInstance));
+    if (Slot)
+    {
+        InventoryList.MarkItemDirty(*Slot);
+    }
     OnItemStackChanged.Broadcast(ItemInstance, GetSlotIndexOfItem(ItemInstance));
     return EZfItemMechanicResult::Success;
 }
@@ -465,15 +470,31 @@ void UZfInventoryComponent::TryUseItemAtSlot(int32 SlotIndex)
     UZfItemInstance* Item = GetItemAtSlot(SlotIndex);
     if (!Item) return;
 
-    AActor* Owner = GetOwner();
-    UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Owner);
+    // Verifica se tem Fragment_Consumable
+    const UZfFragment_Consumable* Fragment = Item->GetFragment<UZfFragment_Consumable>();
+    if (!Fragment) return;
+
+    // Consome ANTES de disparar o evento
+    if (Fragment->bConsumeOnUse)
+    {
+        const bool bStackable = Item->HasFragment<UZfFragment_Stackable>();
+        if (bStackable)
+            TryRemoveAmountFromStack(Item, 1);
+        else
+            TryRemoveItemFromInventory(SlotIndex);
+    }
+
+    // Dispara o evento — GA processa os efeitos
+    IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(GetOwner());
+    if (!ASCInterface) return;
+
+    UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
     if (!ASC) return;
 
     FGameplayEventData EventData;
     EventData.OptionalObject = Item;
     EventData.EventTag = ZfUniqueItemTags::ItemEvents::Item_Event_Use;
-
-    ASC->HandleGameplayEvent(ZfUniqueItemTags::ItemEvents::Item_Event_Use, &EventData);
+    ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 }
 
 void UZfInventoryComponent::UpdateSlotCountFromEquippedBackpack()

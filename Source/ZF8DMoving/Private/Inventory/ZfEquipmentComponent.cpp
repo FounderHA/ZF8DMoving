@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Inventory/Fragments/ZfFragment_Consumable.h"
 #include "Inventory/Fragments/ZfFragment_Stackable.h"
 #include "Player/ZfPlayerState.h"
 
@@ -871,11 +872,11 @@ void UZfEquipmentComponent::ServerTryUseQuickSlot_Implementation(int32 SlotPosit
     }
 }
 
-void UZfEquipmentComponent::ServerTryRemoveItemFromEquipmentSlot_Implementation(FGameplayTag SlotTag, int32 SlotPosition)
+void UZfEquipmentComponent::ServerTryRemoveItemStackFromEquipmentSlot_Implementation(FGameplayTag SlotTag, int32 SlotPosition)
 {
-    if (InternalCheckIsServer(TEXT("TryRemoveItemFromEquipmentSlot")))
+    if (InternalCheckIsServer(TEXT("TryRemoveItemStackFromEquipmentSlot")))
     {
-        TryRemoveItemFromEquipmentSlot(SlotTag,SlotPosition);
+        TryRemoveItemStackFromEquipmentSlot(SlotTag,SlotPosition);
     }
 }
 
@@ -1241,43 +1242,71 @@ void UZfEquipmentComponent::TryUseQuickSlot(int32 SlotPosition)
     UZfItemInstance* Item = GetItemAtEquipmentSlot(SlotTag, SlotPosition);
     if (!Item) return;
 
+    // Verifica se tem Fragment_Consumable
+    const UZfFragment_Consumable* Fragment = Item->GetFragment<UZfFragment_Consumable>();
+    if (!Fragment) return;
+
+    // Verifica se tem Fragment_Consumable
+    const UZfFragment_Stackable* Stackable = Item->GetFragment<UZfFragment_Stackable>();
+
+    // Consome ANTES de disparar o evento
+    if (Stackable)
+    {
+        
+        if (Fragment->bConsumeOnUse)
+        {
+            TryRemoveItemStackFromEquipmentSlot(SlotTag, SlotPosition);
+        }
+    }
+    else
+    {
+        if (Fragment->bConsumeOnUse)
+        {
+            InternalUnequipItem(Item, SlotPosition);
+            EquipmentList.MarkArrayDirty();
+            OnItemUnequipped.Broadcast(Item, SlotTag, SlotPosition);
+        }
+    }
+    
+
+    // Dispara o evento — GA processa os efeitos
     UAbilitySystemComponent* ASC = Internal_GetAbilitySystemComponent();
     if (!ASC) return;
 
     FGameplayEventData EventData;
     EventData.OptionalObject = Item;
     EventData.EventTag = ZfUniqueItemTags::ItemEvents::Item_Event_Use;
-    
     ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 }
 
-void UZfEquipmentComponent::TryRemoveItemFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition)
+void UZfEquipmentComponent::TryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition)
 {
-    if (!InternalCheckIsServer(TEXT("RemoveItemFromEquipmentSlot"))) return;
+    if (!InternalCheckIsServer(TEXT("RemoveItemStackFromEquipmentSlot"))) return;
 
     UZfItemInstance* Item = GetItemAtEquipmentSlot(SlotTag, SlotPosition);
     if (!Item) return;
 
-    const bool bStackable = Item->HasFragment<UZfFragment_Stackable>();
+    if (!Item->HasFragment<UZfFragment_Stackable>()) return;
 
-    if (bStackable)
+    
+    
+    // Reduz 1 do stack. So remove o item se o stack zerar.
+    if (Item->RemoveFromStack(1))
     {
-        // Reduz 1 do stack. So remove o item se o stack zerar.
-        const bool bStackEmpty = Item->RemoveFromStack(1);
-        if (!bStackEmpty)
-        {
-            // Stack ainda tem unidades — notifica dirty para replicar.
-            EquipmentList.MarkArrayDirty();
-            OnStackChanged.Broadcast(Item, SlotTag, SlotPosition);
-            return;
-        }
-        // Stack zerou — cai no InternalUnequipItem abaixo.
+        // Nao stackavel OU stack zerou — remove o item do slot.
+        InternalUnequipItem(Item, SlotPosition);
+        EquipmentList.MarkArrayDirty();
+        OnItemUnequipped.Broadcast(Item, SlotTag, SlotPosition);
+        return;
     }
-
-    // Nao stackavel OU stack zerou — remove o item do slot.
-    InternalUnequipItem(Item, SlotPosition);
-    EquipmentList.MarkArrayDirty();
-    OnItemUnequipped.Broadcast(Item, SlotTag, SlotPosition);
+    
+    // Stack ainda tem unidades — notifica dirty para replicar.
+    FZfEquipmentSlotEntry* Entry = FindSlotEntryByItem(Item);
+    if (Entry)
+    {
+        EquipmentList.MarkItemDirty(*Entry);
+    }
+    OnStackChanged.Broadcast(Item, SlotTag, SlotPosition);
 }
 
 
@@ -1355,6 +1384,20 @@ UZfItemInstance* UZfEquipmentComponent::GetItemAtSlotTag(FGameplayTag SlotTag, i
 const TArray<FZfEquipmentSlotEntry>& UZfEquipmentComponent::GetAllEquipmentSlots() const
 {
     return EquipmentList.EquippedItems;
+}
+
+FZfEquipmentSlotEntry* UZfEquipmentComponent::FindSlotEntryByItem(UZfItemInstance* Item)
+{
+    if (!Item) return nullptr;
+
+    for (FZfEquipmentSlotEntry& Entry : EquipmentList.EquippedItems)
+    {
+        if (Entry.ItemInstance == Item)
+        {
+            return &Entry;
+        }
+    }
+    return nullptr;
 }
 
 // ============================================================
