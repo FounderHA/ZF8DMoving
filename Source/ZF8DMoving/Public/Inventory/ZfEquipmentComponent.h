@@ -1,34 +1,5 @@
 // Copyright ZfGame Studio. All Rights Reserved.
 // ZfEquipmentComponent.h
-// Componente responsável por armazenar e gerenciar todos os
-// itens equipados no personagem.
-//
-// CONCEITO:
-// O EquipmentComponent é um UActorComponent que:
-// - Armazena os ItemInstances equipados via FFastArraySerializer
-// - Comunica com o InventoryComponent para trocar itens
-// - Aplica/remove GameplayEffects dos modifiers via GAS
-// - Gerencia a regra de duas mãos (TwoHanded)
-// - Gerencia os bônus de Combo Sets
-// - Desativa bônus de itens quebrados sem desequipá-los
-//
-// FLUXO DE EQUIPAR:
-// 1. InventoryComponent::TryEquipItem chama EquipmentComponent::TryEquipItem
-// 2. EquipmentComponent valida slot, two-handed, tags de requisito
-// 3. Se já houver item no slot, devolve ao InventoryComponent
-// 4. Remove o item do inventário e o armazena no EquipmentList
-// 5. Aplica os GameplayEffects dos modifiers via GAS
-// 6. Verifica e atualiza bônus de Combo Sets
-//
-// FLUXO DE DESEQUIPAR:
-// 1. Remove os GameplayEffects dos modifiers
-// 2. Atualiza bônus de Combo Sets
-// 3. Devolve o item ao InventoryComponent via ReceiveUnequippedItem
-//
-// REPLICAÇÃO:
-// FZfEquipmentList usa FFastArraySerializer.
-// Replicado para todos — outros jogadores precisam ver
-// os itens equipados para visuais e animações.
 
 #pragma once
 
@@ -40,11 +11,10 @@
 #include "ZfInventoryTypes.h"
 #include "ZfItemInstance.h"
 #include "ZfItemDefinition.h"
+#include "Inventory/ZfInventoryReceiverInterface.h"
 #include "Inventory/Modifiers/ZfModifierRule.h"
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "ZfEquipmentComponent.generated.h"
-
-
 
 // Forward declarations
 class UZfInventoryComponent;
@@ -59,57 +29,28 @@ class UZfModifierRule;
 // DELEGATES
 // ============================================================
 
-// Disparado quando um item é equipado com sucesso
-// @param ItemInstance — item equipado
-// @param SlotType — slot onde foi equipado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEquipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
-
-// Disparado quando um item é desequipado
-// @param ItemInstance — item desequipado
-// @param SlotType — slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
-
-// Disparado quando um item quebra enquanto equipado
-// @param ItemInstance — item que quebrou
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemBroken, UZfItemInstance*, ItemInstance);
-
-// Disparado quando um item equipado é reparado
-// @param ItemInstance — item reparado
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped,   UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemBroken,   UZfItemInstance*, ItemInstance);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInstance*, ItemInstance);
-
-// Disparado quando os bônus de um Combo Set mudam
-// @param SetIdentifierTag — tag do set que mudou
-// @param ActivePieceCount — quantidade de peças atualmente equipadas
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
-
-// Disparado quando Stack Muda
-// @param ItemInstance — Item que Mudou
-// @param SlotType — slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStackChanged, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag, int32, SlotPosition);
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStackChanged, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 
 // ============================================================
 // FZfActiveSetBonus
-// Rastreia o estado ativo de um Combo Set em runtime.
-// Armazena quantas peças estão equipadas e os handles
-// dos GameplayEffects ativos.
 // ============================================================
+
 USTRUCT(BlueprintType)
 struct ZF8DMOVING_API FZfActiveSetBonus
 {
     GENERATED_BODY()
 
-    // Tag identificadora do set
     UPROPERTY(BlueprintReadOnly, Category = "Set|Active")
     FGameplayTag SetIdentifierTag;
 
-    // Quantidade de peças deste set atualmente equipadas
     UPROPERTY(BlueprintReadOnly, Category = "Set|Active")
     int32 ActivePieceCount = 0;
 
-    // Handles dos GameplayEffects de bônus ativos
-    // Indexados pela quantidade de peças necessárias para ativação
     TMap<int32, FActiveGameplayEffectHandle> ActiveBonusHandles;
 };
 
@@ -117,55 +58,37 @@ struct ZF8DMOVING_API FZfActiveSetBonus
 // FAST ARRAY
 // ============================================================
 
-
-// -----------------------------------------------------------
-// FZfEquipmentSlotEntry
-// Uma entrada no sistema de equipamento.
-// SlotIndex permite múltiplos slots do mesmo tipo (Ring_0, Ring_1).
-// -----------------------------------------------------------
 USTRUCT(BlueprintType)
 struct ZF8DMOVING_API FZfEquipmentSlotEntry : public FFastArraySerializerItem
 {
     GENERATED_BODY()
 
-    // Tag identificadora do slot de equipamento
-    // Ex: EquipmentSlot.MainHand, EquipmentSlot.Ring
+    friend class UZfInventoryComponent;
+
+    // Tag única que identifica este slot — ex: EquipmentSlot.Slot.Ring.1
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot", meta = (Categories = "EquipmentSlot"))
     FGameplayTag SlotTag;
-    
-    // Índice para múltiplos slots do mesmo tipo
-    // Ex: Ring → SlotIndex 0 e SlotIndex 1
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
-    int32 SlotPosition = 0;
 
     // Item equipado (nullptr = slot vazio)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Slot")
     TObjectPtr<UZfItemInstance> ItemInstance = nullptr;
 
-    // Callbacks de replicação
     void PreReplicatedRemove(const struct FZfEquipmentList& InArraySerializer);
-    void PostReplicatedAdd(const FZfEquipmentList& InArraySerializer);
-    void PostReplicatedChange(const FZfEquipmentList& InArraySerializer);
+    void PostReplicatedAdd(const struct FZfEquipmentList& InArraySerializer);
+    void PostReplicatedChange(const struct FZfEquipmentList& InArraySerializer);
 };
 
-// -----------------------------------------------------------
-// FZfEquipmentList
-// FastArray de slots equipados.
-// -----------------------------------------------------------
 USTRUCT(BlueprintType)
 struct ZF8DMOVING_API FZfEquipmentList : public FFastArraySerializer
 {
     GENERATED_BODY()
 
-    // Todos os slots de equipamento com seus itens
     UPROPERTY()
     TArray<FZfEquipmentSlotEntry> EquippedItems;
 
-    // Referência ao componente dono
     UPROPERTY(NotReplicated)
     TObjectPtr<UZfEquipmentComponent> OwnerComponent = nullptr;
 
-    // Replicação delta do equipamento
     bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
     {
         return FastArrayDeltaSerialize<FZfEquipmentSlotEntry, FZfEquipmentList>(
@@ -179,26 +102,12 @@ struct TStructOpsTypeTraits<FZfEquipmentList> : public TStructOpsTypeTraitsBase2
     enum { WithNetDeltaSerializer = true };
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ============================================================
 // UZfEquipmentComponent
 // ============================================================
 
 UCLASS(ClassGroup = (Zf), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
-class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent
+class ZF8DMOVING_API UZfEquipmentComponent : public UActorComponent, public IZfInventoryReceiverInterface
 {
     GENERATED_BODY()
 
@@ -208,14 +117,15 @@ public:
 
     UZfEquipmentComponent();
 
+    virtual void QuickTransferItemFromInventory_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, UZfInventoryComponent* InventoryComponent) override;
+
     // ----------------------------------------------------------
     // CONFIGURAÇÃO
     // ----------------------------------------------------------
 
-    // Configuração dos slots disponíveis neste equipamento.
-    // Define quais slots existem e quantos de cada tipo.
-    // Ex: [{Ring, 2}, {MainHand, 1}, {OffHand, 1}]
-    // Configurado no editor por personagem/classe.
+    // Slots padrão desta máquina — usado por Internal_InitializeEquipmentSlots.
+    // Com o novo sistema de tags, este array é opcional — os slots existem
+    // dinamicamente via EquipmentList conforme os itens são equipados.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Config")
     TArray<FZfEquipmentSlotEntry> DefaultEquipmentSlots;
 
@@ -240,411 +150,205 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Equipment|Events")
     FOnStackChanged OnStackChanged;
-    
+
     // ----------------------------------------------------------
-    // FUNÇÕES PRINCIPAIS — DESEQUIPAR
+    // DESEQUIPAR TODOS
     // ----------------------------------------------------------
 
-    
-    // Desequipa todos os itens equipados de uma vez.
-    // Devolve todos ao inventário.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
     void UnequipAllItems();
 
     // ----------------------------------------------------------
-    // FUNÇÕES DE TROCA RÁPIDA
-    // Troca direta entre inventário e slot de equipamento.
+    // TROCA RÁPIDA
     // ----------------------------------------------------------
 
-    // Troca rápida — equipa item do inventário e devolve o
-    // item atual do slot ao inventário em uma única operação.
-    // @param InventorySlotIndex — slot do inventário
-    // @param EquipSlotType — slot de equipamento alvo
-    // @param EquipSlotIndex — índice do slot de equipamento
-    // @return resultado da operação
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
     EZfItemMechanicResult QuickSwapItem(int32 InventorySlotIndex, FGameplayTag EquipmentSlotTag, int32 EquipSlotIndex = 0);
 
     // ----------------------------------------------------------
-    // FUNÇÕES DE DURABILIDADE
-    // Chamadas pelo ItemInstance ou sistemas externos para
-    // notificar mudanças de durabilidade em itens equipados.
+    // DURABILIDADE
     // ----------------------------------------------------------
 
-    // Notifica que um item equipado quebrou.
-    // Desativa os GameplayEffects sem desequipar o item.
-    // Dispara OnEquippedItemBroken para notificar a UI.
-    // @param ItemInstance — item que quebrou
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Durability")
     void NotifyEquippedItemBroken(UZfItemInstance* ItemInstance);
 
-    // Notifica que um item equipado foi reparado.
-    // Reativa os GameplayEffects do item.
-    // @param ItemInstance — item reparado
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Durability")
     void NotifyEquippedItemRepaired(UZfItemInstance* ItemInstance);
+
+    // ----------------------------------------------------------
+    // RPCs
+    // ----------------------------------------------------------
+
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Zf|Equipment|RPC")
+    void ServerRequestQuickSwap(int32 InventorySlotIndex, FGameplayTag EquipmentSlotTag, int32 EquipSlotIndex);
+
+    // ----------------------------------------------------------
+    // SERVER RPCs — GERENCIAMENTO
+    // ----------------------------------------------------------
+
+    // Equipa um item. SlotTag deve ser a tag filha exata (ex: Slot_Ring_1).
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, FGameplayTag SlotTag);
+
+    // Desequipa o item no SlotTag especificado.
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryUnequipItem(FGameplayTag SlotTag, int32 TargetInventorySlot);
+
+    // Usa o consumível no slot especificado.
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryUseQuickSlot(FGameplayTag SlotTag);
+
+    // Remove 1 do stack do item no slot. Remove o item se zerar.
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
+    void ServerTryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag);
+
+    // ----------------------------------------------------------
+    // FUNÇÕES PRINCIPAIS — GERENCIAMENTO
+    // ----------------------------------------------------------
+
+    // Equipa o item no slot definido pelo Fragment_Equippable do item.
+    // @param SlotTag — tag filha exata (ex: Slot_Ring_1). Se inválida, usa a do fragment.
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, FGameplayTag SlotTag);
+
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryUnequipItem(FGameplayTag SlotTag, int32 TargetInventorySlot);
+
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot);
+
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryUnequipBackpack(FGameplayTag SlotTag, int32 TargetInventorySlot);
+
+    UFUNCTION(Category = "Zf|Equipment")
+    void TryUseQuickSlot(FGameplayTag SlotTag);
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
+    void TryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag);
 
     // ----------------------------------------------------------
     // FUNÇÕES DE CONSULTA
     // ----------------------------------------------------------
 
-    // Retorna o item equipado em um slot específico.
-    // Retorna nullptr se o slot estiver vazio.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    EZfItemMechanicResult CanEquipItem(UZfItemInstance* InItemInstance, int32 FromInventorySlot);
+
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    FGameplayTag GetEquipmentSlotTagOfItem(UZfItemInstance* ItemInstance) const;
+
+    // Retorna o item equipado na SlotTag exata fornecida.
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    UZfItemInstance* GetItemAtSlotTag(FGameplayTag SlotTag) const;
+
+    // Compatibilidade — busca pelo SlotTag ignorando SlotIndex.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     UZfItemInstance* GetItemAtEquipmentSlot(FGameplayTag EquipmentSlotTag, int32 SlotIndex = 0) const;
 
-    // Verifica se um item está equipado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     bool IsItemEquipped(UZfItemInstance* ItemInstance) const;
 
-    // Verifica se um slot específico está ocupado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     bool IsEquipmentSlotOccupied(FGameplayTag EquipmentSlotTag, int32 SlotIndex = 0) const;
 
-    // Verifica se um slot está bloqueado por arma de duas mãos.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     bool IsEquipmentSlotBlocked(FGameplayTagContainer EquipmentTags, int32 SlotIndex = 0) const;
 
-    // Retorna todos os itens equipados.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     TArray<UZfItemInstance*> GetAllEquippedItems() const;
 
-    // Retorna todos os itens equipados com uma tag específica.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     TArray<UZfItemInstance*> GetEquippedItemsByTag(const FGameplayTag& Tag) const;
 
-    // Retorna o slot de um item equipado.
-    // Retorna EZfEquipmentSlot::None se não encontrado.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
     FGameplayTag GetEquipmentSlotOfItem(UZfItemInstance* ItemInstance) const;
 
+    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
+    const TArray<FZfEquipmentSlotEntry>& GetAllEquipmentSlots() const;
+
+    FZfEquipmentSlotEntry* FindSlotEntryByItem(UZfItemInstance* Item);
+
+    // Retorna a primeira tag filha vazia de ParentTag.
+    // Ex: GetFirstEmptySlotByParentTag(Slot_Ring) → Slot_Ring_1 ou Slot_Ring_2
+    // Usa RequestGameplayTagChildren para encontrar os filhos automaticamente.
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Zf|Equipment|Query")
+    FGameplayTag GetFirstEmptySlotByParentTag(FGameplayTag ParentTag) const;
+
     // ----------------------------------------------------------
-    // FUNÇÕES DE COMBO SET
+    // COMBO SETS
     // ----------------------------------------------------------
 
-    // Retorna a quantidade de peças equipadas de um set específico.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Set")
     int32 GetEquippedPieceCountForSet(const FGameplayTag& SetIdentifierTag) const;
 
-    // Retorna todos os bônus de set ativos no momento.
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Set")
     TArray<FZfActiveSetBonus> GetAllActiveSetBonuses() const;
 
     // ----------------------------------------------------------
     // EXPANSÃO DE SLOTS
-    // Chamado pelo UZfFragment_InventoryExpansion ao equipar
-    // ou desequipar uma mochila.
     // ----------------------------------------------------------
 
-    // Adiciona slots extras ao InventoryComponent.
-    // Chamado quando uma mochila é equipada.
-    // @param ExtraSlots — quantidade de slots a adicionar
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Expansion")
     void OnBackpackEquipped(int32 ExtraSlots);
 
-    // Remove slots extras do InventoryComponent.
-    // Chamado quando uma mochila é desequipada.
-    // @param ExtraSlots — quantidade de slots a remover
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Expansion")
     void OnBackpackUnequipped(int32 ExtraSlots);
 
     // ----------------------------------------------------------
-    // RPCs — CLIENT → SERVER
-    // ----------------------------------------------------------
-
-    
-
-    // Requisição do cliente para troca rápida
-    UFUNCTION(Server, Reliable, WithValidation,
-        BlueprintCallable, Category = "Zf|Equipment|RPC")
-    void ServerRequestQuickSwap(int32 InventorySlotIndex, FGameplayTag EquipmentSlotTag, int32 EquipSlotIndex);
-
-    // ----------------------------------------------------------
-    // REPLICAÇÃO
+    // REPLICAÇÃO / CICLO DE VIDA
     // ----------------------------------------------------------
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    // ----------------------------------------------------------
-    // CICLO DE VIDA
-    // ----------------------------------------------------------
-
     virtual void BeginPlay() override;
-
 
 protected:
 
-    // ----------------------------------------------------------
-    // DADOS REPLICADOS
-    // ----------------------------------------------------------
-
-    // Lista de slots equipados — replicada para todos os clientes
-    // para visuais e animações de outros jogadores
     UPROPERTY(Replicated)
     FZfEquipmentList EquipmentList;
 
-    // Se verdadeiro, o slot OffHand está bloqueado por
-    // uma arma de duas mãos equipada no MainHand
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Equipment")
     bool bOffHandSlotBlocked = false;
 
-    // ----------------------------------------------------------
-    // DADOS NÃO REPLICADOS — apenas servidor
-    // ----------------------------------------------------------
-
-    // Referência ao InventoryComponent no mesmo ator
     UPROPERTY()
     TObjectPtr<UZfInventoryComponent> InventoryComponent;
 
-    // Rastreamento dos bônus de set ativos em runtime
-    // Não replicado — recalculado localmente em cada cliente
-    // a partir do EquipmentList replicado
     TMap<FGameplayTag, FZfActiveSetBonus> ActiveSetBonuses;
 
 private:
 
     // ----------------------------------------------------------
-    // FUNÇÕES INTERNAS
+    // FUNÇÕES INTERNAS — GERENCIAMENTO
     // ----------------------------------------------------------
 
-    // Inicializa os slots de equipamento com base em DefaultEquipmentSlots
     void Internal_InitializeEquipmentSlots();
-
-    // Busca o AbilitySystemComponent no ator dono
     UAbilitySystemComponent* Internal_GetAbilitySystemComponent() const;
-
-    // Aplica todos os GameplayEffects dos modifiers de um item
-    // @param ItemInstance — item cujos efeitos serão aplicados
     void Internal_ApplyItemGameplayEffects(UZfItemInstance* ItemInstance);
-
-    // Remove todos os GameplayEffects dos modifiers de um item
-    // @param ItemInstance — item cujos efeitos serão removidos
     void Internal_RemoveItemGameplayEffects(UZfItemInstance* ItemInstance);
-
-    // Verifica e atualiza os bônus de Combo Set após equipar/desequipar
-    // @param ItemInstance — item que foi equipado ou desequipado
-    // @param bWasEquipped — true se equipou, false se desequipou
     void Internal_UpdateSetBonuses(UZfItemInstance* ItemInstance, bool bWasEquipped);
-
-    // Aplica os bônus de set para um set específico baseado
-    // na quantidade de peças atualmente equipadas
-    // @param SetTag — tag identificadora do set
-    // @param PieceCount — quantidade de peças equipadas
     void Internal_ApplySetBonuses(const FGameplayTag& SetTag, int32 PieceCount);
-
-    // Remove todos os bônus de set de um set específico
-    // @param SetTag — tag identificadora do set
     void Internal_RemoveAllSetBonuses(const FGameplayTag& SetTag);
-
-    // Bloqueia o slot OffHand (arma de duas mãos equipada)
     void Internal_BlockOffHandSlot();
-
-    // Libera o slot OffHand (arma de duas mãos removida)
-    // Se houver item no OffHand ao liberar, mantém equipado
     void Internal_UnblockOffHandSlot();
 
-    
-    // Versão const de Internal_FindSlotEntry
-    const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(FGameplayTag EquipmentSlotTag, int32 SlotIndex) const;
-
-    // Gera uma ReplicationKey única para novos slots
+    const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(FGameplayTag EquipmentSlotTag) const;
     int32 Internal_GenerateReplicationKey() const;
 
-    // ============================================================
-    // RULES ATIVAS — apenas servidor, nunca replicado
-    // Key externa: ItemInstance que possui os modifiers.
-    // Key interna: ModifierRowName que identifica o modifier.
-    // Ciclo de vida: criado em Internal_ApplyItemGameplayEffects,
-    // destruído em Internal_DeactivateModifierRules ao desequipar.
-    // ============================================================
+    void InternalEquipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag = FGameplayTag());
+    void InternalUnequipItem(UZfItemInstance* InItemInstance);
+    FZfEquipmentSlotEntry* InternalFindSlotEntry(FGameplayTag SlotTag);
+
+    // ----------------------------------------------------------
+    // MODIFIER RULES
+    // ----------------------------------------------------------
+
     TMap<TObjectPtr<UZfItemInstance>, TMap<FName, TObjectPtr<UZfModifierRule>>> ActiveModifierRules;
 
-    // Desvincula e destrói todas as Rules ativas de um item.
-    // Chamado antes de remover os efeitos ao desequipar.
     void Internal_DeactivateModifierRules(UZfItemInstance* ItemInstance);
-
-    // Callback disparado por OnRuleValueChanged de uma Rule ativa.
-    // Recalcula o FinalValue e reaplica o modifier no destino correto.
     void Internal_OnModifierRuleValueChanged(UZfItemInstance* ItemInstance, FName ModifierRowName, UAbilitySystemComponent* ASC);
-
-    // Reverte o AppliedValue atual e reaplica com o novo FinalValue.
-    // Lida com GASAttribute (remove/reaplica GE) e ItemProperty (reverte/aplica).
     void Internal_ReapplyModifier(UZfItemInstance* ItemInstance, FZfAppliedModifier& Modifier, float NewFinalValue, UAbilitySystemComponent* ASC);
 
+    // ----------------------------------------------------------
+    // VALIDAÇÃO
+    // ----------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-    
-
-public:
-    
-    // ============================================================
-    // FUNÇÕES SERVER - GERENCIAMENTO
-    // ============================================================
-
-    // Tenta equipar um item em seu slot correspondente.
-    // Valida: slot disponível, two-handed, tags de requisito,
-    //         item quebrado, slot bloqueado.
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    // @param FGameplayTag — SlotTag vindo da widget do equipamento
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, int32 SlotPosition, FGameplayTag SlotTag);
-
-    // Tenta deequipar um item em seu slot correspondente.
-    // Valida: slot disponível, two-handed, tags de requisito,
-    //         item quebrado, slot bloqueado.
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryUnequipItem(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
-
-    // Tags dos 3 slots de consumivel rapido.
-    // Declare em ZfEquipmentTags.h:
-    //   Slot_Consumable_1, Slot_Consumable_2, Slot_Consumable_3
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryUseQuickSlot(int32 SlotPosition); // SlotNumber: 1, 2 ou 3
-
-    // Remove item do slot e descarta — sem devolver ao inventario.
-    // Se o item for stackavel, reduz o stack em 1.
-    // So remove o item do slot quando o stack zerar.
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Equipment")
-    void ServerTryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
-    
-    // ============================================================
-    // FUNÇÕES PRINCIPAIS - GERENCIAMENTO
-    // ============================================================
-
-    // Tenta equipar um item em seu slot correspondente.
-    // Valida: slot disponível, two-handed, tags de requisito, item quebrado, slot bloqueado.
-    // @param ItemInstance — item a equipar
-    // @param InventorySlotIndex — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    // @return resultado da operação
-    UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 TagetInventorySlot, int32 SlotPosition, FGameplayTag SlotTag);
-
-    // Tenta equipar mochila
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryUnequipItem(FGameplayTag SlotTag, int32 TagetInventorySlot, int32 SlotPosition);
-
-    // Tenta deequipar um item em seu slot correspondente.
-    // Valida: slot disponível, two-handed, tags de requisito,
-    //         item quebrado, slot bloqueado.
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
-
-    // Tenta desequipar mochila
-    // Se já houver item no slot alvo, devolve ao InventoryComponent.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryUnequipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot, int32 SlotPosition);
-
-    // Tags dos 3 slots de consumivel rapido.
-    // Declare em ZfEquipmentTags.h:
-    //   Slot_Consumable_1, Slot_Consumable_2, Slot_Consumable_3
-    UFUNCTION(Category = "Zf|Equipment")
-    void TryUseQuickSlot(int32 SlotPosition); // SlotNumber: 1, 2 ou 3
-
-    // Remove item do slot e descarta — sem devolver ao inventario.
-    // Se o item for stackavel, reduz o stack em 1.
-    // So remove o item do slot quando o stack zerar.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
-    void TryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag, int32 SlotPosition);
-    
-    // ============================================================
-    // FUNÇÕES DE CONSULTA
-    // ============================================================
-
-    // Verifica se Consigo Equipar o Item.
-    // @param ItemInstance — item a equipar
-    // @param FromInventorySlot — slot de origem no inventário
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    EZfItemMechanicResult CanEquipItem(UZfItemInstance* InItemInstance, int32 FromInventorySlot, int32 SlotPosition);
-
-    // Pega EquipmentSlot Tag.
-    // @param ItemInstance — item a Equipado
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    FGameplayTag GetEquipmentSlotTagOfItem(UZfItemInstance* ItemInstance) const;
-
-    // Retorna o ItemInstance equipado em um slot pela sua tag.
-    // @param SlotTag — EquipmentSlot Tag do Item
-    // @param Int32 — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    UZfItemInstance* GetItemAtSlotTag(FGameplayTag SlotTag, int32 SlotPosition = 0) const;
-
-    // Retorna todas as entradas de slot (com SlotTag, SlotPosition e ItemInstance).
-    // Usado pelo sistema de consumo para achar o slot exato de um item.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Equipment|Query")
-    const TArray<FZfEquipmentSlotEntry>& GetAllEquipmentSlots() const;
-
-    // Acha o entry do slot pelo ItemInstance.
-    // Util para MarkItemDirty e OnStackChanged sem precisar saber SlotTag/SlotPosition.
-    // Retorna nullptr se o item nao estiver equipado.
-    FZfEquipmentSlotEntry* FindSlotEntryByItem(UZfItemInstance* Item);
-    
-private:
-
-    // ============================================================
-    // FUNÇÕES INTERNAS - GERENCIAMENTO
-    // ============================================================
-    
-    // Equipa o item a partir do ItemInstance.
-    // @param ItemInstance - Item a ser Adicionado
-    void InternalEquipItem(UZfItemInstance* InItemInstance, int32 SlotPosition);
-    
-    // Equipa o item a partir do ItemInstance.
-    // @param ItemInstance - Item a ser Adicionado
-    // @param SlotPosition — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    void InternalUnequipItem(UZfItemInstance* InItemInstance, int32 SlotPosition);
-
-        
-    // Busca a entrada de slot no EquipmentList
-    // @param SlotTag — Tag do slot
-    // @param SlotPosition — Slot Caso haja mais de um tipo de slot por tipo de item: Ring_1, RIng_2
-    FZfEquipmentSlotEntry* InternalFindSlotEntry(FGameplayTag SlotTag, int32 SlotPosition);
-
-    // ============================================================
-    // FUNÇÕES INTERNAS - ORGANIZAÇÃO
-    // ============================================================
-
-    // ============================================================
-    // FUNÇÕES INTERNAS - VALIDAÇÃO
-    // ============================================================
-
-    // Valida se uma operação pode ser executada no servidor
     bool InternalCheckIsServer(const FString& FunctionName) const;
-
-
-
-
-
-
-    
-
-
 };

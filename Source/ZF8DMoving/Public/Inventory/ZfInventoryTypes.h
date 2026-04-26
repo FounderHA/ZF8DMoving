@@ -635,6 +635,16 @@ struct ZF8DMOVING_API FZfMarketValueConfig
     float ModifierRankValueMultiplier = 0.5f;
 };
 
+UENUM(BlueprintType)
+enum class EZfItemComesFrom : uint8
+{
+    None            UMETA(DisplayName = "None"),
+    Inventory       UMETA(DisplayName = "Inventory"),
+    Equipment       UMETA(DisplayName = "Equipment"),
+    Refinery        UMETA(DisplayName = "Refinery"),
+    Chest           UMETA(DisplayName = "Chest"),
+};
+
 // ============================================================
 // LOG CATEGORY
 // ============================================================
