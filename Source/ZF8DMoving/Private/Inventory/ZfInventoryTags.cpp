@@ -143,4 +143,11 @@ namespace ZfInventoryTags
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Collectible, "ItemType.Collectible")
 	}
+
+	namespace CatalystTypes
+	{
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst,      "ItemType.Catalyst")
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Ore,  "ItemType.Catalyst.Ore")
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Wood, "ItemType.Catalyst.Wood")
+	}
 }

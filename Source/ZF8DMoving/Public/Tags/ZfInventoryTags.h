@@ -161,5 +161,24 @@ namespace ZfInventoryTags
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Collectible)
 	}
 
-	
+	// ----------------------------------------------------------
+	// CATALYST TYPES
+	// Tags para itens que funcionam como catalisadores em
+	// refinadoras — acceleram o tempo de refino.
+	//
+	// Hierarquia:
+	//   ItemType.Catalyst          → qualquer catalisador
+	//   ItemType.Catalyst.Ore      → catalisador para refinadora de minério
+	//   ItemType.Catalyst.Wood     → catalisador para refinadora de madeira
+	//
+	// O slot de catalisador da refinadora usa FGameplayTagQuery
+	// para filtrar quais catalisadores aceita.
+	// Ex: query "HasTag(ItemType.Catalyst.Ore)" aceita só catalisadores de minério.
+	// ----------------------------------------------------------
+	namespace CatalystTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Ore)
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Wood)
+	}
 }
