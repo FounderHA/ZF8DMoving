@@ -72,7 +72,7 @@ public:
 	
 	// Max Abilitity por Class
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SkillTree", meta = (ClampMin = "1"))
-	int32 MaxActiveAbilitySlots;
+	int32 MaxActiveSkillSlots;
 
 	// Attribute Modifiers
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Modifiers")

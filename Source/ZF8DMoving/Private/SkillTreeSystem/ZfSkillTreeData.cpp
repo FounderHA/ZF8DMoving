@@ -9,7 +9,7 @@ UZfSkillTreeNodeData* UZfSkillTreeData::FindNode(FName NodeID) const
 	if (UZfSkillTreeNodeData* Node = FindNodeInRegion(NoviceRegion, NodeID))
 		return Node;
 
-	for (const FAbilityTreeRegion& Region : ClassRegions)
+	for (const FSkillTreeRegion& Region : ClassRegions)
 	{
 		if (UZfSkillTreeNodeData* Node = FindNodeInRegion(Region, NodeID))
 			return Node;
@@ -29,7 +29,7 @@ TArray<UZfSkillTreeNodeData*> UZfSkillTreeData::GetAllNodes() const
 {
 	TArray<UZfSkillTreeNodeData*> AllNodes;
 
-	auto CollectFromRegion = [&](const FAbilityTreeRegion& Region)
+	auto CollectFromRegion = [&](const FSkillTreeRegion& Region)
 	{
 		for (UZfSkillTreeNodeData* Node : Region.Nodes)
 		{
@@ -38,14 +38,14 @@ TArray<UZfSkillTreeNodeData*> UZfSkillTreeData::GetAllNodes() const
 	};
 
 	CollectFromRegion(NoviceRegion);
-	for (const FAbilityTreeRegion& Region : ClassRegions)
+	for (const FSkillTreeRegion& Region : ClassRegions)
 		CollectFromRegion(Region);
 	CollectFromRegion(SpecialRegion);
 
 	return AllNodes;
 }
 
-UZfSkillTreeNodeData* UZfSkillTreeData::FindNodeInRegion(const FAbilityTreeRegion& Region, FName NodeID) const
+UZfSkillTreeNodeData* UZfSkillTreeData::FindNodeInRegion(const FSkillTreeRegion& Region, FName NodeID) const
 {
 	for (UZfSkillTreeNodeData* Node : Region.Nodes)
 	{

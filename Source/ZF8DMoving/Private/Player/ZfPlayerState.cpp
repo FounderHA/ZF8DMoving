@@ -181,24 +181,38 @@ void AZfPlayerState::Server_ResetAttributePoints_Implementation()
 	);
 }
 
-void AZfPlayerState::Server_UnlockAbilityNode_Implementation(const FName& NodeID)
+void AZfPlayerState::Server_UnlockSkillNode_Implementation(const FName& NodeID)
 {
-	if (NodeID.IsNone()) return;
- 
+	UE_LOG(LogTemp, Warning, TEXT("Server_UnlockSkillNode: NodeID=%s"), *NodeID.ToString());
+    
+	if (NodeID.IsNone()) { UE_LOG(LogTemp, Warning, TEXT("NodeID vazio")); return; }
+    
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
- 
-	SkillTreeComponent->UnlockNode(ASC, NodeID);
+	if (!ASC) { UE_LOG(LogTemp, Warning, TEXT("ASC nulo")); return; }
+
+	if (SkillTreeComponent->UnlockNode(ASC, NodeID))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnlockNode SUCCESS"));
+		Client_NotifySkillUpgraded(NodeID, 1);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnlockNode FALHOU"));
+	}
 }
  
-void AZfPlayerState::Server_UpgradeAbilityNode_Implementation(const FName& NodeID)
+void AZfPlayerState::Server_UpgradeSkillNode_Implementation(const FName& NodeID)
 {
 	if (NodeID.IsNone()) return;
- 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
- 
-	SkillTreeComponent->UpgradeNode(ASC, NodeID);
+
+	if (SkillTreeComponent->UpgradeNode(ASC, NodeID))
+	{
+		const int32 NewRank = SkillTreeComponent->GetNodeRank(NodeID);
+		Client_NotifySkillUpgraded(NodeID, NewRank);
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
 }
  
 void AZfPlayerState::Server_UnlockSubEffect_Implementation(const FName& NodeID, int32 SubEffectIndex)
@@ -219,22 +233,60 @@ void AZfPlayerState::Server_RespecAbilityTree_Implementation()
 	SkillTreeComponent->RespecTree(ASC);
 }
  
-void AZfPlayerState::Server_EquipAbilityInSlot_Implementation(const FName& NodeID, int32 SlotIndex)
+void AZfPlayerState::Server_EquipSkillInSlot_Implementation(const FName& NodeID, int32 SlotIndex)
 {
 	if (NodeID.IsNone()) return;
  
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	SkillTreeComponent->EquipAbilityInSlot(ASC, NodeID, SlotIndex);
+	if (SkillTreeComponent->EquipSkillInSlot(ASC, NodeID, SlotIndex))
+	{
+		// Notifica a widget do servidor — no cliente é notificado via OnRep_Loadout
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
 }
  
-void AZfPlayerState::Server_UnequipAbilityFromSlot_Implementation(int32 SlotIndex)
+void AZfPlayerState::Server_UnequipSkillFromSlot_Implementation(int32 SlotIndex)
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
  
-	SkillTreeComponent->UnequipAbilityFromSlot(SlotIndex);
+	if (SkillTreeComponent->UnequipSkillFromSlot(SlotIndex))
+	{
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
+}
+
+void AZfPlayerState::Server_EquipWeaponSkill_Implementation(const FName& NodeID, int32 SlotIndex)
+{
+	if (NodeID.IsNone()) return;
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	if (SkillTreeComponent->EquipWeaponSkill(ASC, NodeID, SlotIndex))
+	{
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
+}
+
+void AZfPlayerState::Server_UnequipWeaponSkill_Implementation(int32 SlotIndex)
+{
+	if (SkillTreeComponent->UnequipWeaponSkill(SlotIndex))
+	{
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
+}
+
+void AZfPlayerState::Client_NotifySkillUpgraded_Implementation(const FName& NodeID, int32 NewRank)
+{
+	if (SkillTreeComponent)
+	{
+		// Atualiza o rank diretamente no componente do cliente
+		SkillTreeComponent->SetNodeRankOnClient(NodeID, NewRank);
+		SkillTreeComponent->OnTreeStateChanged.Broadcast();
+	}
 }
 
 // =============================================================================
@@ -417,6 +469,38 @@ void AZfPlayerState::Client_ReceiveCraftResult_Implementation(const FZfCraftResu
 	OnCraftResultReceived.Broadcast(Result);
 }
 
+// =============================================================================
+// ROTEAMENTO PARA TRANSFERIR ITENS
+// =============================================================================
+
+void AZfPlayerState::Server_RequestAddItem_Implementation(UObject* TargetReceiver, UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
+{
+	if (!HasAuthority()) return;
+
+	if (!TargetReceiver)
+	{
+		UE_LOG(LogZfRefinery, Warning,
+			TEXT("AZfPlayerState::Server_RequestRefineryAddItem: TargetReceiver nulo."));
+		return;
+	}
+	Execute_AddItemToTargetInterface(TargetReceiver, ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
+}
+
+void AZfPlayerState::Server_RequestRemoveItem_Implementation(UObject* TargetReceiver, UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+	if (!HasAuthority()) return;
+
+	if (!TargetReceiver)
+	{
+		UE_LOG(LogZfRefinery, Warning,
+			TEXT("AZfPlayerState::Server_RequestRefineryAddItem: TargetReceiver nulo."));
+		return;
+	}
+	Execute_RemoveItemFromTargetInterface(TargetReceiver, ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+}
 
 // =====================================================================
 // UNIQUE ITEMS

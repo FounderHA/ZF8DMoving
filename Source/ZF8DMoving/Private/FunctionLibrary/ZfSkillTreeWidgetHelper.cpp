@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "FunctionLibrary/ZfAbilityTreeWidgetHelper.h"
+#include "FunctionLibrary/ZfSkillTreeWidgetHelper.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
@@ -15,14 +15,14 @@
 // Privados
 // =============================================================================
 
-UZfSkillTreeComponent* UZfAbilityTreeWidgetHelper::GetTreeComponent(APlayerState* PlayerState)
+UZfSkillTreeComponent* UZfSkillTreeWidgetHelper::GetTreeComponent(APlayerState* PlayerState)
 {
 	if (!PlayerState) return nullptr;
 	AZfPlayerState* ZfPS = Cast<AZfPlayerState>(PlayerState);
 	return ZfPS ? ZfPS->GetSkillTreeComponent() : nullptr;
 }
 
-UAbilitySystemComponent* UZfAbilityTreeWidgetHelper::GetASC(APlayerState* PlayerState)
+UAbilitySystemComponent* UZfSkillTreeWidgetHelper::GetASC(APlayerState* PlayerState)
 {
 	if (!PlayerState) return nullptr;
 	IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(PlayerState);
@@ -33,7 +33,7 @@ UAbilitySystemComponent* UZfAbilityTreeWidgetHelper::GetASC(APlayerState* Player
 // Tooltip — Nó
 // =============================================================================
 
-void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
+void UZfSkillTreeWidgetHelper::GetNodeTooltipData(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData,
 	FNodeTooltipData& OutData)
@@ -56,7 +56,7 @@ void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 	// ── Próximo rank para exibição do custo de ativação ───────────────────
 	// Se Maxed → mostra custo do rank atual (não tem próximo)
 	// Caso contrário → mostra custo do próximo rank
-	if (OutData.NodeState == EAbilityNodeState::Maxed)
+	if (OutData.NodeState == ESkillNodeState::Maxed)
 	{
 		OutData.NextRankForDisplay = OutData.CurrentRank;
 	}
@@ -69,27 +69,27 @@ void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 	// ── Custo em SP — depende do estado ──────────────────────────────────
 	switch (OutData.NodeState)
 	{
-		case EAbilityNodeState::Locked:
-		case EAbilityNodeState::Available:
+		case ESkillNodeState::Locked:
+		case ESkillNodeState::Available:
 			OutData.SkillPointCost = NodeData->UnlockCost;
 			break;
 
-		case EAbilityNodeState::Unlocked:
-		case EAbilityNodeState::AffordableUpgrade:
+		case ESkillNodeState::Unlocked:
+		case ESkillNodeState::AffordableUpgrade:
 			OutData.SkillPointCost = NodeData->GetRankUpCost(OutData.CurrentRank);
 			break;
 
-		case EAbilityNodeState::Maxed:
-		case EAbilityNodeState::Excluded:
+		case ESkillNodeState::Maxed:
+		case ESkillNodeState::Excluded:
 			OutData.SkillPointCost = 0;
 			break;
 	}
 
-	// ── Custos de ativação — apenas se a ability for ativa ────────────────
+	// ── Custos de ativação — apenas se a Skill for ativa ────────────────
 	OutData.ActivationCosts = NodeData->Costs;
 
 	// ── Requisitos não atendidos — apenas se Locked ───────────────────────
-	if (OutData.NodeState == EAbilityNodeState::Locked)
+	if (OutData.NodeState == ESkillNodeState::Locked)
 	{
 		FGameplayTagContainer PlayerTags;
 		ASC->GetOwnedGameplayTags(PlayerTags);
@@ -120,7 +120,7 @@ void UZfAbilityTreeWidgetHelper::GetNodeTooltipData(
 // Tooltip — Sub-efeito
 // =============================================================================
 
-void UZfAbilityTreeWidgetHelper::GetSubEffectTooltipData(
+void UZfSkillTreeWidgetHelper::GetSubEffectTooltipData(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex,
@@ -173,21 +173,62 @@ void UZfAbilityTreeWidgetHelper::GetSubEffectTooltipData(
 // Estado dos nós
 // =============================================================================
 
-EAbilityNodeState UZfAbilityTreeWidgetHelper::GetNodeState(
+ESkillNodeState UZfSkillTreeWidgetHelper::GetNodeState(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData)
 {
-	if (!PlayerState || !NodeData) return EAbilityNodeState::Locked;
+	if (!PlayerState || !NodeData) return ESkillNodeState::Locked;
 
 	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);
-	if (!TreeComp || !ASC) return EAbilityNodeState::Locked;
+	if (!TreeComp || !ASC) return ESkillNodeState::Locked;
 
 	const int32 CurrentRank = TreeComp->GetNodeRankFromASC(ASC, NodeData->NodeID);
 	return UZfSkillTreeComponent::DeriveNodeState(PlayerState, NodeData, CurrentRank);
 }
 
-int32 UZfAbilityTreeWidgetHelper::GetNodeRank(
+ESkillNodeState UZfSkillTreeWidgetHelper::GetRegionState(
+	APlayerState* PlayerState,
+	const FSkillTreeRegion& Region)
+{
+	if (!PlayerState) return ESkillNodeState::Locked;
+
+	// Região livre — sem requisito de classe
+	if (!Region.RequiredClassTag.IsValid())
+	{
+		return ESkillNodeState::Available;
+	}
+
+	UAbilitySystemComponent* ASC = GetASC(PlayerState);
+	if (!ASC) return ESkillNodeState::Locked;
+
+	// Personagem tem a tag da classe desta região → Available
+	if (ASC->HasMatchingGameplayTag(Region.RequiredClassTag))
+	{
+		return ESkillNodeState::Available;
+	}
+
+	// Verifica se o personagem já escolheu uma classe diferente → Excluded
+	const FGameplayTag ClassParentTag = FGameplayTag::RequestGameplayTag(FName("SkillTree.Class"));
+	const FGameplayTag NoviceTag = FGameplayTag::RequestGameplayTag(FName("SkillTree.Class.Novice"));
+
+	FGameplayTagContainer PlayerTags;
+	ASC->GetOwnedGameplayTags(PlayerTags);
+
+	FGameplayTagContainer PlayerClassTags = PlayerTags.Filter(FGameplayTagContainer(ClassParentTag));
+	PlayerClassTags.RemoveTag(NoviceTag);
+
+	// Tem tag de classe diferente → Excluded permanentemente
+	if (PlayerClassTags.Num() > 0)
+	{
+		return ESkillNodeState::Excluded;
+	}
+
+	// Ainda é Novice, não escolheu classe → Locked (pode chegar lá)
+	return ESkillNodeState::Locked;
+}
+
+int32 UZfSkillTreeWidgetHelper::GetNodeRank(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData)
 {
@@ -200,7 +241,7 @@ int32 UZfAbilityTreeWidgetHelper::GetNodeRank(
 	return TreeComp->GetNodeRankFromASC(ASC, NodeData->NodeID);
 }
 
-bool UZfAbilityTreeWidgetHelper::IsSubEffectUnlocked(
+bool UZfSkillTreeWidgetHelper::IsSubEffectUnlocked(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
@@ -215,7 +256,7 @@ bool UZfAbilityTreeWidgetHelper::IsSubEffectUnlocked(
 	return SubEffect.GrantedTag.IsValid() && ASC->HasMatchingGameplayTag(SubEffect.GrantedTag);
 }
 
-bool UZfAbilityTreeWidgetHelper::CanUnlockSubEffect(
+bool UZfSkillTreeWidgetHelper::CanUnlockSubEffect(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
@@ -233,12 +274,12 @@ bool UZfAbilityTreeWidgetHelper::CanUnlockSubEffect(
 // Helpers de custo e recurso
 // =============================================================================
 
-float UZfAbilityTreeWidgetHelper::GetCostForRank(const FAbilityCostData& CostData, int32 Rank)
+float UZfSkillTreeWidgetHelper::GetCostForRank(const FSkillCostData& CostData, int32 Rank)
 {
 	return CostData.GetCostForRank(Rank);
 }
 
-FText UZfAbilityTreeWidgetHelper::GetResourceTypeName(EResourceType ResourceType)
+FText UZfSkillTreeWidgetHelper::GetResourceTypeName(EResourceType ResourceType)
 {
 	switch (ResourceType)
 	{
@@ -249,7 +290,7 @@ FText UZfAbilityTreeWidgetHelper::GetResourceTypeName(EResourceType ResourceType
 	}
 }
 
-FLinearColor UZfAbilityTreeWidgetHelper::GetResourceTypeColor(EResourceType ResourceType)
+FLinearColor UZfSkillTreeWidgetHelper::GetResourceTypeColor(EResourceType ResourceType)
 {
 	switch (ResourceType)
 	{
@@ -260,21 +301,33 @@ FLinearColor UZfAbilityTreeWidgetHelper::GetResourceTypeColor(EResourceType Reso
 	}
 }
 
-float UZfAbilityTreeWidgetHelper::GetNodeStateMaterialValue(EAbilityNodeState NodeState)
+float UZfSkillTreeWidgetHelper::GetRegionStateMaterialValue(ESkillNodeState RegionState)
 {
-	switch (NodeState)
+	switch (RegionState)
 	{
-	case EAbilityNodeState::Locked:            return 0.f;
-	case EAbilityNodeState::Available:         return 1.f;
-	case EAbilityNodeState::Unlocked:          return 2.f;
-	case EAbilityNodeState::AffordableUpgrade: return 3.f;
-	case EAbilityNodeState::Maxed:             return 4.f;
-	case EAbilityNodeState::Excluded:          return 5.f;
-	default:                                   return 0.f;
+	case ESkillNodeState::Locked:    return 0.f;  // classe futura
+	case ESkillNodeState::Available: return 1.f;  // acessível
+	case ESkillNodeState::Excluded:  return 2.f;  // classe diferente
+	default:                         return 1.f;  // fallback → Available
 	}
 }
 
-float UZfAbilityTreeWidgetHelper::GetSubEffectStateMaterialValue(
+float UZfSkillTreeWidgetHelper::GetNodeStateMaterialValue(ESkillNodeState NodeState)
+{
+	switch (NodeState)
+	{
+	case ESkillNodeState::Locked:            return 0.f;
+	case ESkillNodeState::Available:         return 1.f;
+	case ESkillNodeState::Unlocked:          return 2.f;
+	case ESkillNodeState::Disabled:          return 3.f;
+	case ESkillNodeState::AffordableUpgrade: return 4.f;
+	case ESkillNodeState::Maxed:             return 5.f;
+	case ESkillNodeState::Excluded:          return 6.f;
+	default:                                 return 0.f;
+	}
+}
+
+float UZfSkillTreeWidgetHelper::GetSubEffectStateMaterialValue(
 	APlayerState* PlayerState,
 	UZfSkillTreeNodeData* NodeData,
 	int32 SubEffectIndex)
@@ -323,26 +376,45 @@ float UZfAbilityTreeWidgetHelper::GetSubEffectStateMaterialValue(
 // Slots
 // =============================================================================
 
-UZfSkillTreeNodeData* UZfAbilityTreeWidgetHelper::GetNodeDataForSlot(
+UZfSkillTreeNodeData* UZfSkillTreeWidgetHelper::GetNodeDataForSlot(
 	APlayerState* PlayerState,
 	int32 SlotIndex,
-	UZfSkillTreeData* AbilityTree)
+	UZfSkillTreeData* SkillTree)
 {
-	if (!PlayerState || !AbilityTree) return nullptr;
+	if (!PlayerState || !SkillTree) return nullptr;
 
 	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
 	if (!TreeComp) return nullptr;
 
-	const FAbilitySlotLoadout& Loadout = TreeComp->GetLoadout();
+	const FSkillSlotLoadout& Loadout = TreeComp->GetLoadout();
 	if (!Loadout.Slots.IsValidIndex(SlotIndex)) return nullptr;
 
 	const FName NodeID = Loadout.Slots[SlotIndex];
 	if (NodeID.IsNone()) return nullptr;
 
-	return AbilityTree->FindNode(NodeID);
+	return SkillTree->FindNode(NodeID);
 }
 
-bool UZfAbilityTreeWidgetHelper::IsSlotLocked(APlayerState* PlayerState, int32 SlotIndex)
+UZfSkillTreeNodeData* UZfSkillTreeWidgetHelper::GetNodeDataForWeaponSlot(
+	APlayerState* PlayerState,
+	int32 SlotIndex,
+	UZfSkillTreeData* SkillTree)
+{
+	if (!PlayerState || !SkillTree) return nullptr;
+
+	UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+	if (!TreeComp) return nullptr;
+
+	const TArray<FName>& WeaponSlots = TreeComp->GetWeaponLoadout();
+	if (!WeaponSlots.IsValidIndex(SlotIndex)) return nullptr;
+
+	const FName NodeID = WeaponSlots[SlotIndex];
+	if (NodeID.IsNone()) return nullptr;
+
+	return SkillTree->FindNode(NodeID);
+}
+
+bool UZfSkillTreeWidgetHelper::IsSlotLocked(APlayerState* PlayerState, int32 SlotIndex)
 {
 	if (!PlayerState) return true;
 
@@ -352,38 +424,98 @@ bool UZfAbilityTreeWidgetHelper::IsSlotLocked(APlayerState* PlayerState, int32 S
 	const UZfPrimaryDataAssetClass* ClassData = ZfPS->GetCharacterClassData();
 	if (!ClassData) return true;
 
-	return SlotIndex >= ClassData->MaxActiveAbilitySlots;
+	return SlotIndex >= ClassData->MaxActiveSkillSlots;
 }
 
-bool UZfAbilityTreeWidgetHelper::GetSlotCooldown(
+bool UZfSkillTreeWidgetHelper::GetSlotCooldown(
 	APlayerState* PlayerState,
 	int32 SlotIndex,
-	UZfSkillTreeData* AbilityTree,
+	UZfSkillTreeData* SkillTree,
 	float& OutTimeRemaining,
 	float& OutDuration)
 {
 	OutTimeRemaining = 0.f;
 	OutDuration = 0.f;
 
-	UZfSkillTreeNodeData* NodeData = GetNodeDataForSlot(PlayerState, SlotIndex, AbilityTree);
-	if (!NodeData || !NodeData->AbilityClass) return false;
+	UZfSkillTreeNodeData* NodeData = GetNodeDataForSlot(PlayerState, SlotIndex, SkillTree);
+	if (!NodeData) return false;
+
+	if (!NodeData->CooldownTag.IsValid()) return false;
 
 	UAbilitySystemComponent* ASC = GetASC(PlayerState);
 	if (!ASC) return false;
 
-	// Busca o spec da ability no ASC
-	FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromClass(NodeData->AbilityClass);
-	if (!Spec) return false;
+	FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(
+		FGameplayTagContainer(NodeData->CooldownTag));
 
-	UGameplayAbility* AbilityInstance = Spec->GetPrimaryInstance();
-	if (!AbilityInstance) return false;
+	TArray<float> Durations = ASC->GetActiveEffectsDuration(Query);
+	TArray<float> StartTimes = ASC->GetActiveEffectsTimeRemaining(Query);
 
-	// Consulta o cooldown via GAS nativo
-	const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
-	if (!ActorInfo) return false;
+	if (StartTimes.Num() == 0) return false;
 
-	AbilityInstance->GetCooldownTimeRemainingAndDuration(
-		Spec->Handle, ActorInfo, OutTimeRemaining, OutDuration);
+	OutTimeRemaining = StartTimes[0];
+	OutDuration = Durations[0];
 
 	return OutTimeRemaining > 0.f;
+}
+
+ESkillSlotState UZfSkillTreeWidgetHelper::GetSlotState(
+	APlayerState* PlayerState,
+	UZfSkillTreeNodeData* NodeData)
+{
+	if (!PlayerState || !NodeData) return ESkillSlotState::Normal;
+
+	UAbilitySystemComponent* ASC = GetASC(PlayerState);
+	if (!ASC) return ESkillSlotState::Normal;
+
+	// Active — buff ativo (prioridade máxima)
+	if (NodeData->BuffTag.IsValid() && ASC->HasMatchingGameplayTag(NodeData->BuffTag))
+	{
+		return ESkillSlotState::Active;
+	}
+
+	// OnCooldown
+	if (NodeData->CooldownTag.IsValid() && ASC->HasMatchingGameplayTag(NodeData->CooldownTag))
+	{
+		return ESkillSlotState::OnCooldown;
+	}
+
+	// NoResource — verifica cada custo contra atributos atuais
+	if (!NodeData->Costs.IsEmpty())
+	{
+		UZfSkillTreeComponent* TreeComp = GetTreeComponent(PlayerState);
+		const int32 CurrentRank = TreeComp ? TreeComp->GetNodeRankFromASC(ASC, NodeData->NodeID) : 1;
+
+		for (const FSkillCostData& Cost : NodeData->Costs)
+		{
+			if (!Cost.CostEffectClass) continue;
+
+			const float CostValue = Cost.GetCostForRank(CurrentRank);
+			if (CostValue <= 0.f) continue;
+
+			FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+			if (!ASC->CanApplyAttributeModifiers(
+				Cost.CostEffectClass->GetDefaultObject<UGameplayEffect>(),
+				static_cast<float>(CurrentRank),
+				Context))
+			{
+				return ESkillSlotState::NoResource;
+			}
+		}
+	}
+
+	return ESkillSlotState::Normal;
+}
+
+float UZfSkillTreeWidgetHelper::GetSlotStateMaterialValue(ESkillSlotState SlotState)
+{
+	switch (SlotState)
+	{
+	case ESkillSlotState::Normal:      return 0.f;
+	case ESkillSlotState::NoResource:  return 1.f;
+	case ESkillSlotState::OnCooldown:  return 2.f;
+	case ESkillSlotState::Executing:   return 3.f;
+	case ESkillSlotState::Active:      return 4.f;
+	default:                           return 0.f;
+	}
 }

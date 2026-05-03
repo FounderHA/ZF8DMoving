@@ -8,7 +8,7 @@
 #include "ZfSkillTreeTypes.generated.h"
 
 // =============================================================================
-// EAbilityNodeState
+// ESkillNodeState
 // =============================================================================
 
 /**
@@ -16,11 +16,12 @@
  * Nunca armazenado — sempre derivado em runtime por UZfSkillTreeComponent::DeriveNodeState.
  */
 UENUM(BlueprintType)
-enum class EAbilityNodeState : uint8
+enum class ESkillNodeState : uint8
 {
 	Locked              UMETA(DisplayName = "Locked"),
 	Available           UMETA(DisplayName = "Available"),
 	Unlocked            UMETA(DisplayName = "Unlocked"),
+	Disabled            UMETA(DisplayName = "Disabled"),
 	AffordableUpgrade   UMETA(DisplayName = "Affordable Upgrade"),
 	Maxed               UMETA(DisplayName = "Maxed"),
 	Excluded            UMETA(DisplayName = "Excluded"),
@@ -38,7 +39,7 @@ enum class ENodeRequerimentType : uint8
 };
 
 // =============================================================================
-// FAbilityTreeRegion
+// FSkillTreeRegion
 // =============================================================================
 
 /**
@@ -50,7 +51,7 @@ enum class ENodeRequerimentType : uint8
  *   Especial → nós de quest/evento, RequiredTags específicas por nó
  */
 USTRUCT(BlueprintType)
-struct FAbilityTreeRegion
+struct FSkillTreeRegion
 {
 	GENERATED_BODY()
 
@@ -61,6 +62,10 @@ struct FAbilityTreeRegion
 	/** Nome exibido na orb da tela principal. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Region")
 	FText DisplayName;
+	
+	// Icon do Orb
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Region")
+	TObjectPtr<UTexture2D> OrbIcon;
 
 	/**
 	 * Tag de classe necessária para acessar esta região.
@@ -109,7 +114,7 @@ struct FSubEffectIndexList
  *   UnlockedSubEffects → índices dos sub-efeitos desbloqueados por nó
  *
  * O que NÃO é salvo (derivado em runtime):
- *   EAbilityNodeState  → calculado por DeriveNodeState a cada consulta
+ *   ESkillNodeState  → calculado por DeriveNodeState a cada consulta
  *   SkillPoints        → vive no ProgressionAttributeSet (já replicado)
  *   Tags concedidas    → restauradas pelo RestoreFromSaveData via ASC
  */

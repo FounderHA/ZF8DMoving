@@ -16,17 +16,33 @@ UZfAbility_Passive::UZfAbility_Passive()
 }
 
 // =============================================================================
+// OnRemoveAbility — chamado pelo GAS ao revogar a ability do ASC
+// =============================================================================
+
+void UZfAbility_Passive::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
+{
+	// Remove o GE Infinite antes de revogar a ability.
+	// O GAS não remove GEs automaticamente ao revogar a ability.
+	if (PassiveEffectHandle.IsValid())
+	{
+		UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+		if (ASC)
+		{
+			ASC->RemoveActiveGameplayEffect(PassiveEffectHandle);
+			PassiveEffectHandle.Invalidate();
+		}
+	}
+
+	Super::OnRemoveAbility(ActorInfo, Spec);
+}
+
+// =============================================================================
 // OnGiveAbility — chamado pelo GAS ao conceder a ability ao ASC
 // =============================================================================
 
 void UZfAbility_Passive::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
-
-	UE_LOG(LogTemp, Warning, TEXT("OnGiveAbility: %s | IsNetAuthority: %s | IsActive: %s"),
-		*GetName(),
-		ActorInfo->IsNetAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-		IsActive() ? TEXT("YES") : TEXT("NO"));
 
 	if (!ActorInfo) return;
 	if (!ActorInfo->IsNetAuthority()) return;
@@ -54,11 +70,6 @@ void UZfAbility_Passive::ActivateAbility(
 
 	if (!PassiveEffect)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ActivateAbility: %s | IsNetAuthority: %s | PassiveEffectHandle valid: %s"),
-			*GetName(),
-				ActorInfo->IsNetAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-					PassiveEffectHandle.IsValid() ? TEXT("YES") : TEXT("NO"));
-		
 		UE_LOG(LogTemp, Warning,
 			TEXT("UZfAbility_Passive '%s': PassiveEffect não configurado. "
 				 "Configure no Blueprint filho."), *GetName());
