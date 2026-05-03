@@ -40,7 +40,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRecipeLearned, FGameplayTag, Reci
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCraftResultReceived, const FZfCraftResult&, Result);
 
 UCLASS()
-class ZF8DMOVING_API AZfPlayerState : public APlayerState, public IAbilitySystemInterface
+class ZF8DMOVING_API AZfPlayerState : public APlayerState, public IAbilitySystemInterface, public IZfInventoryReceiverInterface
 {
 	GENERATED_BODY()
 	
@@ -154,11 +154,11 @@ public:
 	
 	/** Desbloqueia um nó da skill tree. */
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
-	void Server_UnlockAbilityNode(const FName& NodeID);
+	void Server_UnlockSkillNode(const FName& NodeID);
  
 	/** Evolui um nó já desbloqueado da skill tree. */
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
-	void Server_UpgradeAbilityNode(const FName& NodeID);
+	void Server_UpgradeSkillNode(const FName& NodeID);
  
 	/** Desbloqueia um sub-efeito de um nó. */
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
@@ -170,11 +170,22 @@ public:
  
 	/** Equipa uma ability desbloqueada em um slot ativo. */
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
-	void Server_EquipAbilityInSlot(const FName& NodeID, int32 SlotIndex);
+	void Server_EquipSkillInSlot(const FName& NodeID, int32 SlotIndex);
  
 	/** Remove a ability de um slot ativo. */
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
-	void Server_UnequipAbilityFromSlot(int32 SlotIndex);
+	void Server_UnequipSkillFromSlot(int32 SlotIndex);
+
+	/** Equipa a skill de uma arma num slot de arma (0=primário, 1=secundário). */
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
+	void Server_EquipWeaponSkill(const FName& NodeID, int32 SlotIndex);
+
+	/** Remove a skill de arma de um slot de arma. */
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "SkillTree")
+	void Server_UnequipWeaponSkill(int32 SlotIndex);
+	
+	UFUNCTION(Client, Reliable, Category = "SkillTree")
+	void Client_NotifySkillUpgraded(const FName& NodeID, int32 NewRank);
 	
 	// =====================================================================
 	// CRAFT — RECEITAS CONHECIDAS
@@ -270,6 +281,19 @@ public:
 	/** Delegate disparada no cliente ao receber o resultado de um craft. */
 	UPROPERTY(BlueprintAssignable, Category = "Player|Craft")
 	FOnCraftResultReceived OnCraftResultReceived;
+	
+	// =============================================================================
+	// ROTEAMENTO PARA TRANSFERIR ITENS
+	// =============================================================================
+
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery")
+	void Server_RequestAddItem(UObject* TargetReceiver, UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery")
+	void Server_RequestRemoveItem(UObject* TargetReceiver, UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
 	// =====================================================================
 	// UNIQUE ITEMS

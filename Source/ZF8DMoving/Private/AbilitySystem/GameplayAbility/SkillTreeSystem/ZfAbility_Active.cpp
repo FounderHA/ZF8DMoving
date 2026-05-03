@@ -4,6 +4,10 @@
 
 #include "AbilitySystemComponent.h"
 #include "SkillTreeSystem/ZfSkillTreeNodeData.h"
+#include "SkillTreeSystem/ZfSkillAimIndicator.h"
+#include "SkillTreeSystem/ZfSkillTreeComponent.h"
+#include "Player/ZfPlayerState.h"
+#include "GameFramework/Pawn.h"
 #include "Tags/ZfGameplayTags.h"
 
 UZfAbility_Active::UZfAbility_Active()
@@ -24,6 +28,11 @@ bool UZfAbility_Active::CheckCost(
 	const FGameplayAbilityActorInfo* ActorInfo,
 	FGameplayTagContainer* OptionalRelevantTags) const
 {
+	// Guard de segurança — bloqueia ativação se atributos não atendem
+	// os requisitos mínimos do nó. Caso principal é tratado pelo
+	// OnRequiredAttributeChanged que desequipa o slot automaticamente.
+	if (!AreAttributeRequirementsMet(ActorInfo)) return false;
+
 	// Sem NodeData — sem custo, libera ativação
 	if (!NodeData) return true;
 
@@ -32,7 +41,7 @@ bool UZfAbility_Active::CheckCost(
 
 	const int32 CurrentRank = GetAbilityLevel();
 
-	for (const FAbilityCostData& Cost : NodeData->Costs)
+	for (const FSkillCostData& Cost : NodeData->Costs)
 	{
 		if (!Cost.CostEffectClass) continue;
 
@@ -82,7 +91,7 @@ void UZfAbility_Active::ApplyCost(
 
 	const int32 CurrentRank = GetAbilityLevel();
 
-	for (const FAbilityCostData& Cost : NodeData->Costs)
+	for (const FSkillCostData& Cost : NodeData->Costs)
 	{
 		if (!Cost.CostEffectClass) continue;
 
@@ -108,6 +117,41 @@ void UZfAbility_Active::ApplyCost(
 
 		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 	}
+}
+
+// =============================================================================
+// ApplyCooldown — aplica GE de cooldown com duração do NodeData
+// =============================================================================
+
+void UZfAbility_Active::ApplyCooldown(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	// Sem NodeData ou sem GE de cooldown — sem cooldown
+	if (!NodeData || !GetCooldownGameplayEffect()) return;
+
+	const int32 CurrentRank = GetAbilityLevel();
+	const float Duration = NodeData->GetCooldownDuration(CurrentRank);
+
+	// Duração zero ou negativa — sem cooldown para este rank
+	if (Duration <= 0.f) return;
+
+	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(
+		Handle, ActorInfo, ActivationInfo,
+		GetCooldownGameplayEffect()->GetClass(),
+		static_cast<float>(CurrentRank));
+
+	if (!Spec.IsValid()) return;
+
+	// Passa a duração dinamicamente via SetByCaller.
+	// O GE de cooldown deve usar Duration Policy: Has Duration
+	// com Magnitude: SetByCaller e tag Cooldown.Duration.
+	Spec.Data->SetSetByCallerMagnitude(
+		ZfAbilityTreeTags::Cooldown_Duration,
+		Duration);
+
+	ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 }
 
 // =============================================================================
@@ -148,4 +192,129 @@ void UZfAbility_Active::ActivateAbility(
 
 	// Blueprint implementa a lógica da ability aqui
 	OnAbilityActivated(Handle, *ActorInfo, ActivationInfo);
+}
+// =============================================================================
+// Targeting em runtime
+// =============================================================================
+
+float UZfAbility_Active::GetEffectiveAimRadius_Implementation() const
+{
+	// Fallback: valor base do NodeData para o rank atual.
+	// Override no Blueprint filho para aplicar modificadores de sub-efeito.
+	if (!NodeData) return 300.f;
+	return NodeData->GetAimRadiusForRank(GetAbilityLevel());
+}
+
+float UZfAbility_Active::GetEffectiveMaxRange_Implementation() const
+{
+	// Fallback: valor base do NodeData para o rank atual.
+	// Override no Blueprint filho para aplicar modificadores de sub-efeito.
+	if (!NodeData) return 1500.f;
+	return NodeData->GetMaxRangeForRank(GetAbilityLevel());
+}
+
+// =============================================================================
+// AimMode
+// =============================================================================
+
+void UZfAbility_Active::EnterAimMode()
+{
+	const FGameplayAbilityActorInfo* ActorInfo = GetCurrentActorInfo();
+	if (!ActorInfo) return;
+
+	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+	if (!ASC) return;
+
+	// Guard: ja esta em AimMode
+	if (IsValid(ActiveAimIndicator)) return;
+
+	// Adiciona tag ao ASC — BP_PlayerController intercepta
+	// WeaponPrimary e ESC enquanto esta tag estiver ativa
+	ASC->AddLooseGameplayTag(ZfAbilityTreeTags::SkillTree_AimMode_Active);
+
+	// Spawna o indicador apenas se configurado e apenas no cliente local
+	// O servidor nunca spawna o indicador — puramente visual
+	if (!AimIndicatorClass) return;
+
+	AActor* AvatarActor = ActorInfo->AvatarActor.Get();
+	if (!AvatarActor) return;
+
+	// Apenas o owning client spawna o indicador
+	const ENetRole LocalRole = AvatarActor->GetLocalRole();
+	if (LocalRole != ROLE_AutonomousProxy && !AvatarActor->HasAuthority())
+	{
+		// Simulated proxy — sem indicador
+		return;
+	}
+
+	// Spawna no origin do avatar — InitializeIndicator posiciona corretamente
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = AvatarActor;
+	SpawnParams.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	ActiveAimIndicator = AvatarActor->GetWorld()->SpawnActor<AZfSkillAimIndicator>(
+		AimIndicatorClass,
+		AvatarActor->GetActorLocation(),
+		FRotator::ZeroRotator,
+		SpawnParams);
+
+	if (!IsValid(ActiveAimIndicator)) return;
+
+	// Inicializa com os valores efetivos do rank e sub-efeitos atuais.
+	// O tipo do indicador e definido pelo Blueprint filho via EditDefaultsOnly —
+	// BP_AimIndicator_GroundCircle configura GroundCircle,
+	// BP_AimIndicator_Reticle configura Reticle.
+	APawn* OwnerPawn = Cast<APawn>(AvatarActor);
+	ActiveAimIndicator->InitializeIndicator(
+		GetEffectiveMaxRange(),
+		GetEffectiveAimRadius(),
+		ActiveAimIndicator->IndicatorType,
+		OwnerPawn);
+
+	// Registra no SkillTreeComponent para que o BP_PlayerController
+	// possa acessar HitLocation/HitNormal e NodeID sem referência direta à GA
+	if (OwnerPawn)
+	{
+		if (AZfPlayerState* PS = OwnerPawn->GetPlayerState<AZfPlayerState>())
+		{
+			if (UZfSkillTreeComponent* TreeComp = PS->GetSkillTreeComponent())
+			{
+				const FName NodeID = NodeData ? NodeData->NodeID : NAME_None;
+				TreeComp->SetActiveAimIndicator(ActiveAimIndicator, NodeID);
+			}
+		}
+	}
+}
+
+void UZfAbility_Active::ExitAimMode()
+{
+	const FGameplayAbilityActorInfo* ActorInfo = GetCurrentActorInfo();
+	if (!ActorInfo) return;
+
+	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+	if (ASC)
+	{
+		// Remove a tag — BP_PlayerController volta ao comportamento normal
+		ASC->RemoveLooseGameplayTag(ZfAbilityTreeTags::SkillTree_AimMode_Active);
+	}
+
+	// Limpa a referência no SkillTreeComponent antes de destruir o indicador
+	if (IsValid(ActiveAimIndicator))
+	{
+		AActor* AvatarActor = ActorInfo->AvatarActor.Get();
+		if (APawn* OwnerPawn = Cast<APawn>(AvatarActor))
+		{
+			if (AZfPlayerState* PS = OwnerPawn->GetPlayerState<AZfPlayerState>())
+			{
+				if (UZfSkillTreeComponent* TreeComp = PS->GetSkillTreeComponent())
+				{
+					TreeComp->ClearActiveAimIndicator();
+				}
+			}
+		}
+
+		ActiveAimIndicator->Destroy();
+		ActiveAimIndicator = nullptr;
+	}
 }

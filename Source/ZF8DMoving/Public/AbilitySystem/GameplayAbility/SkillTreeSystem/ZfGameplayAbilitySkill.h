@@ -47,4 +47,11 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TObjectPtr<UZfSkillTreeNodeData> NodeData;
+
+	/**
+	 * Verifica se os AttributeRequirements do NodeData estão todos atendidos.
+	 * Usado por CheckCost das abilities ativas como guard de segurança.
+	 * Retorna true se NodeData for nulo (sem requisitos = sempre atendido).
+	 */
+	bool AreAttributeRequirementsMet(const FGameplayAbilityActorInfo* ActorInfo) const;
 };

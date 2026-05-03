@@ -94,6 +94,10 @@ void AZfPlayerCharacter::InitAbilityActorInfo()
 	// Cliente    → escuta tags quando chegam replicadas do servidor
 	if (UZfSkillTreeComponent* TreeComp = ZfPlayerState->GetSkillTreeComponent())
 	{
+		//
+		UE_LOG(LogTemp, Warning, TEXT("InitializeTagListeners chamado. Authority: %s"),
+			HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+		//
 		TreeComp->InitializeTagListeners(ZfPlayerState->GetAbilitySystemComponent());
 	}
 }
