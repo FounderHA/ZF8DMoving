@@ -15,6 +15,18 @@ class ZF8DMOVING_API IZfInventoryReceiverInterface
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|Inventory")
-	void QuickTransferItemFromInventory(UZfItemInstance* ItemInstance, int32 FromInventorySlot, UZfInventoryComponent* InventoryComponent);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|DragDrop")
+	void AddItemToTargetInterface(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|DragDrop")
+	void RemoveItemFromTargetInterface(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|DragDrop")
+	bool CanITransferBack(UZfItemInstance* InItemInstance,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 };

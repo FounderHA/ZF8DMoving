@@ -275,7 +275,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
     TArray<FZfItemAttributeValue> GetItemAttributes() const { return ItemAttributes; }
 
-    
+    UFUNCTION(BlueprintCallable, Category = "Zf|ItemInstance")
+    UZfItemInstance* CreateShallowCopy(int32 OverrideStack) const;
 
     // Inicializa o ItemInstance com sua definição e tier.
     // Gera o GUID único, copia os dados base do ItemDefinition

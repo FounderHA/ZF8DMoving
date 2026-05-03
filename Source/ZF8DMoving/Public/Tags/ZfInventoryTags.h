@@ -116,6 +116,7 @@ namespace ZfInventoryTags
 	namespace CraftMaterialTypes
 	{
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial)
+		
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial_RawOre_Bronze)
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial_RawOre_Iron)
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial_RawOre_Silver)
@@ -134,6 +135,21 @@ namespace ZfInventoryTags
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial_Wood_DarkLog)
 		
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(CraftMaterial_Planks_DarkPlanks)
+	}
+
+	namespace CatalystTypes
+	{
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst)
+		
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Forge_1)
+		
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Sawmill_1)
+		
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Jeweler_1)
+		
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Tannery_1)
+		
+		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Alchemist_1)
 	}
 	
 	namespace RecipeTypes
@@ -159,26 +175,5 @@ namespace ZfInventoryTags
 	namespace CollectibleTypes
 	{
 		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Collectible)
-	}
-
-	// ----------------------------------------------------------
-	// CATALYST TYPES
-	// Tags para itens que funcionam como catalisadores em
-	// refinadoras — acceleram o tempo de refino.
-	//
-	// Hierarquia:
-	//   ItemType.Catalyst          → qualquer catalisador
-	//   ItemType.Catalyst.Ore      → catalisador para refinadora de minério
-	//   ItemType.Catalyst.Wood     → catalisador para refinadora de madeira
-	//
-	// O slot de catalisador da refinadora usa FGameplayTagQuery
-	// para filtrar quais catalisadores aceita.
-	// Ex: query "HasTag(ItemType.Catalyst.Ore)" aceita só catalisadores de minério.
-	// ----------------------------------------------------------
-	namespace CatalystTypes
-	{
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Ore)
-		ZF8DMOVING_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Catalyst_Wood)
 	}
 }

@@ -118,6 +118,21 @@ namespace ZfInventoryTags
 		
 		UE_DEFINE_GAMEPLAY_TAG(CraftMaterial_Planks_DarkPlanks, "ItemType.CraftMaterial.Planks.DarkPlanks")
 	}
+
+	namespace CatalystTypes
+	{
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst, "ItemType.Catalyst")
+		
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Forge_1, "ItemType.Catalyst.Forge.1")
+		
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Sawmill_1, "ItemType.Catalyst.Sawmill.1")
+		
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Jeweler_1, "ItemType.Catalyst.Jeweler.1")
+		
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Tannery_1, "ItemType.Catalyst.Tannery.1")
+		
+		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Alchemist_1, "ItemType.Catalyst.Alchemist.1")
+	}
 	
 	namespace RecipeTypes
 	{
@@ -142,12 +157,5 @@ namespace ZfInventoryTags
 	namespace CollectibleTypes
 	{
 		UE_DEFINE_GAMEPLAY_TAG(Collectible, "ItemType.Collectible")
-	}
-
-	namespace CatalystTypes
-	{
-		UE_DEFINE_GAMEPLAY_TAG(Catalyst,      "ItemType.Catalyst")
-		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Ore,  "ItemType.Catalyst.Ore")
-		UE_DEFINE_GAMEPLAY_TAG(Catalyst_Wood, "ItemType.Catalyst.Wood")
 	}
 }

@@ -53,7 +53,6 @@
 #include "ZfRefineryTypes.h"
 #include "Components/ActorComponent.h"
 #include "Net/Serialization/FastArraySerializer.h"
-#include "Systems/RefinerySystem/ZfRefineryTypes.h"
 #include "Inventory/ZfInventoryReceiverInterface.h"
 #include "ZfRefineryComponent.generated.h"
 
@@ -64,20 +63,6 @@ class UZfItemInstance;
 class UZfItemDefinition;
 class UZfFragment_Catalyst;
 class UZfInventoryComponent;
-
-
-// ============================================================
-// TIPO DE SLOT — identifica o SlotList e seus efeitos colaterais
-// ============================================================
-
-UENUM(BlueprintType)
-enum class EZfRefinerySlotType : uint8
-{
-	Input,
-	Output,
-	Catalyst
-};
-
 
 // ============================================================
 // FAST ARRAY — SLOT DE REFINARIA
@@ -144,8 +129,9 @@ struct TStructOpsTypeTraits<FZfRefinerySlotList> : public TStructOpsTypeTraitsBa
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRefineryStateChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRefineryCycleCompleted, UZfRefineryRecipe*, Recipe);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCatalystConsumed, float, NewSpeedMultiplier);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefinerySlotChanged, UZfItemInstance*, ItemInstance, int32, SlotIndex);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefineryItemRemoved, EZfRefinerySlotType, SlotType, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRefinerySlotChanged, EZfRefinerySlotType, SlotType, UZfItemInstance*, ItemInstance, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRefineryItemAdded, EZfRefinerySlotType, SlotType, UZfItemInstance*, ItemInstance, int32, SlotIndex);
 
 // ============================================================
 // UZfRefineryComponent
@@ -160,8 +146,19 @@ public:
 
 	UZfRefineryComponent();
 
-	virtual void QuickTransferItemFromInventory_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, UZfInventoryComponent* InventoryComponent) override;
+protected:
 
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void AddItemToTargetInterface_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
+	virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+	
+public:
+	
 	// ============================================================
 	// CONFIGURAÇÃO
 	// ============================================================
@@ -185,43 +182,25 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Refinery|Events")
 	FOnRefinerySlotChanged OnRefinerySlotChanged;
 
-	// ============================================================
-	// API PÚBLICA — SLOTS (genéricas, servidor apenas)
-	// ============================================================
+	UPROPERTY(BlueprintAssignable, Category = "Refinery|Events")
+	FOnRefinerySlotChanged OnRefineryItemAdded;
 
-	// Tenta inserir um item no slot especificado de qualquer SlotList.
-	// Trata stackable, overflow e sincronização com o inventário do player.
-	// @param SlotIndex     — índice alvo; INDEX_NONE = primeiro slot vazio disponível
-	// @param InventoryComp — inventário de origem (opcional); usado para debitar o stack
-	UFUNCTION(BlueprintCallable, Category = "Zf|Refinery")
-	bool TryAddItem(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance, int32 SlotIndex, UZfInventoryComponent* InventoryComp = nullptr);
-
-	// Remove o item de um slot. Aciona efeitos colaterais conforme o SlotType:
-	// Input    → para o refino se a receita ativa não puder mais ser satisfeita
-	// Output   → tenta retomar o refino pausado por output cheio
-	// Catalyst → reseta o boost imediatamente
-	UFUNCTION(BlueprintCallable, Category = "Zf|Refinery")
-	bool TryRemoveItem(FZfRefinerySlotList& SlotList, int32 SlotIndex);
-
-	// Tenta transferir um item do slot para o inventário do player (TryAddPartial).
-	// Se tudo coube, remove o slot. Se sobrou, atualiza o CurrentStack no slot.
-	// Retorna true se pelo menos parte foi transferida.
-	UFUNCTION(BlueprintCallable, Category = "Zf|Refinery")
-	bool TryTransferToInventory(FZfRefinerySlotList& SlotList, int32 SlotIndex, UZfInventoryComponent* InventoryComp);
-
+	UPROPERTY(BlueprintAssignable, Category = "Refinery|Events")
+	FOnRefineryItemRemoved OnRefineryItemRemoved;
+	
 	// ============================================================
 	// SERVER RPCs — SLOTS
 	// ============================================================
 
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery|RPC")
-	void ServerTryAddItem(EZfRefinerySlotType SlotType, UZfItemInstance* ItemInstance, int32 SlotIndex, UZfInventoryComponent* InventoryComp);
+	void ServerTryAddItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery|RPC")
-	void ServerTryRemoveItem(EZfRefinerySlotType SlotType, int32 SlotIndex);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery|RPC")
-	void ServerTryTransferToInventory(EZfRefinerySlotType SlotType, int32 SlotIndex, UZfInventoryComponent* InventoryComp);
-
+	void ServerTryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	
 	// ============================================================
 	// SERVER RPCs — FILA MANUAL DE RECEITAS
 	// ============================================================
@@ -232,6 +211,26 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery|RPC")
 	void ServerTryClearManualRecipeQueue();
 
+	// ============================================================
+	// API PÚBLICA — SLOTS (genéricas, servidor apenas)
+	// ============================================================
+
+	// Tenta inserir um item no slot especificado de qualquer SlotList.
+	// Trata stackable, overflow e sincronização com o inventário do player.
+	// @param SlotIndex     — índice alvo; INDEX_NONE = primeiro slot vazio disponível
+	// @param InventoryComp — inventário de origem (opcional); usado para debitar o stack
+	UFUNCTION(Category = "Zf|Refinery")
+	void TryAddItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
+
+	// Tenta Remover quantidade do Item, se for tudo, remove Item.
+	// @param OriginalSlotIndexBeforeSplit — slot de origem antes do Split
+	// @param Amount        — quantidade a separar do stack original
+	UFUNCTION(Category = "Zf|Inventory")
+	void TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	
 	// ============================================================
 	// API PÚBLICA — FILA MANUAL DE RECEITAS
 	// ============================================================
@@ -284,11 +283,10 @@ public:
 	// Retorna o overflow (quantidade que não coube). 0 = tudo coube.
 	UFUNCTION(BlueprintCallable, Category = "Zf|Refinery")
 	int32 TryAddToStack(FZfRefinerySlotList& SlotList, int32 SlotIndex, int32 Amount);
-
 	
 	// Verifica se SlotList é Compativel
 	UFUNCTION(BlueprintCallable, Category = "Zf|Refinery")
-	bool IsItemAllowedAt(FZfRefinerySlotList& SlotList, const FGameplayTagContainer& ItemTags, UZfItemInstance* ItemInstance) const;
+	bool IsItemAllowedAt(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance) const;
 	
 	
 
@@ -305,10 +303,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Zf|Refinery|Query")
 	FZfRefinerySlotList& GetCatalystSlots() { return CatalystSlots; }
 
-protected:
 
-	virtual void BeginPlay() override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
 
@@ -409,7 +404,7 @@ private:
 
 	// Tenta empilhar o item em stacks existentes do mesmo tipo no SlotList.
 	// Retorna true se o item foi completamente absorvido (sem overflow).
-	bool InternalTryStackWithExistingItems(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance);
+	int32 InternalTryStackWithExistingItems(FZfRefinerySlotList& SlotList, const UZfItemInstance* ItemInstance, int32 AmountToRemove);
 
 	// Conta quantos itens de um tipo específico existem no input.
 	int32 CountItemsInInput(const UZfItemDefinition* ItemDef) const;
