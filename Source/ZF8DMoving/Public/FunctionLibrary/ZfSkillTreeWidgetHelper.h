@@ -6,7 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SkillTreeSystem/ZfSkillTreeTypes.h"
 #include "SkillTreeSystem/ZfSkillTreeNodeData.h"
-#include "ZfAbilityTreeWidgetHelper.generated.h"
+#include "ZfSkillTreeWidgetHelper.generated.h"
 
 class UZfSkillTreeComponent;
 class APlayerState;
@@ -28,11 +28,11 @@ struct FNodeTooltipData
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
 	TObjectPtr<UTexture2D> Icon;
 
-	/** Nome da ability. */
+	/** Nome da Skill. */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
 	FText DisplayName;
 
-	/** Descrição da ability. */
+	/** Descrição da Skill. */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
 	FText Description;
 
@@ -44,14 +44,14 @@ struct FNodeTooltipData
 	 * Próximo rank — usado para calcular o custo de ativação a exibir.
 	 * = CurrentRank + 1 se não estiver no máximo.
 	 * = CurrentRank se já estiver no máximo (Maxed).
-	 * A widget usa GetCostForRank(NextRankForDisplay) em cada FAbilityCostData.
+	 * A widget usa GetCostForRank(NextRankForDisplay) em cada FSkillCostData.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
 	int32 NextRankForDisplay = 1;
 
 	/** Estado atual do nó — define qual custo exibir. */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
-	EAbilityNodeState NodeState = EAbilityNodeState::Locked;
+	ESkillNodeState NodeState = ESkillNodeState::Locked;
 
 	/**
 	 * Custo a exibir em SP.
@@ -65,10 +65,10 @@ struct FNodeTooltipData
 	/**
 	 * Custos de ativação do próximo rank.
 	 * Use GetCostForRank(NextRankForDisplay) em cada entry para obter o valor.
-	 * Vazio se a ability for passiva.
+	 * Vazio se a Skill for passiva.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
-	TArray<FAbilityCostData> ActivationCosts;
+	TArray<FSkillCostData> ActivationCosts;
 
 	/** Requisitos de atributo não atendidos — só exibidos se Locked. */
 	UPROPERTY(BlueprintReadOnly, Category = "Tooltip")
@@ -144,7 +144,31 @@ struct FSubEffectTooltipData
 };
 
 // =============================================================================
-// UZfAbilityTreeWidgetHelper
+// ESkillSlotState
+// =============================================================================
+
+/**
+ * Estado visual de uma skill equipada no slot.
+ * Nunca armazenado — sempre derivado em runtime.
+ *
+ * Normal      → skill disponível para uso
+ * NoResource  → sem mana/stamina/vida suficiente
+ * OnCooldown  → em cooldown
+ * Executing   → sendo executada agora
+ * Active      → buff ativo (animação inversa ao cooldown)
+ */
+UENUM(BlueprintType)
+enum class ESkillSlotState : uint8
+{
+	Normal      UMETA(DisplayName = "Normal"),
+	NoResource  UMETA(DisplayName = "No Resource"),
+	OnCooldown  UMETA(DisplayName = "On Cooldown"),
+	Executing   UMETA(DisplayName = "Executing"),
+	Active      UMETA(DisplayName = "Active"),
+};
+
+// =============================================================================
+// UZfSkillTreeWidgetHelper
 // =============================================================================
 
 /**
@@ -156,7 +180,7 @@ struct FSubEffectTooltipData
  * Todas as funções são BlueprintCallable e recebem o PlayerState como contexto.
  */
 UCLASS()
-class ZF8DMOVING_API UZfAbilityTreeWidgetHelper : public UBlueprintFunctionLibrary
+class ZF8DMOVING_API UZfSkillTreeWidgetHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -200,9 +224,24 @@ public:
 	 * Wrapper de UZfSkillTreeComponent::DeriveNodeState acessível no Blueprint.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
-	static EAbilityNodeState GetNodeState(
+	static ESkillNodeState GetNodeState(
 		APlayerState* PlayerState,
 		UZfSkillTreeNodeData* NodeData);
+	
+	/**
+	* Retorna o estado visual de uma região para a WBP_RegionOrb.
+	*
+	* Available → região livre (Novice/Special) ou personagem tem a tag da classe
+	* Locked    → região de classe que o personagem ainda não atingiu
+	* Excluded  → região de classe diferente da escolhida permanentemente
+	*
+	* @param PlayerState  PlayerState do personagem local
+	* @param Region       Dados da região a verificar
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
+	static ESkillNodeState GetRegionState(
+		APlayerState* PlayerState,
+		const FSkillTreeRegion& Region);
 
 	/**
 	 * Retorna o rank atual de um nó.
@@ -234,35 +273,46 @@ public:
 	// ── Slots ─────────────────────────────────────────────────────────────
 
 	/**
-	 * Retorna o NodeData da ability equipada num slot.
+	 * Retorna o NodeData da Skill equipada num slot.
 	 * Retorna nullptr se o slot estiver vazio ou bloqueado.
 	 *
 	 * @param PlayerState  PlayerState do personagem local
 	 * @param SlotIndex    Índice do slot (0-based)
-	 * @param AbilityTree  Data Asset da tree (para lookup do NodeID)
+	 * @param SkillTree  Data Asset da tree (para lookup do NodeID)
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static UZfSkillTreeNodeData* GetNodeDataForSlot(
 		APlayerState* PlayerState,
 		int32 SlotIndex,
-		UZfSkillTreeData* AbilityTree);
+		UZfSkillTreeData* SkillTree);
+
+	/**
+	 * Retorna o NodeData da skill equipada num slot de arma.
+	 * Slot 0 = botão primário, Slot 1 = botão secundário.
+	 * Retorna nullptr se o slot estiver vazio.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
+	static UZfSkillTreeNodeData* GetNodeDataForWeaponSlot(
+		APlayerState* PlayerState,
+		int32 SlotIndex,
+		UZfSkillTreeData* SkillTree);
 
 	/**
 	 * Retorna true se o slot está bloqueado para a classe atual.
-	 * SlotIndex >= MaxActiveAbilitySlots da classe → bloqueado.
+	 * SlotIndex >= MaxActiveSkillSlots da classe → bloqueado.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
 	static bool IsSlotLocked(APlayerState* PlayerState, int32 SlotIndex);
 
 	/**
 	 * Retorna o custo de ativação de um recurso para o rank informado.
-	 * Wrapper de FAbilityCostData::GetCostForRank acessível no Blueprint.
+	 * Wrapper de FSkillCostData::GetCostForRank acessível no Blueprint.
 	 *
 	 * @param CostData  Entry de custo do NodeData->Costs
 	 * @param Rank      Rank a consultar (use NextRankForDisplay do TooltipData)
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
-	static float GetCostForRank(const FAbilityCostData& CostData, int32 Rank);
+	static float GetCostForRank(const FSkillCostData& CostData, int32 Rank);
 
 	/**
 	 * Retorna o nome do tipo de recurso para exibição na UI.
@@ -279,20 +329,62 @@ public:
 	static FLinearColor GetResourceTypeColor(EResourceType ResourceType);
 
 	/**
+	* Retorna o valor float para o parâmetro escalar "RegionState" do material da orb.
+	* Configure o material para interpretar:
+	*   0.0 = Locked    → dessaturado + cadeado (classe futura)
+	*   1.0 = Available → cor normal (região acessível)
+	*   2.0 = Excluded  → muito escuro + rachaduras (classe diferente)
+	*
+	* Uso no Blueprint:
+	*   GetRegionState → GetRegionStateMaterialValue → Set Scalar Parameter Value (RegionState)
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
+	static float GetRegionStateMaterialValue(ESkillNodeState RegionState);
+	
+	/**
 	* Retorna o valor float para o parâmetro escalar "NodeState" do material do nó.
 	* Configure o material para interpretar:
 	*   0.0 = Locked
-	 *   1.0 = Available
+	*   1.0 = Available
 	*   2.0 = Unlocked
-	*   3.0 = AffordableUpgrade
-	*   4.0 = Maxed
-	*   5.0 = Excluded
+	*   3.0 = Disabled
+	*   4.0 = AffordableUpgrade
+	*   5.0 = Maxed
+	*   6.0 = Excluded
 	*
 	* Uso no Blueprint:
 	*   GetNodeState → GetNodeStateMaterialValue → Set Scalar Parameter Value (NodeState)
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
+	static float GetNodeStateMaterialValue(ESkillNodeState NodeState);
+
+	/**
+	 * Retorna o estado visual de uma skill equipada no slot.
+	 * Análogo ao GetNodeState mas para o slot — derivado em runtime.
+	 * Usado pelo WBP_SkillSlot para material e para verificar se pode arrastar.
+	 *
+	 * @param PlayerState  PlayerState do personagem local
+	 * @param NodeData     NodeData da skill equipada no slot
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
-	static float GetNodeStateMaterialValue(EAbilityNodeState NodeState);
+	static ESkillSlotState GetSlotState(
+		APlayerState* PlayerState,
+		UZfSkillTreeNodeData* NodeData);
+
+	/**
+	 * Retorna o valor float para o parâmetro escalar "SlotState" do M_SkillSlot_Icon.
+	 * Configure o material para interpretar:
+	 *   0.0 = Normal
+	 *   1.0 = NoResource
+	 *   2.0 = OnCooldown
+	 *   3.0 = Executing
+	 *   4.0 = Active
+	 *
+	 * Uso no Blueprint:
+	 *   GetSlotState → GetSlotStateMaterialValue → Set Scalar Parameter Value (SlotState)
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
+	static float GetSlotStateMaterialValue(ESkillSlotState SlotState);
 	
 	/**
 	* Retorna o valor float para o parâmetro escalar "SubEffectState" do material do sub-efeito.
@@ -307,18 +399,15 @@ public:
 	* @param SubEffectIndex  Índice em NodeData->SubEffects
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SkillTree|Widget")
-	static float GetSubEffectStateMaterialValue(
-		APlayerState* PlayerState,
-		UZfSkillTreeNodeData* NodeData,
-		int32 SubEffectIndex);
+	static float GetSubEffectStateMaterialValue(APlayerState* PlayerState, UZfSkillTreeNodeData* NodeData, int32 SubEffectIndex);
 	
 	/**
-	 * Retorna o tempo restante e a duração total do cooldown de uma ability num slot.
-	 * Retorna false se a ability não estiver em cooldown.
+	 * Retorna o tempo restante e a duração total do cooldown de uma Skill num slot.
+	 * Retorna false se a Skill não estiver em cooldown.
 	 *
 	 * @param PlayerState      PlayerState do personagem local
 	 * @param SlotIndex        Índice do slot
-	 * @param AbilityTree      Data Asset da tree
+	 * @param SkillTree      Data Asset da tree
 	 * @param OutTimeRemaining Tempo restante em segundos
 	 * @param OutDuration      Duração total do cooldown
 	 */
@@ -326,13 +415,13 @@ public:
 	static bool GetSlotCooldown(
 		APlayerState* PlayerState,
 		int32 SlotIndex,
-		UZfSkillTreeData* AbilityTree,
+		UZfSkillTreeData* SkillTree,
 		float& OutTimeRemaining,
 		float& OutDuration);
 
 private:
 
-	/** Recupera o AbilityTreeComponent do PlayerState. Retorna nullptr se inválido. */
+	/** Recupera o SkillTreeComponent do PlayerState. Retorna nullptr se inválido. */
 	static UZfSkillTreeComponent* GetTreeComponent(APlayerState* PlayerState);
 
 	/** Recupera o ASC do PlayerState. Retorna nullptr se inválido. */

@@ -23,7 +23,12 @@ namespace ZfAbilityTreeTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SkillTree_Event_Respec, "SkillTree.Event.Respec",
 		"Disparado por Server_RespecAbilityTree. Escutado por GA_RespecAbilityTree. "
 		"Sem payload adicional.")
-
+	
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_AimMode_Active, "SkillTree.AimMode.Active")
+	
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_AimMode_Confirm, "SkillTree.AimMode.Confirm")
+	
+	
 	// =========================================================================
 	// DATA
 	// =========================================================================
@@ -56,10 +61,10 @@ namespace ZfAbilityTreeTags
 	// CLASS
 	// =========================================================================
 
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SkillTree_Class_Novice, "SkillTree.Class.Novice",
-		"Tag da classe inicial. Concedida a todos os personagens na criacao. "
-		"Nunca removida — permanece mesmo apos a escolha da classe definitiva.")
-
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_Class_Novice,	"SkillTree.Class.Novice")
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_Class_Mage,	"SkillTree.Class.Mage")
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_Class_Warrior, "SkillTree.Class.Warrior")
+	UE_DEFINE_GAMEPLAY_TAG(SkillTree_Class_ArcMage, "SkillTree.Class.ArcMage")
 	
 	// =========================================================================
 	// Abilities
@@ -72,8 +77,8 @@ namespace ZfAbilityTreeTags
 	
 	namespace ZfAbilityPassiveTags
 	{
-		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoost, "SkillTree.Ability.Passive.MoveSpeedBoost")
-		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoostTurbo, "SkillTree.Ability.Passive.MoveSpeedBoostTurbo")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoost,			"SkillTree.Ability.Passive.MoveSpeedBoost")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoostTurbo,		"SkillTree.Ability.Passive.MoveSpeedBoostTurbo")
 		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Ability_Passive_MoveSpeedBoostTurboMaster, "SkillTree.Ability.Passive.MoveSpeedBoostTurboMaster")
 	}
 	
@@ -83,11 +88,11 @@ namespace ZfAbilityTreeTags
 	namespace ZfNodeTags
 	{
 		// ── Novice ────────────────────────────────────────────────────────
-		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoost, "SkillTree.Node.Novice.MoveSpeedBoost")
-		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoostTurbo, "SkillTree.Node.Novice.MoveSpeedBoostTurbo")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoost,			"SkillTree.Node.Novice.MoveSpeedBoost")
+		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoostTurbo,		"SkillTree.Node.Novice.MoveSpeedBoostTurbo")
 		UE_DEFINE_GAMEPLAY_TAG(SkillTree_Node_Novice_MoveSpeedBoostTurboMaster, "SkillTree.Node.Novice.MoveSpeedBoostTurboMaster")
 	}
-
+	
 	// =========================================================================
 	// SUBEFFECT
 	// =========================================================================
@@ -95,5 +100,29 @@ namespace ZfAbilityTreeTags
 	{
 		// Sub-efeitos adicionados aqui conforme as abilities forem criadas
 		UE_DEFINE_GAMEPLAY_TAG(SkillTree_SubEffect_Novice_Fireball_DoubleProjectile, "SkillTree.SubEffect.Novice.Fireball.DoubleProjectile")
+	}
+	
+	// =========================================================================
+	// COOLDOWN
+	// =========================================================================
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Cooldown_Duration, "Cooldown.Duration",
+		"Chave SetByCaller para passar duração do cooldown ao GE de cooldown. "
+		"Lida pelo GE via Has Duration + SetByCaller.")
+
+	namespace ZfCooldownTags
+	{
+		// ── Novice ────────────────────────────────────────────────────────
+		UE_DEFINE_GAMEPLAY_TAG(Cooldown_Node_Novice_MoveSpeedBoost,				"Cooldown.Node.Novice.MoveSpeedBoost")
+	}
+	
+	// =========================================================================
+	// BUFF
+	// =========================================================================
+	
+	namespace ZfBuffTags
+	{
+		// ── Novice ────────────────────────────────────────────────────────
+		UE_DEFINE_GAMEPLAY_TAG(Buff_Node_Novice_MoveSpeedBoost,            "Buff.Node.Novice.MoveSpeedBoost")
 	}
 }

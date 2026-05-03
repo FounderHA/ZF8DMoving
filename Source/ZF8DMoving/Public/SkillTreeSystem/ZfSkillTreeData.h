@@ -15,7 +15,7 @@
  *
  * Como criar no editor:
  *   Content Browser → botão direito → Miscellaneous → Data Asset
- *   → selecione UZfSkillTreeData → nomeie como DA_AbilityTree
+ *   → selecione UZfSkillTreeData → nomeie como DA_SkillTree
  */
 UCLASS(BlueprintType)
 class ZF8DMOVING_API UZfSkillTreeData : public UPrimaryDataAsset
@@ -28,18 +28,18 @@ public:
 
 	/** Nós disponíveis para todos os personagens independente de classe. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Regions")
-	FAbilityTreeRegion NoviceRegion;
+	FSkillTreeRegion NoviceRegion;
 
 	/**
 	 * Uma entrada por classe do jogo.
 	 * Cada região tem RequiredClassTag definida.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Regions")
-	TArray<FAbilityTreeRegion> ClassRegions;
+	TArray<FSkillTreeRegion> ClassRegions;
 
 	/** Nós de quest, eventos e habilidades únicas. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SkillTree|Regions")
-	FAbilityTreeRegion SpecialRegion;
+	FSkillTreeRegion SpecialRegion;
 
 	// ── Utilitários de lookup ─────────────────────────────────────────────
 
@@ -62,5 +62,5 @@ public:
 private:
 
 	/** Busca um nó dentro de uma região específica. */
-	UZfSkillTreeNodeData* FindNodeInRegion(const FAbilityTreeRegion& Region, FName NodeID) const;
+	UZfSkillTreeNodeData* FindNodeInRegion(const FSkillTreeRegion& Region, FName NodeID) const;
 };

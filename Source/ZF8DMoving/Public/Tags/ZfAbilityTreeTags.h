@@ -81,25 +81,40 @@ namespace ZfAbilityTreeTags
 
 	/** Tag de identificação da GA_RespecAbilityTree. */
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Respec)
+	
+	/** Tag de identificação do modo de mira */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_AimMode_Active)
+	
+	/** Tag de confirmação do modo de mira */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_AimMode_Confirm)
 
 	// =========================================================================
 	// CLASS — Tags de classe concedidas ao personagem na progressão
-	// Convenção: SkillTree.Class.<NomeDaClasse>
+	// Concedida ao personagem ao Escolher ou evoluir a Class
 	//
 	// Usadas em:
 	//   FAbilityTreeRegion::RequiredClassTag  → acesso à região da classe
 	//   FAbilityTreeNode::RequiredTags        → nós exclusivos de classe
 	//   AZfPlayerState                        → concedida ao escolher/evoluir classe
 	//
-	// Tags de classes evoluídas seguem hierarquia de tag nativa do Unreal:
-	//   SkillTree.Class.Mage inclui SkillTree.Class — HasTag funciona em hierarquia.
-	//   Isso significa que um nó com RequiredTag = SkillTree.Class.Mage
-	//   só é acessível por Magos, não por outras classes.
+	// Convenção: SkillTree.Class.<NomeDaClasse>
 	// =========================================================================
 
 	/** Tag da classe inicial — concedida a todos ao criar o personagem. */
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Class_Novice)
-
+	/** Tag da classe Escolhida — Escolhida em jogo */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Class_Mage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Class_Warrior)
+	/** Tag da classe Evoluida — Escolhida em jogo */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Class_ArcMage)
+	
+	
+	// =========================================================================
+	// AbilityTag — Tags da Abilidade equipada
+	// Configurada no GA da abilidade
+	// Convenção: SkillTree.Ability.<Type>.<NomeDaAbility> (mesmo nome do Node)
+	// =========================================================================
+	
 	namespace ZfAbilityActiveTags
 	{
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Ability_Active_Exemplo)
@@ -117,7 +132,7 @@ namespace ZfAbilityTreeTags
 	// =========================================================================
 	// NODE — Uma tag por nó da skill tree
 	// Concedida ao personagem ao desbloquear o nó
-	// Usada como pré-requisito de outros nós que dependem deste
+	// Configurada no DA da Skill em Blueprint
 	// Convenção: SkillTree.Node.<Região>.<NomeDaAbility>
 	// =========================================================================
 	namespace ZfNodeTags
@@ -127,18 +142,48 @@ namespace ZfAbilityTreeTags
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_MoveSpeedBoostTurbo)
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_Node_Novice_MoveSpeedBoostTurboMaster)
 	}
-
 	
 	// =========================================================================
 	// SUBEFFECT — Uma tag por sub-efeito por habilidade
 	// Concedida ao personagem ao desbloquear o sub-efeito
+	// Configurada no DA da Skill em Blueprint
 	// A ability consulta essas tags durante a execução para modificar comportamento
-	// Convenção: SkillTree.SubEffect.<NomeDaAbility>.<NomeDoEfeito>
+	// Convenção: SkillTree.SubEffect.<Região>.<NomeDaAbility>.<NomeDoEfeito>
 	// =========================================================================
 	namespace ZfSubEffectTags
 	{
 		// Sub-efeitos adicionados aqui conforme as abilities forem criadas
 		// Exemplo:
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(SkillTree_SubEffect_Novice_Fireball_DoubleProjectile)
+	}
+	
+	// =========================================================================
+	// COOLDOWN — Tags de cooldown por nó
+	// Usadas pela widget do slot para detectar cooldown ativo
+	// Configuradas no GE de cooldown em GrantedTags
+	// Convenção: Cooldown.Node.<Região>.<NomeDaSkill>
+	// =========================================================================
+ 
+	/** Chave SetByCaller para passar duração do cooldown ao GE.
+	 * Uso: Spec.Data->SetSetByCallerMagnitude(ZfAbilityTreeTags::Cooldown_Duration, Duration); */
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Duration)
+ 
+	namespace ZfCooldownTags
+	{
+		// ── Novice ────────────────────────────────────────────────────────
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Node_Novice_MoveSpeedBoost)
+	}
+	
+	// =========================================================================
+	// BUFF — Tags de buff por nó
+	// Usadas pela widget do slot para detectar buff ativo
+	// Configuradas no GE de buff em GrantedTags
+	// Convenção: Buff.Node.<Região>.<NomeDaSkill>
+	// =========================================================================
+ 
+	namespace ZfBuffTags
+	{
+		// ── Novice ────────────────────────────────────────────────────────
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Buff_Node_Novice_MoveSpeedBoost)
 	}
 }
