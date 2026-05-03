@@ -23,6 +23,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "CraftingSystem/ZfCraftTypes.h"
 #include "CraftingSystem/ZfCraftRecipe.h"
+#include "Systems/RefinerySystem/ZfRefineryTypes.h"
 
 AZfPlayerState::AZfPlayerState()
 {
