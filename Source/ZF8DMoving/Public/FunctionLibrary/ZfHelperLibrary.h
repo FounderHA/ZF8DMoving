@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
 	static UZfCraftingComponent* FindCraftingComponent(AActor* Actor);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
+	static UZfRefineryComponent* FindRefineryComponent(AActor* Actor);
+	
 	// Converte um número inteiro para algarismos romanos.
 	// @param Number — número a converter (1 a 3999)
 	// @return número em algarismos romanos como FString

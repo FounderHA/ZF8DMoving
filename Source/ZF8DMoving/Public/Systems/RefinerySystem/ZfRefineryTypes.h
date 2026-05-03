@@ -25,6 +25,21 @@ class UZfItemDefinition;
 ZF8DMOVING_API DECLARE_LOG_CATEGORY_EXTERN(LogZfRefinery, Log, All);
 
 
+
+
+// ============================================================
+// TIPO DE SLOT — identifica o SlotList e seus efeitos colaterais
+// ============================================================
+
+UENUM(BlueprintType)
+enum class EZfRefinerySlotType : uint8
+{
+	None,
+	Input,
+	Output,
+	Catalyst
+};
+
 // ============================================================
 // STRUCTS
 // ============================================================

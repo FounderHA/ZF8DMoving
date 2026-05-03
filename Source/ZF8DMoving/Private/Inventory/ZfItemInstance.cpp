@@ -228,6 +228,31 @@ void UZfItemInstance::RecalculateItemAttributes()
     }
 }
 
+UZfItemInstance* UZfItemInstance::CreateShallowCopy(int32 OverrideStack) const
+{
+    // Usa o mesmo outer do item original (que é um Actor)
+    UZfItemInstance* Copy = NewObject<UZfItemInstance>(GetOuter(), GetClass());
+    
+    Copy->SetItemDefinition(ItemDefinition);
+    Copy->SetCurrentStack(OverrideStack);
+    Copy->SetTier(ItemTier);
+    Copy->SetRarity(ItemRarity);
+    Copy->SetQuality(ItemQuality);
+    Copy->SetAppliedModifiers(AppliedModifiers);
+    Copy->SetCurrentDurability(CurrentDurability);
+
+    // Estas não têm setter público — precisa adicionar ou acessar direto
+    Copy->BonusMaxDurability    = BonusMaxDurability;
+    Copy->TotalMaxDurability    = TotalMaxDurability;
+    Copy->bIsRepairable         = bIsRepairable;
+    Copy->bIsBroken             = bIsBroken;
+    Copy->CorruptionState       = CorruptionState;
+    Copy->CalculatedMarketValue = CalculatedMarketValue;
+    Copy->ItemAttributes        = ItemAttributes;
+    // ItemGuid intencionalmente NÃO copiado — cópia é objeto diferente
+    
+    return Copy;
+}
 
 // ============================================================
 // FUNÇÕES DE ACESSO AOS DADOS

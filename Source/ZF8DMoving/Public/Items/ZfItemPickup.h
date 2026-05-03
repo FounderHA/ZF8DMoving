@@ -123,6 +123,23 @@ public:
     EZfItemMechanicResult TryCollectItem(AActor* CollectorActor);
 
     // ----------------------------------------------------------
+    // DROP
+    // ----------------------------------------------------------
+
+    // Muda o Stack Interno do Pickup
+    // @param NewStack — Novo Stack do Item Dropado
+    UFUNCTION(Category = "Zf|Pickup")
+    void SetNewStack(int32 NewStack) const;
+
+    // Transporta Pickup para Fazer a Animação de Drop Novamente
+    UFUNCTION(Category = "Zf|Pickup")
+    void ReDropItem(const AActor* CollectorActor);
+
+    // Cria Novo Pickup e Faz Animação de Drop
+    UFUNCTION(Category = "Zf|Pickup")
+    void DropNewItem();
+    
+    // ----------------------------------------------------------
     // CONSULTA
     // ----------------------------------------------------------
 

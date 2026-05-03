@@ -14,45 +14,6 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 
-
-// ============================================================
-// FZfRefinerySlot — Fast Array Callbacks
-// ============================================================
-
-void FZfRefinerySlot::PreReplicatedRemove(const FZfRefinerySlotList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent)
-	{
-		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
-		{
-			Comp->OnRefinerySlotChanged.Broadcast(ItemInstance, SlotIndex);
-		}
-	}
-}
-
-void FZfRefinerySlot::PostReplicatedAdd(const FZfRefinerySlotList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent)
-	{
-		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
-		{
-			Comp->OnRefinerySlotChanged.Broadcast(ItemInstance, SlotIndex);
-		}
-	}
-}
-
-void FZfRefinerySlot::PostReplicatedChange(const FZfRefinerySlotList& InArraySerializer)
-{
-	if (InArraySerializer.OwnerComponent)
-	{
-		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
-		{
-			Comp->OnRefinerySlotChanged.Broadcast(ItemInstance, SlotIndex);
-		}
-	}
-}
-
-
 // ============================================================
 // Constructor
 // ============================================================
@@ -64,50 +25,45 @@ UZfRefineryComponent::UZfRefineryComponent()
 	bReplicateUsingRegisteredSubObjectList = true;
 }
 
-
 // ============================================================
-// QuickTransferItemFromInventory
+// FZfRefinerySlot — Fast Array Callbacks
 // ============================================================
 
-void UZfRefineryComponent::QuickTransferItemFromInventory_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, UZfInventoryComponent* InInventoryComponent)
+void FZfRefinerySlot::PreReplicatedRemove(const FZfRefinerySlotList& InArraySerializer)
 {
-	TryAddItem(InputSlots, ItemInstance, INDEX_NONE, InInventoryComponent);
-}
-
-
-// ============================================================
-// BeginPlay
-// ============================================================
-
-void UZfRefineryComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (!GetOwner()->HasAuthority()) return;
-
-	if (!RefineryData)
+	if (InArraySerializer.OwnerComponent)
 	{
-		UE_LOG(LogZfRefinery, Error,
-			TEXT("ZfRefineryComponent [%s]: RefineryData não configurado! O componente não funcionará."),
-			*GetOwner()->GetName());
-		return;
+		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
+		{
+			Comp->OnRefineryItemRemoved.Broadcast(InArraySerializer.SlotType, SlotIndex);
+		}
 	}
-
-	// Configura cada SlotList com seu tipo, capacidade e owner.
-	// Slots não são pré-alocados — só existem quando têm item.
-	InputSlots.SlotType    = EZfRefinerySlotType::Input;
-	InputSlots.Capacity    = RefineryData->InputSlotCapacity;
-	InputSlots.OwnerComponent = this;
-
-	OutputSlots.SlotType   = EZfRefinerySlotType::Output;
-	OutputSlots.Capacity   = RefineryData->OutputSlotCapacity;
-	OutputSlots.OwnerComponent = this;
-
-	CatalystSlots.SlotType = EZfRefinerySlotType::Catalyst;
-	CatalystSlots.Capacity = RefineryData->CatalystSlotCount;
-	CatalystSlots.OwnerComponent = this;
 }
 
+void FZfRefinerySlot::PostReplicatedAdd(const FZfRefinerySlotList& InArraySerializer)
+{
+	UE_LOG(LogZfRefinery, Warning, TEXT("PostReplicatedAdd — SlotIndex: %d | OwnerComponent: %s"),
+		SlotIndex,
+		InArraySerializer.OwnerComponent ? TEXT("VÁLIDO") : TEXT("NULO"));
+	if (InArraySerializer.OwnerComponent)
+	{
+		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
+		{
+			Comp->OnRefineryItemAdded.Broadcast(InArraySerializer.SlotType,ItemInstance, SlotIndex);
+		}
+	}
+}
+
+void FZfRefinerySlot::PostReplicatedChange(const FZfRefinerySlotList& InArraySerializer)
+{
+	if (InArraySerializer.OwnerComponent)
+	{
+		if (UZfRefineryComponent* Comp = Cast<UZfRefineryComponent>(InArraySerializer.OwnerComponent))
+		{
+			Comp->OnRefinerySlotChanged.Broadcast(InArraySerializer.SlotType, ItemInstance, SlotIndex);
+		}
+	}
+}
 
 // ============================================================
 // GetLifetimeReplicatedProps
@@ -128,6 +84,256 @@ void UZfRefineryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UZfRefineryComponent, ActiveCatalystState);
 }
 
+// ============================================================
+// BeginPlay
+// ============================================================
+
+void UZfRefineryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// OwnerComponent setado para todos — necessário para os callbacks de replicação no cliente
+	InputSlots.OwnerComponent    = this;
+	OutputSlots.OwnerComponent   = this;
+	CatalystSlots.OwnerComponent = this;
+	
+	if (!GetOwner()->HasAuthority()) return;
+
+	if (!RefineryData)
+	{
+		UE_LOG(LogZfRefinery, Error,
+			TEXT("ZfRefineryComponent [%s]: RefineryData não configurado! O componente não funcionará."),
+			*GetOwner()->GetName());
+		return;
+	}
+
+	// Configura cada SlotList com seu tipo, capacidade e owner.
+	// Slots não são pré-alocados — só existem quando têm item.
+	InputSlots.SlotType    = EZfRefinerySlotType::Input;
+	InputSlots.Capacity    = RefineryData->InputSlotCapacity;
+
+	OutputSlots.SlotType   = EZfRefinerySlotType::Output;
+	OutputSlots.Capacity   = RefineryData->OutputSlotCapacity;
+
+	CatalystSlots.SlotType = EZfRefinerySlotType::Catalyst;
+	CatalystSlots.Capacity = RefineryData->CatalystSlotCount;
+}
+
+// ============================================================
+// INTERFACE
+// ============================================================
+
+void UZfRefineryComponent::AddItemToTargetInterface_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
+{
+	ServerTryAddItem(ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
+}
+
+void UZfRefineryComponent::RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+	ServerTryRemoveItem(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+}
+
+// ============================================================
+// Server RPCs
+// ============================================================
+
+void UZfRefineryComponent::ServerTryAddItem_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
+{
+	if (CheckIsServer("ServerTryAddItem"))
+	{
+		TryAddItem(ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
+	}
+}
+
+void UZfRefineryComponent::ServerTryRemoveItem_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+	if (CheckIsServer("RemoveItemInterface"))
+	{
+		TryRemoveItem(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+	}	
+}
+
+void UZfRefineryComponent::ServerTrySetManualRecipeQueue_Implementation(const TArray<UZfRefineryRecipe*>& NewQueue)
+{
+	SetManualRecipeQueue(NewQueue);
+}
+
+void UZfRefineryComponent::ServerTryClearManualRecipeQueue_Implementation()
+{
+	ClearManualRecipeQueue();
+}
+
+
+// ============================================================
+// TryAddItem
+// ============================================================
+
+void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
+{
+	if (TargetSlotType == SlotTypeComesFrom && TargetSlotIndex == SlotIndexComesFrom) return;
+
+	if (TargetSlotType == EZfRefinerySlotType::Output) return;
+	
+	if (!InItemInstance) return;
+	
+    if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+    {
+    	if (AmountToAdd < 0 || AmountToAdd > InItemInstance->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return;
+    }
+
+	FZfRefinerySlotList& SlotList = GetSlotListByType(TargetSlotType);
+
+	// ==================== QUICK TRANSFER ====================
+    
+	if (TargetSlotIndex ==  INDEX_NONE)
+    {
+		if (InItemInstance->GetFragment<UZfFragment_Catalyst>())
+		{
+			SlotList = CatalystSlots;
+		}
+		
+		SlotList = InputSlots;
+
+		if (!IsItemAllowedAt(SlotList, InItemInstance)) return;
+		
+        // ── Stackável — tenta empilhar em slot existente antes de ocupar novo ─────
+        if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+        {
+            int32 Overflow = InternalTryStackWithExistingItems(SlotList, InItemInstance, AmountToAdd);
+            if (Overflow == 0)
+            {
+                // Completamente absorvido por stacks existentes
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                return;
+            }
+
+            if (Overflow < 0) return;
+
+            if (Overflow > 0)
+            {
+            	// Pega Slot Vazio se Tiver
+            	const int32 EmptySlot = GetFirstEmptySlot(SlotList);
+                
+                if (EmptySlot == INDEX_NONE)
+                {
+                    // Sem slot disponível — Devolver o Resto ao Dono Original
+                    Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                    return;
+                }
+
+                // Slot disponível - Muda Stack
+                UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(Overflow);
+                InternalAddItemToSlot(SlotList, NewItem, EmptySlot);
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                return;
+            }
+        }
+        
+		// Pega Slot Vazio se Tiver
+		const int32 EmptySlot = GetFirstEmptySlot(SlotList);
+        
+        if (EmptySlot == INDEX_NONE) return;
+
+        // Slot disponível
+        InternalAddItemToSlot(SlotList, InItemInstance, EmptySlot);
+        Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+        return;
+    }
+
+	
+	
+	// ==================== DRAG AND DROP ====================
+
+	if (!IsItemAllowedAt(SlotList, InItemInstance)) return;
+	
+	UZfItemInstance* ItemAtTarget = GetSlotItem(SlotList, TargetSlotIndex);
+
+	// Slot vazio
+	if (!ItemAtTarget)
+	{
+		if (InItemInstance->GetCurrentStack() != AmountToAdd)
+		{
+			UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(AmountToAdd);
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			InternalAddItemToSlot(SlotList, NewItem, TargetSlotIndex);
+			return;
+		}
+		InternalAddItemToSlot(SlotList, InItemInstance, TargetSlotIndex);
+		Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+		return;
+	}
+    
+	
+    
+	// Item Stackavel
+	if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+	{
+		// Item No Slot é Diferente
+		if (ItemAtTarget->GetItemDefinition() != InItemInstance->GetItemDefinition()) return;
+		
+		int32 Overflow = TryAddToStack(SlotList, TargetSlotIndex, AmountToAdd);
+		if (Overflow == 0)
+		{
+			// Completamente absorvido pelo Stack - Remover Tudo do Slot Antigo
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			return;
+		}
+
+		if (Overflow < 0) return;
+
+		if (Overflow > 0)
+		{
+			// Remover Quantidade que foi Absorvida
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			return;
+		}
+	}
+}
+
+// ============================================================
+// TryRemoveItem
+// ============================================================
+
+void UZfRefineryComponent::TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+	FZfRefinerySlotList& SlotList = GetSlotListByType(TargetSlotType);
+	
+	UZfItemInstance* ItemAtTarget = GetSlotItem(SlotList, TargetSlotIndex);
+
+	if (!ItemAtTarget) return;
+
+	if (ItemAmountToRemove < 0 || ItemAmountToRemove > ItemAtTarget->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return;
+
+	int32 ItemAmountAtSlot = ItemAtTarget->GetCurrentStack();
+    
+	if (ItemAmountToRemove > ItemAmountAtSlot) return;
+	
+	if (ItemAmountToRemove == ItemAtTarget->GetCurrentStack())
+	{
+		InternalRemoveItemFromSlot(SlotList, TargetSlotIndex);
+		return;
+	}
+
+	ItemAtTarget->SetCurrentStack(ItemAtTarget->GetCurrentStack() - ItemAmountToRemove);
+	for (FZfRefinerySlot& Slot : SlotList.Slots)
+	{
+		if (Slot.SlotIndex == TargetSlotIndex)
+		{
+			SlotList.MarkItemDirty(Slot);
+			break;
+		}
+	}
+	OnRefinerySlotChanged.Broadcast(TargetSlotType, ItemAtTarget, TargetSlotIndex);
+}
 
 // ============================================================
 // GetSlotListByType
@@ -156,7 +362,6 @@ UZfItemInstance* UZfRefineryComponent::GetSlotItem(const FZfRefinerySlotList& Sl
 	}
 	return nullptr;
 }
-
 
 // ============================================================
 // GetFirstEmptySlot
@@ -225,35 +430,29 @@ int32 UZfRefineryComponent::TryAddToStack(FZfRefinerySlotList& SlotList, int32 S
 		}
 	}
 
-	OnRefinerySlotChanged.Broadcast(Item, SlotIndex);
+	OnRefinerySlotChanged.Broadcast(SlotList.SlotType, Item, SlotIndex);
 	return Overflow;
 }
 
-bool UZfRefineryComponent::IsItemAllowedAt(FZfRefinerySlotList& SlotList, const FGameplayTagContainer& ItemTags, UZfItemInstance* ItemInstance) const
+bool UZfRefineryComponent::IsItemAllowedAt(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance) const
 {
+	if (!ItemInstance || !RefineryData) return false;
+	if (!ItemInstance->GetItemDefinition()) return false;
+
+	// Output nunca aceita item do player
+	if (SlotList.SlotType == EZfRefinerySlotType::Output) return false;
+
+	const FGameplayTagContainer& ItemTags = ItemInstance->GetItemDefinition()->ItemTags;
+
 	if (SlotList.SlotType == EZfRefinerySlotType::Catalyst)
 	{
-		if (!RefineryData->IsItemAllowedAsCatalyst(ItemTags))
-		{
-			UE_LOG(LogZfRefinery, Warning,
-				TEXT("ZfRefineryComponent: Item '%s' não tem ZfFragment_Catalyst."),
-				*ItemInstance->GetItemDefinition()->GetName());
-			return false;
-		}
-		if (!ItemInstance->GetFragment<UZfFragment_Catalyst>())
-		{
-			UE_LOG(LogZfRefinery, Warning,
-				TEXT("ZfRefineryComponent: Item '%s' não tem ZfFragment_Catalyst."),
-				*ItemInstance->GetItemDefinition()->GetName());
-			return false;
-		}
-		return true;
+		// Precisa ter o fragment E passar na query
+		return ItemInstance->GetFragment<UZfFragment_Catalyst>() != nullptr
+			&& RefineryData->IsItemAllowedAsCatalyst(ItemTags);
 	}
-	
-	if (RefineryData->IsItemAllowedInInput(ItemTags))return true;
 
-	
-	return false;
+	// Input
+	return RefineryData->IsItemAllowedInInput(ItemTags);
 }
 
 
@@ -293,27 +492,34 @@ void UZfRefineryComponent::ApplyRemoveSideEffects(FZfRefinerySlotList& SlotList)
 // InternalTryStackWithExistingItems
 // ============================================================
 
-bool UZfRefineryComponent::InternalTryStackWithExistingItems(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance)
+int32 UZfRefineryComponent::InternalTryStackWithExistingItems(FZfRefinerySlotList& SlotList, const UZfItemInstance* ItemInstance, int32 AmountToRemove)
 {
-	if (!ItemInstance) return false;
+	if (!ItemInstance) return -1;
 
 	const UZfItemDefinition* IncomingDef = ItemInstance->GetItemDefinition();
-	if (!IncomingDef) return false;
+	if (!IncomingDef) return -1;
 
-	for (FZfRefinerySlot& Slot : SlotList.Slots)
+	int32 Overflow = AmountToRemove;
+	
+	// Percorre por SlotIndex em ordem crescente sem reordenar o array
+	for (int32 i = 0; i < SlotList.Capacity; i++)
 	{
-		if (!Slot.ItemInstance) continue;
-		if (Slot.ItemInstance->GetItemDefinition() != IncomingDef) continue;
+		for (FZfRefinerySlot& Slot : SlotList.Slots)
+		{
+			if (Slot.SlotIndex != i) continue;
+			if (!Slot.ItemInstance) continue;
+			if (Slot.ItemInstance->GetItemDefinition() != IncomingDef) continue;
 
-		const int32 Overflow = Slot.ItemInstance->AddToStack(ItemInstance->GetCurrentStack());
-		ItemInstance->SetCurrentStack(Overflow);
-		SlotList.MarkItemDirty(Slot);
-		OnRefinerySlotChanged.Broadcast(Slot.ItemInstance, Slot.SlotIndex);
+			Overflow = Slot.ItemInstance->AddToStack(Overflow);
+			SlotList.MarkItemDirty(Slot);
+			OnRefinerySlotChanged.Broadcast(SlotList.SlotType, Slot.ItemInstance, Slot.SlotIndex);
 
-		if (Overflow <= 0) return true;
+			if (Overflow <= 0) return 0;
+			break;
+		}
 	}
 
-	return false;
+	return Overflow;
 }
 
 
@@ -331,6 +537,8 @@ void UZfRefineryComponent::InternalAddItemToSlot(FZfRefinerySlotList& SlotList, 
 	SlotList.Slots.Add(NewSlot);
 
 	AddReplicatedSubObject(ItemInstance);
+	SlotList.MarkArrayDirty();
+	OnRefineryItemAdded.Broadcast(SlotList.SlotType, ItemInstance, SlotIndex);
 }
 
 
@@ -350,145 +558,9 @@ UZfItemInstance* UZfRefineryComponent::InternalRemoveItemFromSlot(FZfRefinerySlo
 	SlotList.MarkArrayDirty();
 
 	RemoveReplicatedSubObject(Found);
-	OnRefinerySlotChanged.Broadcast(nullptr, SlotIndex);
+	OnRefineryItemRemoved.Broadcast(SlotList.SlotType, SlotIndex);
 	return Found;
 }
-
-
-// ============================================================
-// TryAddItem — genérico para Input, Output e Catalyst
-// ============================================================
-
-bool UZfRefineryComponent::TryAddItem(FZfRefinerySlotList& SlotList, UZfItemInstance* ItemInstance, int32 SlotIndex, UZfInventoryComponent* InventoryComp)
-{
-	if (!CheckIsServer(TEXT("TryAddItem"))) return false;
-	if (!ItemInstance || !RefineryData) return false;
-
-	const FGameplayTagContainer& ItemTags = ItemInstance->GetItemDefinition()->ItemTags;
-
-	if (!IsItemAllowedAt(SlotList, ItemTags, ItemInstance)) return false;
-	
-	const bool bIsStackable = (ItemInstance->GetFragment<UZfFragment_Stackable>() != nullptr);
-
-	if (bIsStackable)
-	{
-		const int32 OriginalStack = ItemInstance->GetCurrentStack();
-
-		if (InternalTryStackWithExistingItems(SlotList, ItemInstance))
-		{
-			// Completamente absorvido por stacks existentes
-			if (InventoryComp) InventoryComp->ServerTryRemoveAmountFromStack(ItemInstance, OriginalStack);
-			if (!bIsRefining) TryStartNextCycle();
-			return true;
-		}
-
-		// Overflow em ItemInstance->GetCurrentStack()
-		const int32 Absorbed   = OriginalStack - ItemInstance->GetCurrentStack();
-		const int32 TargetSlot = (SlotIndex == INDEX_NONE) ? GetFirstEmptySlot(SlotList) : SlotIndex;
-
-		if (TargetSlot == INDEX_NONE)
-		{
-			// Sem slot disponível — remove do inventário apenas o que foi absorvido
-			if (InventoryComp && Absorbed > 0)
-				InventoryComp->ServerTryRemoveAmountFromStack(ItemInstance, Absorbed);
-			return false;
-		}
-
-		InternalAddItemToSlot(SlotList, ItemInstance, TargetSlot);
-		SlotList.MarkArrayDirty();
-		OnRefinerySlotChanged.Broadcast(ItemInstance, SlotIndex);
-		
-		if (InventoryComp) InventoryComp->ServerTryRemoveAmountFromStack(ItemInstance, OriginalStack);
-		
-		if (!bIsRefining) TryStartNextCycle();
-		return true;
-	}
-
-	// Não stackável — insere direto em slot vazio
-	const int32 TargetSlot = (SlotIndex == INDEX_NONE) ? GetFirstEmptySlot(SlotList) : SlotIndex;
-	if (TargetSlot == INDEX_NONE) return false;
-
-	InternalAddItemToSlot(SlotList, ItemInstance, TargetSlot);
-	
-	SlotList.MarkArrayDirty();
-	OnRefinerySlotChanged.Broadcast(ItemInstance, SlotIndex);
-	
-	if (!bIsRefining) TryStartNextCycle();
-	return true;
-}
-
-
-// ============================================================
-// TryRemoveItem — genérico para Input, Output e Catalyst
-// ============================================================
-
-bool UZfRefineryComponent::TryRemoveItem(FZfRefinerySlotList& SlotList, int32 SlotIndex)
-{
-	if (!CheckIsServer(TEXT("TryRemoveItem"))) return false;
-
-	UZfItemInstance* Removed = InternalRemoveItemFromSlot(SlotList, SlotIndex);
-	if (!Removed) return false;
-
-	ApplyRemoveSideEffects(SlotList);
-	return true;
-}
-
-
-// ============================================================
-// TryTransferToInventory — genérico para Input, Output e Catalyst
-// ============================================================
-
-bool UZfRefineryComponent::TryTransferToInventory(FZfRefinerySlotList& SlotList, int32 SlotIndex, UZfInventoryComponent* InventoryComp)
-{
-	if (!CheckIsServer(TEXT("TryTransferToInventory"))) return false;
-	if (!InventoryComp) return false;
-
-	UZfItemInstance* Item = GetSlotItem(SlotList, SlotIndex);
-	if (!Item) return false;
-
-	const int32 OriginalStack = Item->GetCurrentStack();
-	const int32 Overflow      = 0;//InventoryComp->TryAddPartial(Item);
-
-	if (Overflow <= 0)
-	{
-		InternalRemoveItemFromSlot(SlotList, SlotIndex);
-		ApplyRemoveSideEffects(SlotList);
-	}
-	// Se Overflow > 0, o item permanece no slot com CurrentStack já atualizado
-
-	return Overflow < OriginalStack;
-}
-
-
-// ============================================================
-// Server RPCs
-// ============================================================
-
-void UZfRefineryComponent::ServerTryAddItem_Implementation(EZfRefinerySlotType SlotType, UZfItemInstance* ItemInstance, int32 SlotIndex, UZfInventoryComponent* InventoryComp)
-{
-	TryAddItem(GetSlotListByType(SlotType), ItemInstance, SlotIndex, InventoryComp);
-}
-
-void UZfRefineryComponent::ServerTryRemoveItem_Implementation(EZfRefinerySlotType SlotType, int32 SlotIndex)
-{
-	TryRemoveItem(GetSlotListByType(SlotType), SlotIndex);
-}
-
-void UZfRefineryComponent::ServerTryTransferToInventory_Implementation(EZfRefinerySlotType SlotType, int32 SlotIndex, UZfInventoryComponent* InventoryComp)
-{
-	TryTransferToInventory(GetSlotListByType(SlotType), SlotIndex, InventoryComp);
-}
-
-void UZfRefineryComponent::ServerTrySetManualRecipeQueue_Implementation(const TArray<UZfRefineryRecipe*>& NewQueue)
-{
-	SetManualRecipeQueue(NewQueue);
-}
-
-void UZfRefineryComponent::ServerTryClearManualRecipeQueue_Implementation()
-{
-	ClearManualRecipeQueue();
-}
-
 
 // ============================================================
 // SetManualRecipeQueue / ClearManualRecipeQueue
@@ -941,12 +1013,20 @@ bool UZfRefineryComponent::HasOutputSpace() const
 
 bool UZfRefineryComponent::CheckIsServer(const FString& FunctionName) const
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	const UWorld* World = GetWorld();
+	if (!World)
 	{
-		UE_LOG(LogZfRefinery, Warning,
-			TEXT("ZfRefineryComponent::%s chamado no cliente — ignorado."), *FunctionName);
+		UE_LOG(LogZfInventory, Error, TEXT("UZfInventoryComponent::%s — GetWorld() retornou nulo."), *FunctionName);
 		return false;
 	}
+
+	if (World->GetNetMode() == NM_Client)
+	{
+		UE_LOG(LogZfInventory, Warning,
+			TEXT("UZfInventoryComponent::%s — " "Operação de servidor chamada no cliente!"), *FunctionName);
+		return false;
+	}
+
 	return true;
 }
 

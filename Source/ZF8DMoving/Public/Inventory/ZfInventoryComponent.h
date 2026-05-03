@@ -33,12 +33,16 @@
 #include "GameplayTagContainer.h"
 #include "ZfInventoryTypes.h"
 #include "ZfItemInstance.h"
+#include "Inventory/ZfInventoryReceiverInterface.h"
+#include "Items/ZfItemPickup.h"
 #include "ZfInventoryComponent.generated.h"
 
+enum class EZfRefinerySlotType : uint8;
 // Forward declarations
 class UZfEquipmentComponent;
 class UZfItemInstance;
 class UZfItemDefinition;
+class UZfItemPickup;
 
 // ============================================================
 // DELEGATES
@@ -46,33 +50,10 @@ class UZfItemDefinition;
 // mudanças no inventário sem criar dependências diretas.
 // ============================================================
 
-// Disparado quando um item é adicionado ao inventário
-// @param ItemInstance — o item adicionado
-// @param SlotIndex — índice do slot onde foi adicionado
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemAddedToInventory, UZfItemInstance*, ItemInstance, int32, SlotIndex);
-
-// Disparado quando um item é removido do inventário
-// @param ItemInstance — o item removido
-// @param SlotIndex — índice do slot de onde foi removido
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemRemovedFromInventory, UZfItemInstance*, ItemInstance, int32, SlotIndex);
-
-// Disparado quando um item é movido entre slots
-// @param ItemInstance — o item movido
-// @param FromSlot — slot de origem
-// @param ToSlot — slot de destino
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemMovedInInventory);
-
-// Disparado quando o tamanho do inventário muda
-// @param NewSize — novo tamanho total de slots
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventorySizeChanged);
-
-// Disparado quando o inventário é completamente atualizado
-// (reorganização, ordenação, etc.)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryRefreshed);
-
-// Disparado quando Stack Muda
-// @param ItemInstance — o item que Stack Mudou
-// @param SlotIndex — índice do slot de onde Stack Mudou
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemovedFromInventory, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemAddedToInventory, UZfItemInstance*, ItemInstance, int32, SlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemStackChanged, UZfItemInstance*, ItemInstance, int32, SlotIndex);
 
 
@@ -151,11 +132,18 @@ struct TStructOpsTypeTraits<FZfInventoryList> : public TStructOpsTypeTraitsBase2
 };
 
 UCLASS(ClassGroup = (Zf),BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
-class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent
+class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent, public IZfInventoryReceiverInterface
 {
     GENERATED_BODY()
 
     friend class UZfEquipmentComponent;
+    friend class UZfRefineryComponent;
+
+    virtual void AddItemToTargetInterface_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+        int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+        EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+        FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
+    virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
     
 private:
 
@@ -211,10 +199,6 @@ public:
     // Chamado quando item é removido
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnItemRemovedFromInventory OnItemRemoved;
-
-    // Chamado quando item é movido entre slots
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemMovedInInventory OnItemMoved;
 
     // Chamado quando o tamanho do inventário muda
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
@@ -317,19 +301,26 @@ public:
     // Adiciona um item do inventário pela instancia.
     // @param ItemInstance — item adicionado
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
-    void ServerTryAddItemToInventory(UZfItemInstance* ItemInstance);
+    void ServerTryAddItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+        int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+        EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+        FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
    
+    // Remove um item do inventário pelo índice do slot.
+    // @param SlotIndex — slot a remover
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+
+    // Adiciona um item do inventário pela instancia.
+    // @param ItemInstance — item adicionado
+    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+    void ServerTryAddItemToInventory(UZfItemInstance* ItemInstance);
+
     // Remove um item do inventário pelo índice do slot.
     // @param SlotIndex — slot a remover
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
     void ServerTryRemoveItemFromInventory(int32 SlotIndex);
 
-    // Move item entre Slots
-    // @param int32 — Slot de onde veio seu item
-    // @param int32 — Slot onde está indo seu item
-    UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
-    void ServerTryMoveItem(int32 FromSlotIndex, int32 ToSlotIndex);
-    
     // Remove uma quantidade de um item stackável.
     // Remove o item inteiro se a quantidade zerar.
     // @param ItemInstance — item stackável a remover
@@ -347,7 +338,7 @@ public:
     // Dropa item do inventário
     //@param SlotIndex — Index do item no inventário
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory|RPC")
-    void ServerTryDropItem(int32 SlotIndex);
+    void ServerTryDropItem(UZfItemInstance* ItemInstance, int32 SlotIndex = -1);
 
     
     // Requisição do cliente para ordenar o inventário
@@ -362,7 +353,7 @@ public:
     void ServerTryUseItemAtSlot(int32 SlotIndex);
 
     UFUNCTION(Category = "Zf|Inventory")
-    EZfItemMechanicResult TryPickupItem(UZfItemInstance* ItemInstance);
+    EZfItemMechanicResult TryPickupItem(UZfItemInstance* ItemInstance, AZfItemPickup* ItemPickup);
     
 
 private:
@@ -378,8 +369,26 @@ private:
     // @param ItemInstance — instância do item a adicionar
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory")
-    EZfItemMechanicResult TryAddItemToInventory(UZfItemInstance* ItemInstance);
+    EZfItemMechanicResult TryAddItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+        int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+        EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+        FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
    
+    // Remove um item do inventário pelo índice do slot.
+    // @param SlotIndex — slot a remover
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+
+    // Tenta adicionar um item ao inventário.
+    // Se o item é stackável e já existe stack do mesmo tipo,
+    // tenta empilhar antes de ocupar novo slot.
+    // Deve ser chamado apenas no servidor.
+    // @param ItemInstance — instância do item a adicionar
+    // @return resultado da operação
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryAddItemToInventory(UZfItemInstance* ItemInstance);
+
     // Remove um item do inventário pelo índice do slot.
     // @param SlotIndex — slot a remover
     // @return resultado da operação
@@ -401,6 +410,11 @@ private:
     UFUNCTION(Category = "Zf|Inventory")
     EZfItemMechanicResult TryRemoveAmountFromStack(UZfItemInstance* ItemInstance, int32 Amount);
     
+    // Tenta adicionar ao stack de um item já existente no slot especificado.
+    // Retorna o overflow (quantidade que não coube). 0 = tudo coube.
+    UFUNCTION(Category = "Zf|Refinery")
+    int32 TryAddToStack(int32 SlotIndex, int32 Amount);
+    
     UFUNCTION(Category = "Zf|Inventory")
     void TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex, int32 Amount);
 
@@ -416,8 +430,12 @@ private:
     void TryUseItemAtSlot(int32 SlotIndex);
     
     // Atualiza o CurrentSlotCount baseado na mochila atualmente equipada.
-    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory")
+    UFUNCTION(Category = "Zf|Inventory")
     void UpdateSlotCountFromEquippedBackpack();
+
+    // Tenta Pegar Item do chão
+    UFUNCTION(Category = "Zf|Inventory")
+    EZfItemMechanicResult TryAddItemFromPickup(UZfItemInstance* ItemInstance, AZfItemPickup* ItemPickup);
 
     // ============================================================
     // FUNÇÕES INTERNAS - GERENCIAMENTO
@@ -435,7 +453,7 @@ private:
     // Tenta fazer stack de um item com stacks existentes.
     // Retorna true se o item foi completamente absorvido por stacks.
     // @param ItemInstance — item a empilhar
-    bool InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance);
+    int32 InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance, int32 AmountToRemove);
 
     // Move um item de um slot para outro.
     // Se o slot destino tiver item, troca os dois de lugar.

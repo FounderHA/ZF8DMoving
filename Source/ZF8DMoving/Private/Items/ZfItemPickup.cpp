@@ -183,7 +183,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
  
     // Tenta adicionar o item ao inventário do coletor
     int32 OutSlotIndex = INDEX_NONE;
-    const EZfItemMechanicResult Result = CollectorInventory->TryPickupItem(ItemInstance);
+    const EZfItemMechanicResult Result = CollectorInventory->TryPickupItem(ItemInstance, this);
  
     if (Result == EZfItemMechanicResult::Success)
     {
@@ -204,12 +204,66 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
         // Destrói o pickup após a coleta
         SetLifeSpan(0.01f);
     }
+    else if (Result == EZfItemMechanicResult::Failed_InventoryFull)
+    {
+        ReDropItem(CollectorActor);
+        UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::TryCollectItem — " "Inventario Cheio, RedropandoItem"));
+    }
     else
     {
         UE_LOG(LogZfInventory, Warning, TEXT("AZfItemPickup::TryCollectItem — " "Falha ao coletar item: %s"), *UEnum::GetValueAsString(Result));
     }
  
     return Result;
+}
+
+// ============================================================
+// DROP
+// ============================================================
+
+void AZfItemPickup::SetNewStack(int32 NewStack) const
+{
+    ItemInstance->SetCurrentStack(NewStack);
+}
+
+void AZfItemPickup::ReDropItem(const AActor* CollectorActor)
+{
+    if (!CollectorActor) return;
+
+    // Posição na frente do ator
+    const FVector ActorLocation  = CollectorActor->GetActorLocation();
+    const FVector ForwardVector  = CollectorActor->GetActorForwardVector();
+    const FVector DropLocation   = ActorLocation + ForwardVector * 100.0f + FVector(0, 0, 50.0f);
+
+    SetActorLocation(DropLocation);
+
+    if (StaticMeshComponent && StaticMeshComponent->IsSimulatingPhysics())
+    {
+        // Ângulo aleatório para frente (entre -30 e 30 graus horizontalmente)
+        const float RandomAngle  = FMath::RandRange(-30.0f, 30.0f);
+        const FRotator Rotation  = FRotator(0.0f, CollectorActor->GetActorRotation().Yaw + RandomAngle, 0.0f);
+        const FVector ThrowDir   = Rotation.Vector();
+
+        // Velocidade com componente para frente e para cima
+        const float ForwardSpeed = FMath::RandRange(200.0f, 400.0f);
+        const float UpSpeed      = FMath::RandRange(300.0f, 500.0f);
+        const FVector ThrowVelocity = ThrowDir * ForwardSpeed + FVector(0, 0, UpSpeed);
+
+        StaticMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+        StaticMeshComponent->AddImpulse(ThrowVelocity, NAME_None, true);
+    }
+
+    // Reinicia o timer de auto-destruição
+    if (HasAuthority() && AutoDestroyAfterSeconds > 0.0f)
+    {
+        GetWorldTimerManager().ClearTimer(AutoDestroyTimerHandle);
+        Internal_StartAutoDestroyTimer();
+    }
+}
+
+void AZfItemPickup::DropNewItem()
+{
+    
 }
 
 // ============================================================

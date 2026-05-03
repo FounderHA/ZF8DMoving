@@ -10,6 +10,7 @@
 #include "GameFramework/Character.h"
 #include "GatheringSystem/ZfGatheringComponent.h"
 #include "Player/ZfPlayerState.h"
+#include "Systems/RefinerySystem/ZfRefineryComponent.h"
 
 
 TArray<FGameplayAttribute> UZfHelperLibrary::GetAllAttributes(TSubclassOf<UAttributeSet> AttributeSetClass)
@@ -69,6 +70,13 @@ UZfCraftingComponent* UZfHelperLibrary::FindCraftingComponent(AActor* Actor)
     if (!Actor) return nullptr;
 
     return Actor->FindComponentByClass<UZfCraftingComponent>();
+}
+
+UZfRefineryComponent* UZfHelperLibrary::FindRefineryComponent(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+
+    return Actor->FindComponentByClass<UZfRefineryComponent>();
 }
 
 FString UZfHelperLibrary::ToRomanNumeral(int32 Number)

@@ -35,12 +35,8 @@ FPrimaryAssetId UZfRefineryData::GetPrimaryAssetId() const
 bool UZfRefineryData::IsItemAllowedInInput(const FGameplayTagContainer& ItemTags) const
 {
 	// Query vazia = aceita qualquer item (permissivo por padrão)
-	if (InputSlotQuery.IsEmpty())
-	{
-		return true;
-	}
-
-	return InputSlotQuery.Matches(ItemTags);
+	if (AllowedInputTags.IsEmpty()) return true;
+	return ItemTags.HasAny(AllowedInputTags);
 }
 
 
@@ -51,12 +47,8 @@ bool UZfRefineryData::IsItemAllowedInInput(const FGameplayTagContainer& ItemTags
 bool UZfRefineryData::IsItemAllowedAsCatalyst(const FGameplayTagContainer& ItemTags) const
 {
 	// Query vazia = aceita qualquer catalisador (permissivo por padrão)
-	if (CatalystSlotQuery.IsEmpty())
-	{
-		return true;
-	}
-
-	return CatalystSlotQuery.Matches(ItemTags);
+	if (AllowedCatalystTags.IsEmpty()) return true;
+	return ItemTags.HasAny(AllowedCatalystTags);
 }
 
 

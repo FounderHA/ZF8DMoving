@@ -16,6 +16,7 @@
 #include "Inventory/Fragments/ZfFragment_Modifiers.h"
 #include "ZfEquipmentComponent.generated.h"
 
+enum class EZfRefinerySlotType : uint8;
 // Forward declarations
 class UZfInventoryComponent;
 class UZfItemInstance;
@@ -117,8 +118,15 @@ public:
 
     UZfEquipmentComponent();
 
-    virtual void QuickTransferItemFromInventory_Implementation(UZfItemInstance* ItemInstance, int32 FromInventorySlot, UZfInventoryComponent* InventoryComponent) override;
-
+    virtual void AddItemToTargetInterface_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+        int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+        EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+        FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
+    virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+	virtual bool CanITransferBack_Implementation(UZfItemInstance* InItemInstance,
+	    EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType, 
+	    FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
+    
     // ----------------------------------------------------------
     // CONFIGURAÇÃO
     // ----------------------------------------------------------
@@ -212,10 +220,19 @@ public:
     EZfItemMechanicResult TryEquipItem(UZfItemInstance* ItemInstance, int32 FromInventorySlot, FGameplayTag SlotTag);
 
     UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipItemInterface(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
+        int32 SlotIndexComesFrom, int32 TargetSlotIndex,
+        EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
+        FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
+
+    UFUNCTION(Category = "Zf|Equipment")
     EZfItemMechanicResult TryUnequipItem(FGameplayTag SlotTag, int32 TargetInventorySlot);
 
     UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, int32 FromInventorySlot);
+    EZfItemMechanicResult TryUnequipItemInterface(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+
+    UFUNCTION(Category = "Zf|Equipment")
+    EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, UZfItemInstance* InItemInstance, int32 FromInventorySlot);
 
     UFUNCTION(Category = "Zf|Equipment")
     EZfItemMechanicResult TryUnequipBackpack(FGameplayTag SlotTag, int32 TargetInventorySlot);
@@ -226,13 +243,23 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Equipment")
     void TryRemoveItemStackFromEquipmentSlot(FGameplayTag SlotTag);
 
+    // Tenta adicionar ao stack de um item já existente no slot especificado.
+    // Retorna o overflow (quantidade que não coube). 0 = tudo coube.
+    UFUNCTION(Category = "Zf|Refinery")
+    int32 TryAddToStack(FGameplayTag SlotTag, int32 Amount);
+
     // ----------------------------------------------------------
     // FUNÇÕES DE CONSULTA
     // ----------------------------------------------------------
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    EZfItemMechanicResult CanEquipItem(UZfItemInstance* InItemInstance, int32 FromInventorySlot);
+    bool CanEquipItem(UZfItemInstance* InItemInstance, FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
+    UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
+    bool CanUnequipItem(FGameplayTag TargetSlotTag);
+
+    
+    
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     FGameplayTag GetEquipmentSlotTagOfItem(UZfItemInstance* ItemInstance) const;
 
@@ -328,12 +355,13 @@ private:
     void Internal_RemoveAllSetBonuses(const FGameplayTag& SetTag);
     void Internal_BlockOffHandSlot();
     void Internal_UnblockOffHandSlot();
+    int32 InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance, FGameplayTag SlotTag);
 
     const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(FGameplayTag EquipmentSlotTag) const;
     int32 Internal_GenerateReplicationKey() const;
 
     void InternalEquipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag = FGameplayTag());
-    void InternalUnequipItem(UZfItemInstance* InItemInstance);
+    void InternalUnequipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag);
     FZfEquipmentSlotEntry* InternalFindSlotEntry(FGameplayTag SlotTag);
 
     // ----------------------------------------------------------

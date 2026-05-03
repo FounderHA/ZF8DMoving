@@ -84,17 +84,8 @@ public:
 	// - "HasTag(ItemType.CraftMaterial.RawOre)" → aceita qualquer minério bruto
 	// - "HasAnyTags(ItemType.CraftMaterial.RawOre, ItemType.CraftMaterial.Jewel.Ruby)"
 	//   → aceita minério bruto OU aquela joia específica
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Input")
-	FGameplayTagQuery InputSlotQuery;
-
-	// ============================================================
-	// SLOT — OUTPUT
-	// ============================================================
-
-	// Número máximo de stacks distintos que o slot de output suporta.
-	// Quando cheio, o refinador pausa e aguarda espaço.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Output", meta = (ClampMin = "1", UIMin = "1"))
-	int32 OutputSlotCapacity = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Input", meta = (Categories = "ItemType.CraftMaterial"))
+	FGameplayTagContainer AllowedInputTags;
 
 	// ============================================================
 	// SLOT — CATALYST
@@ -112,8 +103,17 @@ public:
 	// - "HasTag(ItemType.Catalyst.Ore)"  → aceita só catalisadores de minério
 	// - "HasTag(ItemType.Catalyst.Wood)" → aceita só catalisadores de madeira
 	// - "HasTag(ItemType.Catalyst)"      → aceita qualquer catalisador
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Catalyst")
-	FGameplayTagQuery CatalystSlotQuery;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Catalyst", meta = (Categories = "ItemType.Catalyst"))
+	FGameplayTagContainer AllowedCatalystTags;
+	
+	// ============================================================
+	// SLOT — OUTPUT
+	// ============================================================
+
+	// Número máximo de stacks distintos que o slot de output suporta.
+	// Quando cheio, o refinador pausa e aguarda espaço.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Refinery|Slots|Output", meta = (ClampMin = "1", UIMin = "1"))
+	int32 OutputSlotCapacity = 5;
 
 	// ============================================================
 	// RECEITAS
