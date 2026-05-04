@@ -30,7 +30,7 @@ void FZfEquipmentSlotEntry::PreReplicatedRemove(const FZfEquipmentList& InArrayS
 {
     if (InArraySerializer.OwnerComponent && ItemInstance)
     {
-        InArraySerializer.OwnerComponent->OnItemUnequipped.Broadcast(ItemInstance, SlotTag);
+        InArraySerializer.OwnerComponent->OnItemUnequipped.Broadcast(SlotTag);
     }
 }
 
@@ -78,17 +78,12 @@ void UZfEquipmentComponent::AddItemToTargetInterface_Implementation(UObject* Ite
     }
 }
 
-void UZfEquipmentComponent::RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+void UZfEquipmentComponent::RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
     if (InternalCheckIsServer("RemoveItemFromTargetInterface_Implementation"))
     {
-        TryUnequipItemInterface(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+        TryUnequipItemInterface(ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
     }
-}
-
-bool UZfEquipmentComponent::CanITransferBack_Implementation(UZfItemInstance* InItemInstance, EZfRefinerySlotType TargetSlotType, EZfRefinerySlotType SlotTypeComesFrom, FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
-{
-    return CanEquipItem(InItemInstance, SlotTagComesFrom, TargetSlotTag);
 }
 
 // ============================================================
@@ -336,7 +331,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItem(UZfItemInstance* ItemF
     // Slot já ocupado — troca
     if (UZfItemInstance* EquipedItem = GetItemAtSlotTag(ResolvedSlot))
     {
-        InternalUnequipItem(EquipedItem, ResolvedSlot);
+        InternalUnequipItem(ResolvedSlot);
         InternalEquipItem(ItemFromInventory, ResolvedSlot);
 
         InventoryComponent->TryRemoveItemFromInventory(FromInventorySlot);
@@ -364,27 +359,53 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemInterface(UObject* Item
 
     // Tenho Requisistos para equipar este Item --------------------------------------------------------------------------------------
 
-    if (CanEquipItem(InItemInstance, SlotTagComesFrom, TargetSlotTag)) return EZfItemMechanicResult::Failed_IncompatibleItem;
+    //if (CanEquipItem(InItemInstance, SlotTagComesFrom, TargetSlotTag)) return EZfItemMechanicResult::Failed_IncompatibleItem;
     
-    if (AmountToAdd < 0 || AmountToAdd > InItemInstance->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return EZfItemMechanicResult::Failed_IncompatibleItem;
+    if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+    {
+        if (AmountToAdd < 0 || AmountToAdd > InItemInstance->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return EZfItemMechanicResult::Failed_IncompatibleItem;
+    }
     
     // Pega Slot Vazio se Tiver
     FGameplayTag EmpitySlotTag = GetFirstEmptySlotByParentTag(TargetSlotTag);
+
+
+
+
+
+
+
+
+
+
+    // ==================== DRAG AND DROP ====================
     
     UZfItemInstance* ItemAtTarget = GetItemAtEquipmentSlot(TargetSlotTag);
 
     // Slot vazio
     if (!ItemAtTarget)
     {
+        if (InItemInstance->GetCurrentStack() != AmountToAdd)
+        {
+            UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(AmountToAdd);
+            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+            InternalEquipItem(NewItem, TargetSlotTag);
+            if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
+            {
+                InventoryComponent->UpdateSlotCountFromEquippedBackpack();
+            }
+            return EZfItemMechanicResult::Success;
+        }
         InternalEquipItem(InItemInstance, TargetSlotTag);
         if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
         {
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
         }
-        Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+        Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
         return EZfItemMechanicResult::Success;
     }
 
+    // Mochila Já Equipada
     if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
     {
         UZfItemInstance* BackpackAtInventory = InItemInstance;
@@ -395,10 +416,10 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemInterface(UObject* Item
 
         if (NewExtraSlots - OldExtraSlots >= 0)
         {
-            InternalUnequipItem(EquipedBackpack, TargetSlotTag);
+            InternalUnequipItem(TargetSlotTag);
             InternalEquipItem(BackpackAtInventory, TargetSlotTag);
 
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, BackpackAtInventory->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+            Execute_RemoveItemFromTargetInterface(ItemComesFrom, BackpackAtInventory->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
             Execute_AddItemToTargetInterface(ItemComesFrom, this, EquipedBackpack, EquipedBackpack->GetCurrentStack(),TargetSlotIndex, SlotIndexComesFrom, TargetSlotType, SlotTypeComesFrom, TargetSlotTag, SlotTagComesFrom);
             
             InventoryComponent->UpdateSlotCountFromEquippedBackpack();
@@ -413,7 +434,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemInterface(UObject* Item
 
             if (AvaliableSlots >= ItensToMove)
             {
-                InternalUnequipItem(EquipedBackpack, TargetSlotTag);
+                InternalUnequipItem(TargetSlotTag);
                 InternalEquipItem(BackpackAtInventory, TargetSlotTag);
             
                 Execute_AddItemToTargetInterface(ItemComesFrom, this, EquipedBackpack, EquipedBackpack->GetCurrentStack(),TargetSlotIndex, SlotIndexComesFrom, TargetSlotType, SlotTypeComesFrom, TargetSlotTag, SlotTagComesFrom);
@@ -439,7 +460,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemInterface(UObject* Item
         if (Overflow == 0)
         {
             // Completamente absorvido pelo Stack - Remover Tudo do Slot Antigo
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
             return EZfItemMechanicResult::Success;
         }
 
@@ -448,7 +469,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipItemInterface(UObject* Item
         if (Overflow > 0)
         {
             // Remover Quantidade que foi Absorvida
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
             return EZfItemMechanicResult::Success;
         }
     }
@@ -483,7 +504,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
         {
             if (CanEquipItem(ItemAtInventory, SlotTag, SlotTag))
             {
-                InternalUnequipItem(ItemInEquipment, SlotTag);
+                InternalUnequipItem(SlotTag);
                 InternalEquipItem(ItemAtInventory, SlotTag);
 
                 InventoryComponent->TryRemoveItemFromInventory(TargetInventorySlot);
@@ -495,7 +516,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
 
         if (InventoryComponent->GetAvailableSlots() >= 1)
         {
-            InternalUnequipItem(ItemInEquipment, SlotTag);
+            InternalUnequipItem(SlotTag);
             InventoryComponent->TryAddItemToInventory(ItemInEquipment);
             return EZfItemMechanicResult::Success;
         }
@@ -504,20 +525,24 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItem(FGameplayTag SlotTag
     }
 
     // Slot do inventário vazio
-    InternalUnequipItem(ItemInEquipment, SlotTag);
+    InternalUnequipItem(SlotTag);
     InventoryComponent->TryAddItemToSpecificSlot(ItemInEquipment, TargetInventorySlot);
     return EZfItemMechanicResult::Success;
 }
 
-EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItemInterface(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItemInterface(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
 
     UZfItemInstance* InItemInstance = GetItemAtEquipmentSlot(TargetSlotTag);
+    
     if (!InItemInstance) return EZfItemMechanicResult::Failed_InvalidOperation;
 
     if (!CanUnequipItem(TargetSlotTag)) return EZfItemMechanicResult::Failed_InvalidOperation;
 
-    if (ItemAmountToRemove < 0 || ItemAmountToRemove > InItemInstance->GetCurrentStack()) return EZfItemMechanicResult::Failed_IncompatibleItem;
+    if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+    {
+        if (ItemAmountToRemove < 0 || ItemAmountToRemove > InItemInstance->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return EZfItemMechanicResult::Failed_IncompatibleItem;
+    }
     
     int32 ItemAmountAtSlot = InItemInstance->GetCurrentStack();
     
@@ -525,11 +550,12 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipItemInterface(UObject* It
     
     if (ItemAmountToRemove == ItemAmountAtSlot)
     {
+        InternalUnequipItem(TargetSlotTag);
         if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
         {
-            InventoryComponent->RelocateItemsAboveCapacity(InventoryComponent->GetAvailableDefaultSlots());
+            InventoryComponent->RelocateItemsAboveCapacity(InventoryComponent->DefaultSlotCount);
+            InventoryComponent->UpdateSlotCountFromEquippedBackpack();
         }
-        InternalUnequipItem(InItemInstance, TargetSlotTag);
         return EZfItemMechanicResult::Success;
     }
 
@@ -556,7 +582,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
 
         if (NewExtraSlots - OldExtraSlots >= 0)
         {
-            InternalUnequipItem(EquipedBackpack, SlotTag);
+            InternalUnequipItem(SlotTag);
             InternalEquipItem(BackpackAtInventory, SlotTag);
             
             InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, FromInventorySlot);
@@ -572,7 +598,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryEquipBackpack(FGameplayTag SlotT
 
             if (AvaliableSlots >= ItensToMove)
             {
-                InternalUnequipItem(EquipedBackpack, SlotTag);
+                InternalUnequipItem(SlotTag);
                 InternalEquipItem(BackpackAtInventory, SlotTag);
                 
                 InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, FromInventorySlot);
@@ -609,7 +635,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
 
         if (NewExtraSlots - OldExtraSlots >= 0)
         {
-            InternalUnequipItem(EquipedBackpack, SlotTag);
+            InternalUnequipItem(SlotTag);
             InternalEquipItem(BackpackAtInventory, SlotTag);
 
             InventoryComponent->TryRemoveItemFromInventory(TargetInventorySlot);
@@ -626,7 +652,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
 
             if (AvaliableSlots - ItensToMove >= 0)
             {
-                InternalUnequipItem(EquipedBackpack, SlotTag);
+                InternalUnequipItem(SlotTag);
                 InternalEquipItem(BackpackAtInventory, SlotTag);
 
                 InventoryComponent->TryRemoveItemFromInventory(TargetInventorySlot);
@@ -634,7 +660,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
                 InventoryComponent->RelocateItemsAboveCapacity(NewCapacity);
                 InventoryComponent->UpdateSlotCountFromEquippedBackpack();
 
-                OnItemUnequipped.Broadcast(BackpackAtInventory, BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag);
+                OnItemUnequipped.Broadcast(BackpackAtInventory->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag);
                 EquipmentList.MarkArrayDirty();
                 return EZfItemMechanicResult::Success;
             }
@@ -651,7 +677,7 @@ EZfItemMechanicResult UZfEquipmentComponent::TryUnequipBackpack(FGameplayTag Slo
 
         if (AvaliableSlots - 1 - ItensToMove >= 0)
         {
-            InternalUnequipItem(EquipedBackpack, EquipedBackpack->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag);
+            InternalUnequipItem(EquipedBackpack->GetFragment<UZfFragment_Equippable>()->EquipmentSlotTag);
 
             InventoryComponent->TryAddItemToSpecificSlot(EquipedBackpack, TargetInventorySlot);
             InventoryComponent->RelocateItemsAboveCapacity(InventoryComponent->GetAvailableDefaultSlots());
@@ -682,7 +708,7 @@ void UZfEquipmentComponent::TryUseQuickSlot(FGameplayTag SlotTag)
     {
         if (Fragment->bConsumeOnUse)
         {
-            InternalUnequipItem(Item, SlotTag);
+            InternalUnequipItem(SlotTag);
         }
     }
 
@@ -705,7 +731,7 @@ void UZfEquipmentComponent::TryRemoveItemStackFromEquipmentSlot(FGameplayTag Slo
 
     if (Item->RemoveFromStack(1))
     {
-        InternalUnequipItem(Item, SlotTag);
+        InternalUnequipItem(SlotTag);
         return;
     }
     
@@ -746,7 +772,7 @@ bool UZfEquipmentComponent::CanEquipItem(UZfItemInstance* InItemInstance, FGamep
 
     UZfItemInstance* ItemAtTarget = GetItemAtSlotTag(TargetSlotTag);
     // Mesmo Tipo de Slot
-    if (ItemAtTarget)
+    if (!ItemAtTarget)
     {
         if (SlotTagComesFrom.RequestDirectParent() != TargetSlotTag.RequestDirectParent()) return false;
     }
@@ -784,18 +810,17 @@ bool UZfEquipmentComponent::CanEquipItem(UZfItemInstance* InItemInstance, FGamep
     return true;
 }
 
-bool UZfEquipmentComponent::CanUnequipItem(FGameplayTag TargetSlotTag)
+bool UZfEquipmentComponent::CanUnequipItem(FGameplayTag TargetSlotTag, int32 PreviewAmount)
 {
-    // Requisistos de Item
     UZfItemInstance* EquipmentAtSlot = GetItemAtSlotTag(TargetSlotTag);
     if (!EquipmentAtSlot) return false;
     
     if (EquipmentAtSlot->GetFragment<UZfFragment_InventoryExpansion>())
     {
         int32 AvaliableSlots = InventoryComponent->GetAvailableDefaultSlots();
-        int32 ItensToMove    = InventoryComponent->GetItemCountFromInitialSlot(AvaliableSlots);
+        int32 ItensToMove    = InventoryComponent->GetItemCountFromInitialSlot(InventoryComponent->DefaultSlotCount);
             
-        if (AvaliableSlots - ItensToMove >= 0) return true;
+        if (AvaliableSlots - PreviewAmount - ItensToMove >= 0) return true;
         
         return false;
     }
@@ -986,21 +1011,22 @@ void UZfEquipmentComponent::InternalEquipItem(UZfItemInstance* InItemInstance, F
     InItemInstance->NotifyFragments_ItemEquipped(this, GetOwner());
 }
 
-void UZfEquipmentComponent::InternalUnequipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag)
+void UZfEquipmentComponent::InternalUnequipItem(FGameplayTag TargetSlotTag)
 {
-    check(InItemInstance != nullptr);
+    UZfItemInstance* ItemInstance = GetItemAtEquipmentSlot(TargetSlotTag);
+    check(ItemInstance != nullptr);
 
-    Internal_RemoveItemGameplayEffects(InItemInstance);
+    Internal_RemoveItemGameplayEffects(ItemInstance);
 
-    EquipmentList.EquippedItems.RemoveAll([InItemInstance](const FZfEquipmentSlotEntry& Entry)
+    EquipmentList.EquippedItems.RemoveAll([TargetSlotTag](const FZfEquipmentSlotEntry& Entry)
     {
-        return Entry.ItemInstance == InItemInstance;
+        return Entry.SlotTag == TargetSlotTag;
     });
-
-    RemoveReplicatedSubObject(InItemInstance);
     EquipmentList.MarkArrayDirty();
-    OnItemUnequipped.Broadcast(InItemInstance, ResolvedSlotTag);
-    InItemInstance->NotifyFragments_ItemUnequipped(this, GetOwner());
+    
+    RemoveReplicatedSubObject(ItemInstance);
+    OnItemUnequipped.Broadcast(TargetSlotTag);
+    ItemInstance->NotifyFragments_ItemUnequipped(this, GetOwner());
 }
 
 FZfEquipmentSlotEntry* UZfEquipmentComponent::InternalFindSlotEntry(FGameplayTag SlotTag)

@@ -23,10 +23,5 @@ public:
 		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|DragDrop")
-	void RemoveItemFromTargetInterface(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zf|DragDrop")
-	bool CanITransferBack(UZfItemInstance* InItemInstance,
-		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
-		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
+	void RemoveItemFromTargetInterface(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 };

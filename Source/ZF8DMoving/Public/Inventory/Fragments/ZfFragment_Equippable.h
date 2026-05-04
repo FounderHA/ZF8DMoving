@@ -47,18 +47,6 @@ public:
     // o slot OffHand completamente até o item ser desequipado.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Equippable")
     EZfHandedness Handedness = EZfHandedness::NotApplicable;
-    
-    // Índice do slot quando há múltiplos do mesmo tipo.
-    // Ex: Ring_0 ou Ring_1. Deixe 0 para slots únicos.
-    // O EquipmentComponent encontrará o primeiro slot livre
-    // do mesmo tipo automaticamente se bAutoFindSlot = true.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Equippable")
-    int32 PreferredSlotIndex = 0;
-
-    // Se verdadeiro, ao equipar, o sistema busca automaticamente
-    // o primeiro slot livre do mesmo tipo (ignora PreferredSlotIndex).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragment|Equippable")
-    bool bAutoFindFreeSlot = true;
 
     // Tags de requisito para equipar — o ator precisa ter TODAS essas tags.
     // Ex: pode exigir "Character.Class.Warrior" para equipar uma espada pesada.

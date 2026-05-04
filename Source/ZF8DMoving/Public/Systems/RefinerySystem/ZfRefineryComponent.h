@@ -155,7 +155,7 @@ protected:
 		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
 		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
 		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-	virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+	virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
 	
 public:
 	
@@ -199,7 +199,7 @@ public:
 		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery|RPC")
-	void ServerTryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	void ServerTryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 	
 	// ============================================================
 	// SERVER RPCs — FILA MANUAL DE RECEITAS
@@ -229,7 +229,7 @@ public:
 	// @param OriginalSlotIndexBeforeSplit — slot de origem antes do Split
 	// @param Amount        — quantidade a separar do stack original
 	UFUNCTION(Category = "Zf|Inventory")
-	void TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	void TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 	
 	// ============================================================
 	// API PÚBLICA — FILA MANUAL DE RECEITAS
