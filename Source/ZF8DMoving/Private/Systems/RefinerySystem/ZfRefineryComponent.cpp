@@ -131,9 +131,9 @@ void UZfRefineryComponent::AddItemToTargetInterface_Implementation(UObject* Item
 	ServerTryAddItem(ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
 }
 
-void UZfRefineryComponent::RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+void UZfRefineryComponent::RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
-	ServerTryRemoveItem(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+	ServerTryRemoveItem(ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
 }
 
 // ============================================================
@@ -151,11 +151,11 @@ void UZfRefineryComponent::ServerTryAddItem_Implementation(UObject* ItemComesFro
 	}
 }
 
-void UZfRefineryComponent::ServerTryRemoveItem_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+void UZfRefineryComponent::ServerTryRemoveItem_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
 	if (CheckIsServer("RemoveItemInterface"))
 	{
-		TryRemoveItem(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+		TryRemoveItem(ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
 	}	
 }
 
@@ -212,7 +212,7 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
             if (Overflow == 0)
             {
                 // Completamente absorvido por stacks existentes
-                Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
                 return;
             }
 
@@ -226,14 +226,14 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
                 if (EmptySlot == INDEX_NONE)
                 {
                     // Sem slot disponível — Devolver o Resto ao Dono Original
-                    Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                    Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
                     return;
                 }
 
                 // Slot disponível - Muda Stack
                 UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(Overflow);
                 InternalAddItemToSlot(SlotList, NewItem, EmptySlot);
-                Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
                 return;
             }
         }
@@ -245,7 +245,7 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
 
         // Slot disponível
         InternalAddItemToSlot(SlotList, InItemInstance, EmptySlot);
-        Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+        Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
         return;
     }
 
@@ -263,12 +263,12 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
 		if (InItemInstance->GetCurrentStack() != AmountToAdd)
 		{
 			UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(AmountToAdd);
-			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
 			InternalAddItemToSlot(SlotList, NewItem, TargetSlotIndex);
 			return;
 		}
 		InternalAddItemToSlot(SlotList, InItemInstance, TargetSlotIndex);
-		Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+		Execute_RemoveItemFromTargetInterface(ItemComesFrom, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
 		return;
 	}
     
@@ -284,7 +284,7 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
 		if (Overflow == 0)
 		{
 			// Completamente absorvido pelo Stack - Remover Tudo do Slot Antigo
-			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
 			return;
 		}
 
@@ -293,7 +293,7 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
 		if (Overflow > 0)
 		{
 			// Remover Quantidade que foi Absorvida
-			Execute_RemoveItemFromTargetInterface(ItemComesFrom, this, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+			Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
 			return;
 		}
 	}
@@ -303,7 +303,7 @@ void UZfRefineryComponent::TryAddItem(UObject* ItemComesFrom, UZfItemInstance* I
 // TryRemoveItem
 // ============================================================
 
-void UZfRefineryComponent::TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+void UZfRefineryComponent::TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
 	FZfRefinerySlotList& SlotList = GetSlotListByType(TargetSlotType);
 	
@@ -311,7 +311,10 @@ void UZfRefineryComponent::TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmoun
 
 	if (!ItemAtTarget) return;
 
-	if (ItemAmountToRemove < 0 || ItemAmountToRemove > ItemAtTarget->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return;
+	if (ItemAtTarget->GetFragment<UZfFragment_Stackable>())
+	{
+		if (ItemAmountToRemove < 0 || ItemAmountToRemove > ItemAtTarget->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return;
+	}
 
 	int32 ItemAmountAtSlot = ItemAtTarget->GetCurrentStack();
     

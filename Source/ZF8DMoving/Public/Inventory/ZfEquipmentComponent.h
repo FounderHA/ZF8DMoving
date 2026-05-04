@@ -29,11 +29,10 @@ class UZfModifierRule;
 // ============================================================
 // DELEGATES
 // ============================================================
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped,   UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUnequipped, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemBroken,   UZfItemInstance*, ItemInstance);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedItemRepaired, UZfItemInstance*, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUnequipped, FGameplayTag, SlotTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemEquipped,   UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSetBonusChanged, FGameplayTag, SetIdentifierTag, int32, ActivePieceCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStackChanged, UZfItemInstance*, ItemInstance, FGameplayTag, SlotTag);
 
@@ -122,10 +121,7 @@ public:
         int32 SlotIndexComesFrom, int32 TargetSlotIndex,
         EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
         FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-    virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
-	virtual bool CanITransferBack_Implementation(UZfItemInstance* InItemInstance,
-	    EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType, 
-	    FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
+    virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
     
     // ----------------------------------------------------------
     // CONFIGURAÇÃO
@@ -229,7 +225,7 @@ public:
     EZfItemMechanicResult TryUnequipItem(FGameplayTag SlotTag, int32 TargetInventorySlot);
 
     UFUNCTION(Category = "Zf|Equipment")
-    EZfItemMechanicResult TryUnequipItemInterface(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+    EZfItemMechanicResult TryUnequipItemInterface(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
     UFUNCTION(Category = "Zf|Equipment")
     EZfItemMechanicResult TryEquipBackpack(FGameplayTag SlotTag, UZfItemInstance* InItemInstance, int32 FromInventorySlot);
@@ -256,7 +252,7 @@ public:
     bool CanEquipItem(UZfItemInstance* InItemInstance, FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
-    bool CanUnequipItem(FGameplayTag TargetSlotTag);
+    bool CanUnequipItem(FGameplayTag TargetSlotTag, int32 PreviewAmount = 0);
 
     
     
@@ -361,7 +357,7 @@ private:
     int32 Internal_GenerateReplicationKey() const;
 
     void InternalEquipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag = FGameplayTag());
-    void InternalUnequipItem(UZfItemInstance* InItemInstance, FGameplayTag ResolvedSlotTag);
+    void InternalUnequipItem(FGameplayTag TargetSlotTag);
     FZfEquipmentSlotEntry* InternalFindSlotEntry(FGameplayTag SlotTag);
 
     // ----------------------------------------------------------

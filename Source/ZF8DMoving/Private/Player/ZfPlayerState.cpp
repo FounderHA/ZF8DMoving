@@ -490,7 +490,7 @@ void AZfPlayerState::Server_RequestAddItem_Implementation(UObject* TargetReceive
 	Execute_AddItemToTargetInterface(TargetReceiver, ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
 }
 
-void AZfPlayerState::Server_RequestRemoveItem_Implementation(UObject* TargetReceiver, UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+void AZfPlayerState::Server_RequestRemoveItem_Implementation(UObject* TargetReceiver, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
 	if (!HasAuthority()) return;
 
@@ -500,7 +500,7 @@ void AZfPlayerState::Server_RequestRemoveItem_Implementation(UObject* TargetRece
 			TEXT("AZfPlayerState::Server_RequestRefineryAddItem: TargetReceiver nulo."));
 		return;
 	}
-	Execute_RemoveItemFromTargetInterface(TargetReceiver, ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+	Execute_RemoveItemFromTargetInterface(TargetReceiver, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
 }
 
 // =====================================================================

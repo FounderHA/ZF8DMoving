@@ -293,7 +293,7 @@ public:
 		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery")
-	void Server_RequestRemoveItem(UObject* TargetReceiver, UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	void Server_RequestRemoveItem(UObject* TargetReceiver, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
 	// =====================================================================
 	// UNIQUE ITEMS

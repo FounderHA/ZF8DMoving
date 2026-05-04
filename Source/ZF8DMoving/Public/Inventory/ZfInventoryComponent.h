@@ -143,7 +143,7 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent, public IZfI
         int32 SlotIndexComesFrom, int32 TargetSlotIndex,
         EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
         FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-    virtual void RemoveItemFromTargetInterface_Implementation(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+    virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
     
 private:
 
@@ -309,7 +309,7 @@ public:
     // Remove um item do inventário pelo índice do slot.
     // @param SlotIndex — slot a remover
     UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
-    void ServerTryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+    void ServerTryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
     // Adiciona um item do inventário pela instancia.
     // @param ItemInstance — item adicionado
@@ -378,7 +378,7 @@ private:
     // @param SlotIndex — slot a remover
     // @return resultado da operação
     UFUNCTION(Category = "Zf|Inventory")
-    EZfItemMechanicResult TryRemoveItem(UObject* ItemComesFrom, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+    EZfItemMechanicResult TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
     // Tenta adicionar um item ao inventário.
     // Se o item é stackável e já existe stack do mesmo tipo,
