@@ -182,7 +182,7 @@ int32 UZfItemGeneratorLibrary::RollQuality(
         Accumulated += Entry.Weight;
         if (Roll <= Accumulated)
         {
-            UE_LOG(LogZfInventory, Log,
+            UE_LOG(LogZfInventory, Verbose,
                 TEXT("RollQuality: Qualidade %d sorteada | PlayerLevel=%d | MinQuality=%d | Bonus=%.2f"),
                 Entry.Quality, PlayerLevel, MinQuality, TotalBonus);
             return Entry.Quality;
@@ -261,7 +261,7 @@ int32 UZfItemGeneratorLibrary::RollModifierCount(EZfItemRarity Rarity)
     // Começa no mínimo garantido
     int32 Count = Range->Min;
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("RollModifierCount: Raridade=%s | Min=%d | Max=%d | Iniciando com %d modifier(s)."),
         *UEnum::GetValueAsString(Rarity), Range->Min, Range->Max, Count);
 
@@ -276,7 +276,7 @@ int32 UZfItemGeneratorLibrary::RollModifierCount(EZfItemRarity Rarity)
         if (Roll <= Chance)
         {
             Count++;
-            UE_LOG(LogZfInventory, Log,
+            UE_LOG(LogZfInventory, Verbose,
                 TEXT("RollModifierCount: Sucesso! Roll=%.4f <= Chance=%.4f | Total agora: %d"),
                 Roll, Chance, Count);
 
@@ -284,7 +284,7 @@ int32 UZfItemGeneratorLibrary::RollModifierCount(EZfItemRarity Rarity)
         }
         else
         {
-            UE_LOG(LogZfInventory, Log,
+            UE_LOG(LogZfInventory, Verbose,
                 TEXT("RollModifierCount: Falhou. Roll=%.4f > Chance=%.4f | Parando em %d modifier(s)."),
                 Roll, Chance, Count);
             break;
@@ -293,11 +293,11 @@ int32 UZfItemGeneratorLibrary::RollModifierCount(EZfItemRarity Rarity)
 
     if (Count == Range->Max)
     {
-        UE_LOG(LogZfInventory, Log,
+        UE_LOG(LogZfInventory, Verbose,
             TEXT("RollModifierCount: Atingiu o máximo de %d modifier(s)."), Count);
     }
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("RollModifierCount: Total final = %d modifier(s)."), Count);
 
     return Count;
@@ -564,7 +564,7 @@ UZfItemInstance* UZfItemGeneratorLibrary::GenerateItem(
         NewInstance->ApplyPropertyModifier(Modifier.ItemPropertyTag, Modifier.FinalValue);
     }
     
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("w: Item gerado. Raridade=%s | Tier=%d | Quality=%d | Modifiers=%d"),
         *UEnum::GetValueAsString(Rarity), Tier, Quality, Modifiers.Num());
 

@@ -13,7 +13,7 @@ void UZfFragment_Durability::OnItemBroken(UZfItemInstance* OwningInstance)
 		return;
 	}
 
-	UE_LOG(LogZfInventory, Log, TEXT("UZfFragment_Durability::OnItemBroken — Item '%s' quebrou." "Bônus desativados pelo EquipmentComponent."),
+	UE_LOG(LogZfInventory, Verbose, TEXT("UZfFragment_Durability::OnItemBroken — Item '%s' quebrou." "Bônus desativados pelo EquipmentComponent."),
 		*OwningInstance->GetItemGuid().ToString());
 }
 
@@ -26,7 +26,7 @@ void UZfFragment_Durability::OnItemRepaired(UZfItemInstance* OwningInstance)
 		return;
 	}
 
-	UE_LOG(LogZfInventory, Log,
+	UE_LOG(LogZfInventory, Verbose,
 		TEXT("UZfFragment_Durability::OnItemRepaired — Item '%s' reparado." "Bônus reativados pelo EquipmentComponent."),
 		*OwningInstance->GetItemGuid().ToString());
 }

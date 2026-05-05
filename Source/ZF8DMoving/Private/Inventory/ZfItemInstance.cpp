@@ -133,7 +133,7 @@ void UZfItemInstance::InitializeItemInstance(UZfItemDefinition* InItemDefinition
     // Calcula valor de mercado inicial
     RecalculateMarketValue();
 
-    UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::InitializeItemInstance — " "Item '%s' inicializado. GUID: %s | Tier: %d | Rarity: %s"),
+    UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::InitializeItemInstance — " "Item '%s' inicializado. GUID: %s | Tier: %d | Rarity: %s"),
         *InItemDefinition->ItemName.ToString(),
         *ItemGuid.ToString(),
         ItemTier,
@@ -217,7 +217,7 @@ void UZfItemInstance::RecalculateItemAttributes()
 
         ItemAttributes.Add(AttributeValue);
 
-        UE_LOG(LogZfInventory, Log,
+        UE_LOG(LogZfInventory, Verbose,
             TEXT("RecalculateItemAttributes: %s | Base=%.1f | ModBonus=%.1f | Final=%.1f"),
             *Entry.AttributeTag.ToString(),
             AttributeValue.BaseValue,
@@ -228,10 +228,10 @@ void UZfItemInstance::RecalculateItemAttributes()
     }
 }
 
-UZfItemInstance* UZfItemInstance::CreateShallowCopy(int32 OverrideStack) const
+UZfItemInstance* UZfItemInstance::CreateServerCopy(int32 OverrideStack, UObject* NewOuter)
 {
-    // Usa o mesmo outer do item original (que é um Actor)
-    UZfItemInstance* Copy = NewObject<UZfItemInstance>(GetOuter(), GetClass());
+    // Usa o NewOuter se fornecido, senão usa o outer original
+    UZfItemInstance* Copy = NewObject<UZfItemInstance>(NewOuter ? NewOuter : GetOuter(), GetClass());
     
     Copy->SetItemDefinition(ItemDefinition);
     Copy->SetCurrentStack(OverrideStack);
@@ -240,8 +240,8 @@ UZfItemInstance* UZfItemInstance::CreateShallowCopy(int32 OverrideStack) const
     Copy->SetQuality(ItemQuality);
     Copy->SetAppliedModifiers(AppliedModifiers);
     Copy->SetCurrentDurability(CurrentDurability);
+    Copy->ItemGuid              = FGuid::NewGuid();
 
-    // Estas não têm setter público — precisa adicionar ou acessar direto
     Copy->BonusMaxDurability    = BonusMaxDurability;
     Copy->TotalMaxDurability    = TotalMaxDurability;
     Copy->bIsRepairable         = bIsRepairable;
@@ -249,7 +249,6 @@ UZfItemInstance* UZfItemInstance::CreateShallowCopy(int32 OverrideStack) const
     Copy->CorruptionState       = CorruptionState;
     Copy->CalculatedMarketValue = CalculatedMarketValue;
     Copy->ItemAttributes        = ItemAttributes;
-    // ItemGuid intencionalmente NÃO copiado — cópia é objeto diferente
     
     return Copy;
 }
@@ -453,7 +452,7 @@ void UZfItemInstance::RepairItem()
         NotifyFragments_ItemRepaired();
     }
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfItemInstance::RepairItem — "
              "Item '%s' (GUID: %s) reparado para %.1f de durabilidade."),
         *GetItemName().ToString(), *ItemGuid.ToString(), CurrentDurability);
@@ -617,7 +616,7 @@ bool UZfItemInstance::AddAppliedModifier(const FZfAppliedModifier& NewModifier)
     // Recalcula o valor de mercado
     RecalculateMarketValue();
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfItemInstance::AddAppliedModifier — " "Modifier '%s' adicionado ao item GUID: %s. " "Total: %d/%d"),
         *NewModifier.ModifierRowName.ToString(), *ItemGuid.ToString(), AppliedModifiers.Num(), MaxTotal);
 
@@ -641,7 +640,7 @@ bool UZfItemInstance::RemoveAppliedModifier(const FName& ModifierRowName)
     {
         RecalculateMarketValue();
 
-        UE_LOG(LogZfInventory, Log,
+        UE_LOG(LogZfInventory, Verbose,
             TEXT("UZfItemInstance::RemoveAppliedModifier — "
                  "Modifier '%s' removido do item GUID: %s."),
             *ModifierRowName.ToString(), *ItemGuid.ToString());
@@ -675,7 +674,7 @@ void UZfItemInstance::RemoveAllNonDebuffModifiers()
     {
         RecalculateMarketValue();
 
-        UE_LOG(LogZfInventory, Log,
+        UE_LOG(LogZfInventory, Verbose,
             TEXT("UZfItemInstance::RemoveAllNonDebuffModifiers — "
                  "Removidos %d modifiers do item GUID: %s."),
             RemovedCount, *ItemGuid.ToString());
@@ -771,7 +770,7 @@ bool UZfItemInstance::CorruptItem()
     // que selecionará aleatoriamente um debuff compatível
     CorruptionState = EZfCorruptionState::Corrupted;
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfItemInstance::CorruptItem — " "Item '%s' (GUID: %s) foi corrompido."),
         *GetItemName().ToString(), *ItemGuid.ToString());
 
@@ -791,7 +790,7 @@ void UZfItemInstance::SetIsRepairable(bool bRepairable)
 
     bIsRepairable = bRepairable;
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfItemInstance::SetIsRepairable — " "GUID: %s | bIsRepairable: %s"),
         *ItemGuid.ToString(), bIsRepairable ? TEXT("true") : TEXT("false"));
 }
@@ -998,7 +997,7 @@ void UZfItemInstance::Internal_InitializeUniqueModifiers()
         // Adiciona o modifier ao item
         AppliedModifiers.Add(NewModifier);
 
-        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
+        UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::Internal_InitializeUniqueModifiers — "
                  "Modifier único '%s' | Rank: %d | Valor: %.2f | GUID: %s"),
             *Handle.RowName.ToString(), NewModifier.CurrentRank, NewModifier.CurrentValue, *ItemGuid.ToString());
     }
@@ -1036,7 +1035,7 @@ void UZfItemInstance::Internal_RecalculateTotalMaxDurability()
 
     TotalMaxDurability = BaseMaxDurability + BonusMaxDurability;
 
-    UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::Internal_RecalculateTotalMaxDurability — "
+    UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::Internal_RecalculateTotalMaxDurability — "
         "Base=%.1f | Bonus=%.1f | Total=%.1f | GUID: %s"),
         BaseMaxDurability, BonusMaxDurability, TotalMaxDurability,
         *ItemGuid.ToString());
@@ -1068,7 +1067,7 @@ void UZfItemInstance::ApplyPropertyModifier(const FGameplayTag& PropertyTag, flo
         const float NewDurability = NormalizedNewDurability * TotalMaxDurability;
         SetCurrentDurability(NewDurability);
 
-        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::ApplyPropertyModifier — "
+        UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::ApplyPropertyModifier — "
             "MaxDurability bonus +%.1f | Total Bonus: %.1f | GUID: %s"),
             Value, BonusMaxDurability, *ItemGuid.ToString());
     }
@@ -1103,7 +1102,7 @@ void UZfItemInstance::RevertPropertyModifier(const FGameplayTag& PropertyTag, fl
         const float NewDurability = NormalizedNewDurability * TotalMaxDurability;
         SetCurrentDurability(NewDurability);
 
-        UE_LOG(LogZfInventory, Log, TEXT("UZfItemInstance::RevertPropertyModifier — "
+        UE_LOG(LogZfInventory, Verbose, TEXT("UZfItemInstance::RevertPropertyModifier — "
             "MaxDurability bonus -%.1f | Total Bonus: %.1f | GUID: %s"),
             AppliedValue, BonusMaxDurability, *ItemGuid.ToString());
     }

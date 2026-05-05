@@ -295,6 +295,13 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Refinery")
 	void Server_RequestRemoveItem(UObject* TargetReceiver, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 
+	// =============================================================================
+	// DROPAR ITENS
+	// =============================================================================
+
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Zf|Inventory")
+	void Server_RequestDropItem(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	
 	// =====================================================================
 	// UNIQUE ITEMS
 	// =====================================================================

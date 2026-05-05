@@ -481,10 +481,17 @@ void AZfPlayerState::Server_RequestAddItem_Implementation(UObject* TargetReceive
 {
 	if (!HasAuthority()) return;
 
+	if (!InItemInstance)
+	{
+		UE_LOG(LogZfRefinery, Warning,
+			TEXT("AZfPlayerState::Server_RequestDropItem: ItemInstance nulo."));
+		return;
+	}
+	
 	if (!TargetReceiver)
 	{
 		UE_LOG(LogZfRefinery, Warning,
-			TEXT("AZfPlayerState::Server_RequestRefineryAddItem: TargetReceiver nulo."));
+			TEXT("AZfPlayerState::Server_RequestAddItem: TargetReceiver nulo."));
 		return;
 	}
 	Execute_AddItemToTargetInterface(TargetReceiver, ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
@@ -493,14 +500,66 @@ void AZfPlayerState::Server_RequestAddItem_Implementation(UObject* TargetReceive
 void AZfPlayerState::Server_RequestRemoveItem_Implementation(UObject* TargetReceiver, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
 	if (!HasAuthority()) return;
-
+	
 	if (!TargetReceiver)
 	{
 		UE_LOG(LogZfRefinery, Warning,
-			TEXT("AZfPlayerState::Server_RequestRefineryAddItem: TargetReceiver nulo."));
+			TEXT("AZfPlayerState::Server_RequestRemoveItem: TargetReceiver nulo."));
 		return;
 	}
 	Execute_RemoveItemFromTargetInterface(TargetReceiver, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+}
+
+// =============================================================================
+// DROPAR ITENS
+// =============================================================================
+
+void AZfPlayerState::Server_RequestDropItem_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+	if (!HasAuthority()) return;
+
+	if (!InItemInstance)
+	{
+		UE_LOG(LogZfRefinery, Warning,
+			TEXT("AZfPlayerState::Server_RequestDropItem: ItemInstance nulo."));
+		return;
+	}
+	
+	if (!ItemComesFrom)
+	{
+		UE_LOG(LogZfRefinery, Warning,
+			TEXT("AZfPlayerState::Server_RequestDropItem: TargetReceiver nulo."));
+		return;
+	}
+
+	APawn* InstigatorPawn = nullptr;
+
+	if (APlayerController* PC = GetPlayerController())
+	{
+		InstigatorPawn = PC->GetPawn();
+	}
+
+	if (!InstigatorPawn) return;
+	
+	UZfItemInstance* ItemToDrop = InItemInstance->CreateServerCopy(ItemAmountToRemove, InstigatorPawn);
+	if (!ItemToDrop) return;
+	
+	if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag)) return;
+
+	const TSubclassOf<AZfItemPickup> PickupClass = ItemToDrop->GetItemDefinition()->ItemPickupActorClass.LoadSynchronous();
+	if (!PickupClass) return;
+	
+	// Fica só isso:
+	const FTransform DropTransform(FRotator::ZeroRotator, InstigatorPawn->GetActorLocation());
+
+	AZfItemPickup* Pickup = GetWorld()->SpawnActorDeferred<AZfItemPickup>(PickupClass, DropTransform, this, InstigatorPawn, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+
+	if (Pickup)
+	{
+		Pickup->InitializePickup(ItemToDrop);
+		Pickup->FinishSpawning(DropTransform);
+		Pickup->ReDropItem(InstigatorPawn);
+	}
 }
 
 // =====================================================================

@@ -121,7 +121,7 @@ public:
         int32 SlotIndexComesFrom, int32 TargetSlotIndex,
         EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
         FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-    virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+    virtual bool RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
     
     // ----------------------------------------------------------
     // CONFIGURAÇÃO
@@ -351,7 +351,7 @@ private:
     void Internal_RemoveAllSetBonuses(const FGameplayTag& SetTag);
     void Internal_BlockOffHandSlot();
     void Internal_UnblockOffHandSlot();
-    int32 InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance, FGameplayTag SlotTag);
+    int32 InternalTryStackWithExistingItems(UZfItemInstance* ItemInstance, int32 AmountToAdd, FGameplayTag ParentTag);
 
     const FZfEquipmentSlotEntry* Internal_FindSlotEntryConst(FGameplayTag EquipmentSlotTag) const;
     int32 Internal_GenerateReplicationKey() const;

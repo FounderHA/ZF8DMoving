@@ -129,6 +129,7 @@ struct TStructOpsTypeTraits<FZfRefinerySlotList> : public TStructOpsTypeTraitsBa
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRefineryStateChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRefineryCycleCompleted, UZfRefineryRecipe*, Recipe);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCatalystConsumed, float, NewSpeedMultiplier);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefineryProgressUpdated, float, Progress, float, TimeRemaining);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefineryItemRemoved, EZfRefinerySlotType, SlotType, int32, SlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRefinerySlotChanged, EZfRefinerySlotType, SlotType, UZfItemInstance*, ItemInstance, int32, SlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRefineryItemAdded, EZfRefinerySlotType, SlotType, UZfItemInstance*, ItemInstance, int32, SlotIndex);
@@ -149,14 +150,16 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void AddItemToTargetInterface_Implementation(UObject* ItemComesFrom, UZfItemInstance* InItemInstance, int32 AmountToAdd,
 		int32 SlotIndexComesFrom, int32 TargetSlotIndex,
 		EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
 		FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-	virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
-	
+	virtual bool RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+	virtual void AddItemBackToTargetInterface_Implementation(UZfItemInstance* InItemInstance, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+    
 public:
 	
 	// ============================================================
@@ -187,6 +190,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Refinery|Events")
 	FOnRefineryItemRemoved OnRefineryItemRemoved;
+
+	UPROPERTY(BlueprintAssignable, Category = "Refinery|Events")
+	FOnRefineryProgressUpdated OnRefineryProgressUpdated;
 	
 	// ============================================================
 	// SERVER RPCs — SLOTS
@@ -229,7 +235,7 @@ public:
 	// @param OriginalSlotIndexBeforeSplit — slot de origem antes do Split
 	// @param Amount        — quantidade a separar do stack original
 	UFUNCTION(Category = "Zf|Inventory")
-	void TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
+	bool TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag);
 	
 	// ============================================================
 	// API PÚBLICA — FILA MANUAL DE RECEITAS

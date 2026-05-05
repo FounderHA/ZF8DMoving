@@ -72,6 +72,11 @@ void AZfItemPickup::PostInitializeComponents()
     CollisionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
     CollisionSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
     CollisionSphere->SetGenerateOverlapEvents(true);
+    
+    StaticMeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore); // Ignora câmera
+    //StaticMeshComponent->SetLinearDamping(2.0f); // quanto maior, mais rápido desacelera
+    //StaticMeshComponent->SetAngularDamping(2.0f); // rotação também desacelera
+
 }
 
 // ============================================================
@@ -105,6 +110,7 @@ void AZfItemPickup::BeginPlay()
     // Inicia timer de auto-destruição se configurado
     if (HasAuthority() && AutoDestroyAfterSeconds > 0.0f)
     {
+        Internal_StartAutoDestroyTimer();
         Internal_StartAutoDestroyTimer();
     }
 }
@@ -147,7 +153,7 @@ void AZfItemPickup::InitializePickup(UZfItemInstance* InItemInstance)
     // Armazena o ItemInstance — será replicado automaticamente
     ItemInstance = InItemInstance;
 
-    UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::InitializePickup — " "Pickup inicializado com item '%s'. GUID: %s"),
+    UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::InitializePickup — " "Pickup inicializado com item '%s'. GUID: %s"),
         *InItemInstance->GetItemName().ToString(), *InItemInstance->GetItemGuid().ToString());
 }
 
@@ -198,7 +204,7 @@ EZfItemMechanicResult AZfItemPickup::TryCollectItem(AActor* CollectorActor)
         // Dispara delegate
         OnItemPickedUp.Broadcast(CollectorActor, CollectedItem);
  
-        UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::TryCollectItem — " "Item '%s' coletado por '%s'. Pickup será destruído."),
+        UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::TryCollectItem — " "Item '%s' coletado por '%s'. Pickup será destruído."),
             *CollectedItem->GetItemName().ToString(), *CollectorActor->GetName());
  
         // Destrói o pickup após a coleta
@@ -233,7 +239,7 @@ void AZfItemPickup::ReDropItem(const AActor* CollectorActor)
     // Posição na frente do ator
     const FVector ActorLocation  = CollectorActor->GetActorLocation();
     const FVector ForwardVector  = CollectorActor->GetActorForwardVector();
-    const FVector DropLocation   = ActorLocation + ForwardVector * 100.0f + FVector(0, 0, 50.0f);
+    const FVector DropLocation   = ActorLocation + ForwardVector * 30.0f + FVector(0, 0, 50.0f);
 
     SetActorLocation(DropLocation);
 
@@ -245,12 +251,28 @@ void AZfItemPickup::ReDropItem(const AActor* CollectorActor)
         const FVector ThrowDir   = Rotation.Vector();
 
         // Velocidade com componente para frente e para cima
-        const float ForwardSpeed = FMath::RandRange(200.0f, 400.0f);
-        const float UpSpeed      = FMath::RandRange(300.0f, 500.0f);
+        const float ForwardSpeed = FMath::RandRange(100.0f, 200.0f);
+        const float UpSpeed      = FMath::RandRange(300.0f, 400.0f);
         const FVector ThrowVelocity = ThrowDir * ForwardSpeed + FVector(0, 0, UpSpeed);
 
         StaticMeshComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
         StaticMeshComponent->AddImpulse(ThrowVelocity, NAME_None, true);
+
+        // Rotação aleatória inicial do ator
+        const FRotator RandomRotation = FRotator(
+            FMath::RandRange(-30.0f, 30.0f),  // Pitch
+            FMath::RandRange(0.0f, 360.0f),   // Yaw
+            FMath::RandRange(-30.0f, 30.0f)   // Roll
+        );
+        SetActorRotation(RandomRotation);
+
+        // Impulso angular para girar durante o voo
+        const FVector AngularImpulse = FVector(
+            FMath::RandRange(-200.0f, 200.0f),
+            FMath::RandRange(-200.0f, 200.0f),
+            FMath::RandRange(-200.0f, 200.0f)
+        );
+        StaticMeshComponent->AddAngularImpulseInDegrees(AngularImpulse, NAME_None, true);
     }
 
     // Reinicia o timer de auto-destruição
@@ -289,7 +311,7 @@ void AZfItemPickup::MulticastOnItemCollected_Implementation(AActor* CollectorAct
     // Executado em todos os clientes e no servidor
     // Aqui devem ser disparados efeitos visuais e sonoros de coleta
 
-    UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::MulticastOnItemCollected — " "Item coletado por '%s'. Efeitos visuais/sonoros aqui."),
+    UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::MulticastOnItemCollected — " "Item coletado por '%s'. Efeitos visuais/sonoros aqui."),
         CollectorActor ? *CollectorActor->GetName() : TEXT("Unknown"));
 
     // Esconde os meshes e widget imediatamente nos clientes
@@ -385,13 +407,13 @@ void AZfItemPickup::Internal_StartAutoDestroyTimer()
         AutoDestroyAfterSeconds,
         false);
 
-    UE_LOG(LogZfInventory, Log, TEXT("AZfItemPickup::Internal_StartAutoDestroyTimer — " "Pickup será destruído em %.0f segundos."),
+    UE_LOG(LogZfInventory, Verbose, TEXT("AZfItemPickup::Internal_StartAutoDestroyTimer — " "Pickup será destruído em %.0f segundos."),
         AutoDestroyAfterSeconds);
 }
 
 void AZfItemPickup::Internal_OnAutoDestroyTimerExpired()
 {
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("AZfItemPickup::Internal_OnAutoDestroyTimerExpired — "
              "Pickup '%s' destruído por timeout."),
         ItemInstance
