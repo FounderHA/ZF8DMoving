@@ -82,7 +82,7 @@ void UZfInventoryComponent::BeginPlay()
         
         CurrentSlotCount = DefaultSlotCount;
 
-        UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::BeginPlay — " "Inventário inicializado com %d slots disponíveis."), CurrentSlotCount);
+        UE_LOG(LogZfInventory, Verbose, TEXT("UZfInventoryComponent::BeginPlay — " "Inventário inicializado com %d slots disponíveis."), CurrentSlotCount);
     }
 }
 
@@ -139,9 +139,19 @@ void UZfInventoryComponent::AddItemToTargetInterface_Implementation(UObject* Ite
     ServerTryAddItem(ItemComesFrom, InItemInstance, AmountToAdd, SlotIndexComesFrom, TargetSlotIndex, SlotTypeComesFrom, TargetSlotType, SlotTagComesFrom, TargetSlotTag);
 }
 
-void UZfInventoryComponent::RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+bool UZfInventoryComponent::RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
 {
-    ServerTryRemoveItem(ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag);
+    if (InternalCheckIsServer("RemoveItemFromTargetInterface_Implementation"))
+    {
+        if (TryRemoveItem(ItemAmountToRemove, TargetSlotIndex, TargetSlotType, TargetSlotTag) == EZfItemMechanicResult::Success) return true;
+        return false;
+    }
+    return false;
+}
+
+void UZfInventoryComponent::AddItemBackToTargetInterface_Implementation(UZfItemInstance* InItemInstance, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
+{
+    InternalAddItem(InItemInstance, TargetSlotIndex);
 }
 
 // ============================================================
@@ -227,18 +237,13 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItem(UObject* ItemComesFrom, 
         EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
         FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag)
 {
-    if (TargetSlotIndex == SlotIndexComesFrom) return EZfItemMechanicResult::Failed_InvalidOperation;
+    if (TargetSlotIndex != INDEX_NONE)
+    {
+        if (TargetSlotIndex == SlotIndexComesFrom) return EZfItemMechanicResult::Failed_InvalidOperation;
+    }
     
     if (!InItemInstance) return EZfItemMechanicResult::Failed_ItemNotFound;
-
-    if (ItemComesFrom == EquipmentComponent)
-    {
-        if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
-        {
-            if (!EquipmentComponent->CanUnequipItem(SlotTagComesFrom, 1)) return EZfItemMechanicResult::Failed_InventoryFull;
-        }
-    }
-
+    
     if (InItemInstance->GetFragment<UZfFragment_Stackable>())
     {
         if (AmountToAdd < 0 || AmountToAdd > InItemInstance->GetFragment<UZfFragment_Stackable>()->MaxStackSize) return EZfItemMechanicResult::Failed_IncompatibleItem;
@@ -274,9 +279,9 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItem(UObject* ItemComesFrom, 
                 }
 
                 // Slot disponível - Muda Stack
-                UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(Overflow);
+                UZfItemInstance* NewItem = InItemInstance->CreateServerCopy(Overflow, GetOwner());
+                if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom)) return EZfItemMechanicResult::Failed_InvalidOperation;
                 InternalAddItem(NewItem, EmptySlot);
-                Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
                 return EZfItemMechanicResult::Success;
             }
         }
@@ -287,8 +292,8 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItem(UObject* ItemComesFrom, 
         if (EmptySlot == INDEX_NONE) return EZfItemMechanicResult::Failed_InventoryFull;
 
         // Slot disponível
+        if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom)) return EZfItemMechanicResult::Failed_InvalidOperation;
         InternalAddItem(InItemInstance, EmptySlot);
-        Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
         return EZfItemMechanicResult::Success;
     }
     
@@ -303,43 +308,63 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItem(UObject* ItemComesFrom, 
     {
         if (InItemInstance->GetCurrentStack() != AmountToAdd)
         {
-            UZfItemInstance* NewItem = InItemInstance->CreateShallowCopy(AmountToAdd);
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+            UZfItemInstance* NewItem = InItemInstance->CreateServerCopy(AmountToAdd, GetOwner());
+            if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom)) return EZfItemMechanicResult::Failed_InvalidOperation;
             InternalAddItem(NewItem, TargetSlotIndex);
             return EZfItemMechanicResult::Success;
         }
+        if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom)) return EZfItemMechanicResult::Failed_InvalidOperation;
         InternalAddItem(InItemInstance, TargetSlotIndex);
-        Execute_RemoveItemFromTargetInterface(ItemComesFrom, InItemInstance->GetCurrentStack(), SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+
+        if (ItemComesFrom == EquipmentComponent)
+        {
+            if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>())
+            {
+                RelocateItemsAboveCapacity(DefaultSlotCount);
+            }
+        }
         return EZfItemMechanicResult::Success;
     }
-    
-    
-    
+
     // Item Stackavel
-    if (InItemInstance->GetFragment<UZfFragment_Stackable>())
+    if (ItemAtTarget->GetItemDefinition() == InItemInstance->GetItemDefinition())
     {
-        // Item No Slot é Diferente
-        if (ItemAtTarget->GetItemDefinition() != InItemInstance->GetItemDefinition()) return EZfItemMechanicResult::Failed_SlotBlocked;
-        
-        int32 Overflow = TryAddToStack(TargetSlotIndex, AmountToAdd);
-        if (Overflow == 0)
+        if (InItemInstance->GetFragment<UZfFragment_Stackable>())
         {
-            // Completamente absorvido pelo Stack - Remover Tudo do Slot Antigo
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
-            return EZfItemMechanicResult::Success;
-        }
+            int32 Overflow = TryAddToStack(TargetSlotIndex, AmountToAdd);
+            if (Overflow == 0)
+            {
+                // Completamente absorvido pelo Stack - Remover Tudo do Slot Antigo
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                return EZfItemMechanicResult::Success;
+            }
 
-        if (Overflow < 0) return EZfItemMechanicResult::Failed_InvalidOperation;
+            if (Overflow < 0) return EZfItemMechanicResult::Failed_InvalidOperation;
 
-        if (Overflow > 0)
-        {
-            // Remover Quantidade que foi Absorvida
-            Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
-            return EZfItemMechanicResult::Success;
+            if (Overflow > 0)
+            {
+                // Remover Quantidade que foi Absorvida
+                Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd - Overflow, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+                return EZfItemMechanicResult::Success;
+            }
         }
     }
+    
+    // Swap nos Slot
+    if (ItemComesFrom != this)
+    {
+        if (InItemInstance->GetFragment<UZfFragment_InventoryExpansion>()) return EZfItemMechanicResult::Failed_InvalidOperation;
+    }
+    
+    if (InItemInstance->GetCurrentStack() != AmountToAdd) return EZfItemMechanicResult::Failed_SlotBlocked;
 
-    return EZfItemMechanicResult::Failed_SlotBlocked;
+    if (!Execute_RemoveItemFromTargetInterface(ItemComesFrom, AmountToAdd, SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom)) return EZfItemMechanicResult::Failed_InvalidOperation;
+    if (!Execute_RemoveItemFromTargetInterface(this, ItemAtTarget->GetCurrentStack(), TargetSlotIndex, TargetSlotType, TargetSlotTag)) return EZfItemMechanicResult::Failed_InvalidOperation;
+    
+    Execute_AddItemBackToTargetInterface(ItemComesFrom, InItemInstance , TargetSlotIndex, TargetSlotType, TargetSlotTag);
+    Execute_AddItemBackToTargetInterface(ItemComesFrom, ItemAtTarget , SlotIndexComesFrom, SlotTypeComesFrom, SlotTagComesFrom);
+
+    return EZfItemMechanicResult::Success;
 }
 
 EZfItemMechanicResult UZfInventoryComponent::TryRemoveItem(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag)
@@ -388,7 +413,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
         if (InternalTryStackWithExistingItems(InItemInstance, InItemInstance->GetCurrentStack()))
         {
             // Item foi completamente absorvido por stacks existentes
-            UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::TryAddItemToInventory — " 
+            UE_LOG(LogZfInventory, Verbose, TEXT("UZfInventoryComponent::TryAddItemToInventory — " 
             "Item '%s' completamente empilhado em stacks existentes."), *InItemInstance->GetItemName().ToString());
             return EZfItemMechanicResult::Success;
         }
@@ -415,7 +440,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToInventory(UZfItemInstan
     // Notifica os fragments do item
     InItemInstance->NotifyFragments_ItemAddedToInventory(this);
     
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfInventoryComponent::TryAddItemToInventory — " "Item '%s' adicionado ao slot %d."),
         *InItemInstance->GetItemName().ToString(), EmptySlot);
 
@@ -449,7 +474,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryRemoveItemFromInventory(int32 Sl
 
     InventoryList.MarkArrayDirty();
 
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::RemoveItemAtSlot — " "Item '%s' removido do slot %d."),
+    UE_LOG(LogZfInventory, Verbose, TEXT("UZfInventoryComponent::RemoveItemAtSlot — " "Item '%s' removido do slot %d."),
         *ItemInstance->GetItemName().ToString(), SlotIndex);
 
     return EZfItemMechanicResult::Success;
@@ -479,7 +504,7 @@ EZfItemMechanicResult UZfInventoryComponent::TryAddItemToSpecificSlot(UZfItemIns
 
     InItemInstance->NotifyFragments_ItemAddedToInventory(this);
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("TryAddItemToSpecificSlot — Item '%s' adicionado ao slot %d."),
         *InItemInstance->GetItemName().ToString(), TargetSlotIndex);
 
@@ -585,7 +610,7 @@ void UZfInventoryComponent::TrySplitStack(int32 FromSlotIndex, int32 ToSlotIndex
     // 4. Adiciona a nova instância no slot destino
     InternalAddItem(NewItem, ResolvedSlot);
 
-    UE_LOG(LogZfInventory, Log, TEXT("ServerTrySplitStack — Slot %d dividido: %d → slot %d"),FromSlotIndex, Amount, ResolvedSlot);
+    UE_LOG(LogZfInventory, Verbose, TEXT("ServerTrySplitStack — Slot %d dividido: %d → slot %d"),FromSlotIndex, Amount, ResolvedSlot);
 }
 
 void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) const
@@ -625,7 +650,7 @@ void UZfInventoryComponent::TrySpawnPickupItem(UZfItemInstance* ItemInstance) co
             // Agora sim roda o BeginPlay
             Pickup->FinishSpawning(DropTransform);
 
-            UE_LOG(LogZfInventory, Log, 
+            UE_LOG(LogZfInventory, Verbose, 
                 TEXT("ServerTryDropItem — Item '%s' dropado em %s."),
                 *ItemInstance->GetItemName().ToString(), *DropLocation.ToString());
         }
@@ -696,8 +721,6 @@ void UZfInventoryComponent::UpdateSlotCountFromEquippedBackpack()
     }
     
     CurrentSlotCount = FMath::Min(DefaultSlotCount + ExtraSlots, MaxAbsoluteSlotCount);
-    InventoryList.MarkArrayDirty();
-    OnInventorySizeChanged.Broadcast();
 }
 
 EZfItemMechanicResult UZfInventoryComponent::TryAddItemFromPickup(UZfItemInstance* ItemInstance, AZfItemPickup* ItemPickup)
@@ -847,6 +870,19 @@ int32 UZfInventoryComponent::GetAvailableSlotsWithExpansion(UZfItemInstance* Bac
     }
 
     return ExpandedCapacity - OccupiedSlots;
+}
+
+int32 UZfInventoryComponent::GetAvailableSlotsUpToIndex(int32 MaxIndex) const
+{
+    int32 OccupiedSlots = 0;
+    for (const FZfInventorySlot& Slot : InventoryList.Slots)
+    {
+        if (Slot.SlotIndex < MaxIndex && Slot.ItemInstance)
+        {
+            OccupiedSlots++;
+        }
+    }
+    return MaxIndex + 1 - OccupiedSlots;
 }
 
 int32 UZfInventoryComponent::GetItemCountFromInitialSlot(int32 InitialSlotIndex) const
@@ -1058,7 +1094,7 @@ EZfItemMechanicResult UZfInventoryComponent::InternalMoveItemBetweenSlots(int32 
         InventoryList.MarkItemDirty(*SlotB);
     }
 
-    UE_LOG(LogZfInventory, Log,
+    UE_LOG(LogZfInventory, Verbose,
         TEXT("UZfInventoryComponent::MoveItemBetweenSlots — " "Item '%s' movido do slot %d para %d."),
         *ItemToMove->GetItemName().ToString(), FromSlotIndex, ToSlotIndex);
 
@@ -1155,7 +1191,7 @@ void UZfInventoryComponent::InternalSortInventoryBySelected(EZfInventorySortType
     OnInventoryRefreshed.Broadcast();
     InventoryList.MarkArrayDirty();
 
-    UE_LOG(LogZfInventory, Log, TEXT("UZfInventoryComponent::InternalSortInventoryBySelected — "
+    UE_LOG(LogZfInventory, Verbose, TEXT("UZfInventoryComponent::InternalSortInventoryBySelected — "
         "Inventário ordenado por '%s'. %d itens reorganizados."),
         *UEnum::GetValueAsString(SortType), Items.Num());
 }

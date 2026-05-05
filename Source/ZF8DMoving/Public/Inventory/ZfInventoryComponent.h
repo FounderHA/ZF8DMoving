@@ -143,7 +143,8 @@ class ZF8DMOVING_API UZfInventoryComponent : public UActorComponent, public IZfI
         int32 SlotIndexComesFrom, int32 TargetSlotIndex,
         EZfRefinerySlotType SlotTypeComesFrom, EZfRefinerySlotType TargetSlotType,
         FGameplayTag SlotTagComesFrom, FGameplayTag TargetSlotTag) override;
-    virtual void RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+    virtual bool RemoveItemFromTargetInterface_Implementation(int32 ItemAmountToRemove, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
+    virtual void AddItemBackToTargetInterface_Implementation(UZfItemInstance* InItemInstance, int32 TargetSlotIndex, EZfRefinerySlotType TargetSlotType, FGameplayTag TargetSlotTag) override;
     
 private:
 
@@ -267,6 +268,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zf|Inventory|Query")
     int32 GetAvailableSlotsWithExpansion(UZfItemInstance* BackpackInstance) const;
 
+    // Retorna quantos slots estão disponíveis considerando até tal Slot
+    // @param int32 — Nova quantidade de Slots
+    // @return quantidade de slots livres no range expandido
+    int32 GetAvailableSlotsUpToIndex(int32 MaxIndex) const;
+    
     // Retorna quantos itens existem a partir de um slot específico até o final.
     // Útil para verificar se há itens nos slots que serão perdidos
     // ao trocar uma mochila maior por uma menor.
